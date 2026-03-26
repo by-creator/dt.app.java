@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connexion - Dakar Terminal</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<div class="login-page">
+  <div class="login-card">
+
+    <!-- Logo -->
+    <div class="login-logo">
+      <img th:src="@{/img/image.png}" alt="Dakar Terminal" style="max-height: 52px; width: 300px;">
+    </div>
+
+    <h1 class="login-title">Bonjour, commençons</h1>
+    <p class="login-subtitle">Connectez-vous pour accéder à la plateforme Dakar Terminal.</p>
+
+    <!-- Error / logout messages -->
+    <div th:if="${param.error}" class="alert-error">
+      Adresse email ou mot de passe incorrect.
+    </div>
+    <div th:if="${param.logout}" class="alert-success">
+      Vous avez été déconnecté avec succès.
+    </div>
+
+    <form th:action="@{/login}" method="post">
+
+      <div class="form-group">
+        <label for="email" class="form-label">ADRESSE EMAIL</label>
+        <input type="email" id="email" name="email" class="form-input"
+               placeholder="email@dakar-terminal.com" required autofocus>
+      </div>
+
+      <div class="form-group">
+        <label for="password" class="form-label">MOT DE PASSE</label>
+        <div class="password-wrapper">
+          <input type="password" id="password" name="password" class="form-input" required>
+          <button type="button" class="password-toggle" onclick="togglePassword(this)">Voir</button>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-login">SE CONNECTER</button>
+
+      <div class="login-footer">
+        <label class="remember-me">
+          <input type="checkbox" name="remember-me">
+          Se souvenir de moi
+        </label>
+        <a href="#" class="forgot-link">Mot de passe oublié&nbsp;?</a>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<script>
+  function togglePassword(btn) {
+    const input = document.getElementById('password');
+    if (input.type === 'password') {
+      input.type = 'text';
+      btn.textContent = 'Cacher';
+    } else {
+      input.type = 'password';
+      btn.textContent = 'Voir';
+    }
+  }
+</script>
+
+</body>
+</html>
