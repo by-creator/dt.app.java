@@ -14,17 +14,7 @@
   <aside class="sidebar">
     <div class="sidebar-logo">
       <div class="sidebar-logo-box">
-        <svg width="28" height="28" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="22" cy="22" r="19" stroke="#1e3a8a" stroke-width="2" fill="#e8f0fe"/>
-          <ellipse cx="22" cy="22" rx="9" ry="19" stroke="#1e3a8a" stroke-width="1.5" fill="none"/>
-          <line x1="3" y1="22" x2="41" y2="22" stroke="#1e3a8a" stroke-width="1.5"/>
-          <line x1="7" y1="13" x2="37" y2="13" stroke="#1e3a8a" stroke-width="1.2"/>
-          <line x1="7" y1="31" x2="37" y2="31" stroke="#1e3a8a" stroke-width="1.2"/>
-        </svg>
-        <div>
-          <div class="brand">DAKAR TERMINAL</div>
-          <div class="sub">SÉNÉGAL</div>
-        </div>
+        <img th:src="@{/img/image.png}" alt="Dakar Terminal" style="max-height: 40px; width: 150px;">
       </div>
     </div>
 
@@ -100,7 +90,7 @@
       </a>
 
       <!-- Menu Douane -->
-      <a href="#" class="module-card" data-name="menu douane">
+      <a th:href="@{/menu/douane}" class="module-card" data-name="menu douane">
         <div class="module-icon">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
