@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Menu - Dakar Terminal</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<div class="app-layout">
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-box">
+        <svg width="28" height="28" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="22" cy="22" r="19" stroke="#1e3a8a" stroke-width="2" fill="#e8f0fe"/>
+          <ellipse cx="22" cy="22" rx="9" ry="19" stroke="#1e3a8a" stroke-width="1.5" fill="none"/>
+          <line x1="3" y1="22" x2="41" y2="22" stroke="#1e3a8a" stroke-width="1.5"/>
+          <line x1="7" y1="13" x2="37" y2="13" stroke="#1e3a8a" stroke-width="1.2"/>
+          <line x1="7" y1="31" x2="37" y2="31" stroke="#1e3a8a" stroke-width="1.2"/>
+        </svg>
+        <div>
+          <div class="brand">DAKAR TERMINAL</div>
+          <div class="sub">SÉNÉGAL</div>
+        </div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a th:href="@{/dashboard}" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+          <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+        </svg>
+        Dashboard
+      </a>
+      <a th:href="@{/menu}" class="nav-item active">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/>
+          <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+        Menu
+      </a>
+    </nav>
+
+    <div class="sidebar-user">
+      <div class="user-row">
+        <div class="user-avatar-sm"
+             th:text="${#strings.toUpperCase(#strings.substring(loggedUser.username, 0, 1))}">A</div>
+        <span class="user-display-name" th:text="${loggedUser.username}">Admin</span>
+        <form th:action="@{/logout}" method="post" style="margin:0">
+          <button type="submit" class="logout-btn" title="Se déconnecter">&#x2192;</button>
+        </form>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <main class="main-content">
+
+    <div class="page-header menu-header-row">
+      <div>
+        <div class="page-badge"><span class="page-badge-dot"></span> NAVIGATION RAPIDE</div>
+        <h1 class="page-title">Menu administrateur</h1>
+        <p class="page-subtitle">Recherchez rapidement un module et accédez aux espaces disponibles pour votre rôle.</p>
+      </div>
+      <div class="menu-search-wrap">
+        <input type="search" class="menu-search" placeholder="Rechercher un menu..." id="menuSearch" oninput="filterModules(this.value)">
+      </div>
+    </div>
+
+    <div class="modules-grid" id="modulesGrid">
+
+      <!-- Menu DT -->
+      <a href="#" class="module-card" data-name="menu dt">
+        <div class="module-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+          </svg>
+        </div>
+        <div class="module-title">Menu DT</div>
+        <div class="module-desc">Accédez au sous-menu de DT.</div>
+        <div class="module-link">Ouvrir <span>&#x2197;</span></div>
+      </a>
+
+      <!-- Menu Compagnie -->
+      <a href="#" class="module-card" data-name="menu compagnie">
+        <div class="module-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+          </svg>
+        </div>
+        <div class="module-title">Menu Compagnie</div>
+        <div class="module-desc">Accédez au sous-menu des compagnies.</div>
+        <div class="module-link">Ouvrir <span>&#x2197;</span></div>
+      </a>
+
+      <!-- Menu Douane -->
+      <a href="#" class="module-card" data-name="menu douane">
+        <div class="module-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+          </svg>
+        </div>
+        <div class="module-title">Menu Douane</div>
+        <div class="module-desc">Accédez au sous-menu de la douane.</div>
+        <div class="module-link">Ouvrir <span>&#x2197;</span></div>
+      </a>
+
+
+
+    </div>
+
+  </main>
+</div>
+
+<script>
+  function filterModules(query) {
+    const cards = document.querySelectorAll('#modulesGrid .module-card');
+    const q = query.toLowerCase().trim();
+    cards.forEach(card => {
+      const name = card.dataset.name || '';
+      card.style.display = (!q || name.includes(q)) ? '' : 'none';
+    });
+  }
+</script>
+
+</body>
+</html>

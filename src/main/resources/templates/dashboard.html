@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tableau de bord - Dakar Terminal</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<div class="app-layout">
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-box">
+        <svg width="28" height="28" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="22" cy="22" r="19" stroke="#1e3a8a" stroke-width="2" fill="#e8f0fe"/>
+          <ellipse cx="22" cy="22" rx="9" ry="19" stroke="#1e3a8a" stroke-width="1.5" fill="none"/>
+          <line x1="3" y1="22" x2="41" y2="22" stroke="#1e3a8a" stroke-width="1.5"/>
+          <line x1="7" y1="13" x2="37" y2="13" stroke="#1e3a8a" stroke-width="1.2"/>
+          <line x1="7" y1="31" x2="37" y2="31" stroke="#1e3a8a" stroke-width="1.2"/>
+        </svg>
+        <div>
+          <div class="brand">DAKAR TERMINAL</div>
+          <div class="sub">SÉNÉGAL</div>
+        </div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a th:href="@{/dashboard}" class="nav-item active">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+          <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+        </svg>
+        Dashboard
+      </a>
+      <a th:href="@{/menu}" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/>
+          <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+        Menu
+      </a>
+    </nav>
+
+    <div class="sidebar-user">
+      <div class="user-row">
+        <div class="user-avatar-sm"
+             th:text="${#strings.toUpperCase(#strings.substring(loggedUser.username, 0, 1))}">A</div>
+        <span class="user-display-name" th:text="${loggedUser.username}">Admin</span>
+        <form th:action="@{/logout}" method="post" style="margin:0">
+          <button type="submit" class="logout-btn" title="Se déconnecter">&#x2192;</button>
+        </form>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <main class="main-content">
+
+    <!-- Page header -->
+    <div class="page-header">
+      <div>
+        <div class="page-badge"><span class="page-badge-dot"></span> ADMINISTRATION</div>
+        <h1 class="page-title">Tableau de bord</h1>
+        <p class="page-subtitle">Vue d'ensemble de la plateforme Dakar Terminal, avec vos indicateurs principaux et les comptes les plus récents.</p>
+      </div>
+      <div class="date-chip">
+        <span class="label">AUJOURD'HUI</span>
+        <span class="value" th:text="${currentDate}">Jeudi 26 mars 2026</span>
+      </div>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="stats-grid">
+
+      <div class="stat-card purple">
+        <div>
+          <div class="stat-label">Utilisateurs actifs</div>
+          <div class="stat-value" th:text="${activeUsers}">0</div>
+        </div>
+        <div class="stat-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="stat-card orange">
+        <div>
+          <div class="stat-label">Rôles définis</div>
+          <div class="stat-value" th:text="${rolesCount}">0</div>
+        </div>
+        <div class="stat-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="stat-card teal">
+        <div>
+          <div class="stat-label">Administrateurs</div>
+          <div class="stat-value" th:text="${adminCount}">0</div>
+        </div>
+        <div class="stat-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+            <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="stat-card green">
+        <div>
+          <div class="stat-label">Créés aujourd'hui</div>
+          <div class="stat-value" th:text="${todayCount}">0</div>
+        </div>
+        <div class="stat-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+            <polyline points="16 7 22 7 22 13"/>
+          </svg>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Bottom section -->
+    <div class="bottom-grid">
+
+      <!-- Recent users table -->
+      <div class="card">
+        <div class="card-header-row">
+          <div>
+            <h3>Derniers utilisateurs</h3>
+            <p>Comptes utilisateurs créés récemment sur la plateforme.</p>
+          </div>
+          <a th:href="@{/dashboard}" class="btn-outline">Voir mon profil</a>
+        </div>
+
+        <div>
+          <table class="users-table">
+            <thead>
+              <tr>
+                <th>DATE</th>
+                <th>UTILISATEUR</th>
+                <th>RÔLE</th>
+                <th>STATUT</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="u : ${recentUsers}">
+                <td th:text="${u.formattedDate}">—</td>
+                <td>
+                  <div class="user-cell">
+                    <div class="user-initials" th:text="${u.initials}">?</div>
+                    <div>
+                      <div class="user-cell-name" th:text="${u.username}">Nom</div>
+                      <div class="user-cell-email" th:text="${u.email}">email</div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span class="role-badge" th:classappend="${u.roleBadgeClass}"
+                        th:text="${u.displayAuthority}">RÔLE</span>
+                </td>
+                <td>
+                  <span th:text="${u.enabled} ? 'Compte actif' : 'Désactivé'">Actif</span>
+                </td>
+              </tr>
+              <tr th:if="${#lists.isEmpty(recentUsers)}">
+                <td colspan="4" style="text-align:center; color:#94a3b8; padding: 24px;">
+                  Aucun utilisateur pour le moment.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Right panels -->
+      <div class="right-panel">
+
+        <!-- Quick actions -->
+        <div class="panel-card">
+          <div class="panel-icon-wrap purple">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+            </svg>
+          </div>
+          <h4>Actions rapides</h4>
+          <p class="panel-subtitle">Accès direct aux écrans les plus utiles.</p>
+          <a href="#" class="quick-action primary">
+            Mettre à jour mon profil
+            <span>&#8594;</span>
+          </a>
+          <a href="#" class="quick-action secondary">
+            Paramètres de sécurité
+            <span>&#8594;</span>
+          </a>
+          <a href="#" class="quick-action secondary">
+            Accéder à Demat
+            <span>&#8594;</span>
+          </a>
+        </div>
+
+        <!-- About system -->
+        <div class="panel-card">
+          <div class="panel-icon-wrap blue">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+          </div>
+          <h4>À propos du système</h4>
+          <p class="panel-subtitle">Résumé technique de l'environnement actuel.</p>
+          <div class="sysinfo-row">
+            <span class="key">Application</span>
+            <span class="val">Dakar Terminal v1.0</span>
+          </div>
+          <div class="sysinfo-row">
+            <span class="key">Stack</span>
+            <span class="val">Spring Boot 3.2 · Thymeleaf · MySQL</span>
+          </div>
+          <div class="sysinfo-row">
+            <span class="key">Sécurité</span>
+            <span class="val">Spring Security + BCrypt</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+</div>
+
+</body>
+</html>
