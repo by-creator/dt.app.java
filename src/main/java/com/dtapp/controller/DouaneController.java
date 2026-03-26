@@ -4,24 +4,26 @@ import com.dtapp.entity.BlocageItem;
 import com.dtapp.entity.User;
 import com.dtapp.repository.BlocageItemRepository;
 import com.dtapp.repository.UserRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.List;
-
 @Controller
 @RequestMapping("/menu/douane")
 public class DouaneController {
+
+    private static final int PAGE_SIZE = 4;
 
     private final UserRepository userRepository;
     private final BlocageItemRepository blocageItemRepository;
 
     public DouaneController(UserRepository userRepository,
                             BlocageItemRepository blocageItemRepository) {
-        this.userRepository       = userRepository;
+        this.userRepository        = userRepository;
         this.blocageItemRepository = blocageItemRepository;
     }
 
@@ -33,11 +35,28 @@ public class DouaneController {
 
     @GetMapping("/blocage")
     public String blocage(@RequestParam(required = false) String search,
+                          @RequestParam(defaultValue = "0") int page,
                           Model model, Authentication auth) {
-        model.addAttribute("loggedUser", loggedUser(auth));
-        List<BlocageItem> items = blocageItemRepository.searchAll(search);
-        model.addAttribute("blocageItems", items);
-        model.addAttribute("search", search != null ? search : "");
+
+        if (page < 0) page = 0;
+
+        Page<BlocageItem> itemsPage = blocageItemRepository.searchPaged(
+                search, PageRequest.of(page, PAGE_SIZE));
+
+        /* Clamp page if out of range after a deletion */
+        if (page > 0 && page >= itemsPage.getTotalPages()) {
+            page = itemsPage.getTotalPages() - 1;
+            itemsPage = blocageItemRepository.searchPaged(
+                    search, PageRequest.of(Math.max(page, 0), PAGE_SIZE));
+        }
+
+        model.addAttribute("loggedUser",  loggedUser(auth));
+        model.addAttribute("blocageItems", itemsPage.getContent());
+        model.addAttribute("search",       search != null ? search : "");
+        model.addAttribute("currentPage",  itemsPage.getNumber());
+        model.addAttribute("totalPages",   itemsPage.getTotalPages());
+        model.addAttribute("totalItems",   itemsPage.getTotalElements());
+        model.addAttribute("pageSize",     PAGE_SIZE);
         return "douane/blocage";
     }
 
@@ -50,37 +69,32 @@ public class DouaneController {
             return "redirect:/menu/douane/blocage";
         }
 
-        String itemTrimmed = item.trim();
+        String trimmed = item.trim();
         BlocageItem entry = blocageItemRepository
-                .findTopByItemOrderByCreatedAtDesc(itemTrimmed)
+                .findTopByItemOrderByCreatedAtDesc(trimmed)
                 .orElse(null);
 
         if ("bloquer".equals(action)) {
             if (entry != null && entry.isBloque()) {
-                ra.addFlashAttribute("error",
-                        "L'item « " + itemTrimmed + " » est déjà bloqué.");
+                ra.addFlashAttribute("error", "L'item « " + trimmed + " » est déjà bloqué.");
             } else if (entry != null) {
                 entry.setStatut("BLOQUE");
                 blocageItemRepository.save(entry);
-                ra.addFlashAttribute("success",
-                        "L'item « " + itemTrimmed + " » a été bloqué.");
+                ra.addFlashAttribute("success", "L'item « " + trimmed + " » a été bloqué.");
             } else {
-                BlocageItem newEntry = new BlocageItem();
-                newEntry.setItem(itemTrimmed);
-                newEntry.setStatut("BLOQUE");
-                blocageItemRepository.save(newEntry);
-                ra.addFlashAttribute("success",
-                        "L'item « " + itemTrimmed + " » a été bloqué.");
+                BlocageItem n = new BlocageItem();
+                n.setItem(trimmed);
+                n.setStatut("BLOQUE");
+                blocageItemRepository.save(n);
+                ra.addFlashAttribute("success", "L'item « " + trimmed + " » a été bloqué.");
             }
         } else if ("debloquer".equals(action)) {
             if (entry == null || !entry.isBloque()) {
-                ra.addFlashAttribute("error",
-                        "L'item « " + itemTrimmed + " » n'est pas bloqué.");
+                ra.addFlashAttribute("error", "L'item « " + trimmed + " » n'est pas bloqué.");
             } else {
                 entry.setStatut("DEBLOQUE");
                 blocageItemRepository.save(entry);
-                ra.addFlashAttribute("success",
-                        "L'item « " + itemTrimmed + " » a été débloqué.");
+                ra.addFlashAttribute("success", "L'item « " + trimmed + " » a été débloqué.");
             }
         }
 
@@ -90,18 +104,17 @@ public class DouaneController {
     @PostMapping("/blocage/action")
     public String tableAction(@RequestParam Integer id,
                               @RequestParam String action,
+                              @RequestParam(defaultValue = "0") int page,
+                              @RequestParam(required = false) String search,
                               RedirectAttributes ra) {
         blocageItemRepository.findById(id).ifPresent(entry -> {
-            if ("bloquer".equals(action)) {
-                entry.setStatut("BLOQUE");
-            } else if ("debloquer".equals(action)) {
-                entry.setStatut("DEBLOQUE");
-            }
+            entry.setStatut("bloquer".equals(action) ? "BLOQUE" : "DEBLOQUE");
             blocageItemRepository.save(entry);
-            ra.addFlashAttribute("success",
-                    "Statut de « " + entry.getItem() + " » mis à jour.");
+            ra.addFlashAttribute("success", "Statut de « " + entry.getItem() + " » mis à jour.");
         });
-        return "redirect:/menu/douane/blocage";
+        String redirect = "redirect:/menu/douane/blocage?page=" + page;
+        if (search != null && !search.isBlank()) redirect += "&search=" + search;
+        return redirect;
     }
 
     private User loggedUser(Authentication auth) {

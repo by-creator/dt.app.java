@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Paramètres - Dakar Terminal</title>
+  <script th:src="@{/js/theme.js}"></script>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<div class="app-layout">
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-box">
+        <img th:src="@{/img/image.png}" alt="Dakar Terminal" style="max-height: 40px; width: 150px;">
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <a th:href="@{/dashboard}" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+          <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+        </svg>
+        Dashboard
+      </a>
+      <a th:href="@{/menu}" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/>
+          <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+        Menu
+      </a>
+      <a th:href="@{/parametres}" class="nav-item active">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        Paramètres
+      </a>
+    </nav>
+    <div class="sidebar-user">
+      <div class="user-row">
+        <div class="user-avatar-sm"
+             th:text="${#strings.toUpperCase(#strings.substring(loggedUser.username, 0, 1))}">A</div>
+        <span class="user-display-name" th:text="${loggedUser.username}">Admin</span>
+        <form th:action="@{/logout}" method="post" style="margin:0">
+          <button type="submit" class="logout-btn" title="Se déconnecter">&#x2192;</button>
+        </form>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <main class="main-content">
+
+    <!-- Page header -->
+    <div class="page-header-card">
+      <div>
+        <div class="page-badge"><span class="page-badge-dot"></span> COMPTE</div>
+        <h1 class="page-title" style="font-size:26px; margin-bottom:4px;">Paramètres</h1>
+        <p class="page-subtitle">Gérez vos informations personnelles, votre mot de passe et l'apparence de l'application.</p>
+      </div>
+    </div>
+
+    <!-- 3-column settings grid -->
+    <div class="settings-grid">
+
+      <!-- ===== CARD 1 : Profil ===== -->
+      <div class="settings-card">
+        <div class="settings-card-icon purple">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+        </div>
+        <h3 class="settings-card-title">Informations du profil</h3>
+        <p class="settings-card-subtitle">Modifiez votre nom d'affichage.</p>
+
+        <div th:if="${profilSuccess}" class="alert-success" style="margin-bottom:16px; font-size:13px;" th:text="${profilSuccess}"></div>
+        <div th:if="${profilError}"   class="alert-error"   style="margin-bottom:16px; font-size:13px;" th:text="${profilError}"></div>
+
+        <form th:action="@{/parametres/profil}" method="post">
+          <div class="form-group">
+            <label class="form-label">NOM D'AFFICHAGE</label>
+            <input type="text" name="username" class="form-input"
+                   th:value="${loggedUser.username}" required>
+          </div>
+          <div class="form-group" style="margin-bottom:24px;">
+            <label class="form-label">ADRESSE EMAIL</label>
+            <input type="email" class="form-input"
+                   th:value="${loggedUser.email}" disabled
+                   style="opacity:0.6; cursor:not-allowed;">
+            <span style="font-size:11px; color:#94a3b8; margin-top:4px; display:block;">L'email est l'identifiant de connexion et ne peut pas être modifié ici.</span>
+          </div>
+          <button type="submit" class="btn-settings-save">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            Enregistrer
+          </button>
+        </form>
+      </div>
+
+      <!-- ===== CARD 2 : Mot de passe ===== -->
+      <div class="settings-card">
+        <div class="settings-card-icon orange">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </div>
+        <h3 class="settings-card-title">Modifier le mot de passe</h3>
+        <p class="settings-card-subtitle">Choisissez un mot de passe fort d'au moins 8 caractères.</p>
+
+        <div th:if="${passwordSuccess}" class="alert-success" style="margin-bottom:16px; font-size:13px;" th:text="${passwordSuccess}"></div>
+        <div th:if="${passwordError}"   class="alert-error"   style="margin-bottom:16px; font-size:13px;" th:text="${passwordError}"></div>
+
+        <form th:action="@{/parametres/password}" method="post">
+          <div class="form-group">
+            <label class="form-label">MOT DE PASSE ACTUEL</label>
+            <div class="password-wrapper">
+              <input type="password" name="currentPassword" id="cur" class="form-input" required>
+              <button type="button" class="password-toggle" onclick="togglePwd('cur',this)">Voir</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">NOUVEAU MOT DE PASSE</label>
+            <div class="password-wrapper">
+              <input type="password" name="newPassword" id="np" class="form-input" required minlength="8">
+              <button type="button" class="password-toggle" onclick="togglePwd('np',this)">Voir</button>
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:24px;">
+            <label class="form-label">CONFIRMER LE MOT DE PASSE</label>
+            <div class="password-wrapper">
+              <input type="password" name="confirmPassword" id="cp" class="form-input" required minlength="8">
+              <button type="button" class="password-toggle" onclick="togglePwd('cp',this)">Voir</button>
+            </div>
+          </div>
+          <button type="submit" class="btn-settings-save">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            Mettre à jour
+          </button>
+        </form>
+      </div>
+
+      <!-- ===== CARD 3 : Thème ===== -->
+      <div class="settings-card">
+        <div class="settings-card-icon teal">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+        </div>
+        <h3 class="settings-card-title">Thème de l'application</h3>
+        <p class="settings-card-subtitle">Choisissez l'apparence qui vous convient le mieux.</p>
+
+        <div class="theme-options">
+
+          <button class="theme-option" data-theme="light" onclick="setTheme('light')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="5"/>
+              <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+              <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+            </svg>
+            <div>
+              <div style="font-weight:600;">Clair</div>
+              <div style="font-size:12px; opacity:0.65;">Fond blanc, texte sombre</div>
+            </div>
+          </button>
+
+          <button class="theme-option" data-theme="dark" onclick="setTheme('dark')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+            <div>
+              <div style="font-weight:600;">Sombre</div>
+              <div style="font-size:12px; opacity:0.65;">Fond noir, texte clair</div>
+            </div>
+          </button>
+
+          <button class="theme-option" data-theme="system" onclick="setTheme('system')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+            </svg>
+            <div>
+              <div style="font-weight:600;">Système</div>
+              <div style="font-size:12px; opacity:0.65;">Suit les préférences de l'OS</div>
+            </div>
+          </button>
+
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script th:src="@{/js/theme.js}"></script>
+<script>
+  /* Highlight the current active theme button on load */
+  document.addEventListener('DOMContentLoaded', function () {
+    var current = localStorage.getItem('dt-theme') || 'system';
+    document.querySelectorAll('.theme-option').forEach(function (btn) {
+      btn.classList.toggle('active', btn.dataset.theme === current);
+    });
+  });
+
+  function togglePwd(id, btn) {
+    var input = document.getElementById(id);
+    input.type = input.type === 'password' ? 'text' : 'password';
+    btn.textContent = input.type === 'password' ? 'Voir' : 'Cacher';
+  }
+</script>
+
+</body>
+</html>
