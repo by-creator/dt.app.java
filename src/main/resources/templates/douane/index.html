@@ -58,22 +58,20 @@
   <!-- ===== MAIN ===== -->
   <main class="main-content">
 
-    <!-- Breadcrumb -->
-    <div style="display:flex; align-items:center; gap:8px; margin-bottom:28px; font-size:13px; color:#64748b;">
-      <a th:href="@{/menu}" style="color:#6366f1; text-decoration:none; font-weight:500;">Menu</a>
-      <span>&#8250;</span>
-      <span style="color:#0f172a; font-weight:600;">Douane</span>
-    </div>
-
     <div class="page-header-card">
       <div>
         <div class="page-badge"><span class="page-badge-dot"></span> MENU DOUANE</div>
         <h1 class="page-title" style="font-size:26px; margin-bottom:4px;">Douane</h1>
         <p class="page-subtitle">Accédez aux fonctionnalités disponibles pour le module Douane.</p>
       </div>
+      <div style="display:flex; align-items:center; gap:8px; font-size:13px; color:#64748b;">
+        <a th:href="@{/menu}" style="color:#6366f1; text-decoration:none; font-weight:500;">Menu</a>
+        <span>&#8250;</span>
+        <span>Douane</span>
+      </div>
     </div>
 
-    <div class="modules-grid" style="grid-template-columns: repeat(4, 1fr);">
+    <div class="modules-grid">
 
       <!-- Gestion Blocage / Déblocage -->
       <a th:href="@{/menu/douane/blocage}" class="module-card">
