@@ -9,6 +9,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Génère un fichier Excel (.xlsx) à partir d'une liste d'EdiRecord.
@@ -17,6 +18,13 @@ import java.util.Map;
 @Service
 @Slf4j
 public class XlsExporter {
+
+    /** Champs purement numériques — tous les autres sont écrits comme texte. */
+    private static final Set<String> NUMERIC_FIELDS = Set.of(
+            "bl_volume", "bl_weight",
+            "blitem_commodity_volume", "blitem_commodity_weight",
+            "number_of_yard_items", "number_of_packages"
+    );
 
     public void export(List<EdiRecord> records, Map<String, String> headers, String outputPath) {
         try (Workbook workbook = new XSSFWorkbook()) {
@@ -45,16 +53,16 @@ public class XlsExporter {
             for (EdiRecord record : records) {
                 Map<String, String> data = new java.util.LinkedHashMap<>(record.toArray());
 
-                // ── Conversion poids : tonnes → kg ──────────────────────────
+                // ── Poids déjà en kg (EdiRecord divise par 1000) ────────────
                 double rawWeight = parseDouble(data.get("bl_weight"));
                 data.put("bl_weight", rawWeight > 0
-                        ? formatNum(EdiRecord.roundTo(rawWeight * 1000, 2)) : null);
+                        ? formatNum(EdiRecord.roundTo(rawWeight, 2)) : null);
 
                 double rawItemWeight = parseDouble(data.get("blitem_commodity_weight"));
                 boolean isVehicle = "VEHICULE".equals(data.get("blitem_yard_item_type"));
                 double itemWeightKg = 0;
                 if (rawItemWeight > 0) {
-                    itemWeightKg = EdiRecord.roundTo(rawItemWeight * 1000, 2);
+                    itemWeightKg = EdiRecord.roundTo(rawItemWeight, 2);
                     data.put("blitem_commodity_weight", formatNum(itemWeightKg));
                 } else {
                     data.put("blitem_commodity_weight", isVehicle ? "0" : null);
@@ -102,13 +110,17 @@ public class XlsExporter {
                     String value = data.get(key);
                     if (value == null || value.isEmpty()) {
                         // Cellule vide
-                    } else {
-                        // Tenter d'écrire comme nombre si possible
+                    } else if (NUMERIC_FIELDS.contains(key)) {
+                        // Champ numérique : écrire comme nombre
                         try {
                             cell.setCellValue(Double.parseDouble(value));
                         } catch (NumberFormatException e) {
                             cell.setCellValue(value);
                         }
+                    } else {
+                        // Champ texte (identifiants, codes, noms) : toujours écrire comme string
+                        // pour préserver les zéros de tête (ex: "001938")
+                        cell.setCellValue(value);
                     }
                 }
             }

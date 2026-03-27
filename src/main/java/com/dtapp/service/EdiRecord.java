@@ -123,14 +123,14 @@ public class EdiRecord {
         // ── BL Number ────────────────────────────────────────────────────────
         rec.data.put("bl_number", rec.data.getOrDefault("bl_number", "").trim());
 
-        // ── Poids : offset 281 (principal), fallback 1296 ────────────────────
+        // ── Poids : offset 281 (principal), fallback 1296 — valeur en grammes ÷ 1000 = kg ──
         String rawW281 = stripLeadingZeros(rec.data.getOrDefault("bl_weight", ""));
         String rawW296 = stripLeadingZeros(rec.data.getOrDefault("bl_weight_alt", ""));
         double weight  = 0;
         if (isPositiveNumeric(rawW281)) {
-            weight = roundTo(Double.parseDouble(rawW281) / 1_000_000.0, 6);
+            weight = roundTo(Double.parseDouble(rawW281) / 1_000.0, 3);
         } else if (isPositiveNumeric(rawW296)) {
-            weight = roundTo(Double.parseDouble(rawW296) / 1_000_000.0, 6);
+            weight = roundTo(Double.parseDouble(rawW296) / 1_000.0, 3);
         }
         String weightStr = weight > 0 ? formatDouble(weight) : "";
         rec.data.put("bl_weight",               weightStr);
@@ -177,15 +177,15 @@ public class EdiRecord {
         // ── AllowInvalid ──────────────────────────────────────────────────────
         rec.data.put("blitem_allow_invalid", "VRAI");
 
-        // ── Commodity (tranches de poids véhicules) ───────────────────────────
+        // ── Commodity (tranches de poids véhicules, weight en kg) ────────────
         if ("VEHICULE".equals(yardType) && weight > 0) {
             String commodity;
-            if      (weight <= 1.5)  commodity = "VEH 0-1500Kgs";
-            else if (weight <= 3.0)  commodity = "VEH 1501-3000Kgs";
-            else if (weight <= 6.0)  commodity = "VEH 3001-6000Kgs";
-            else if (weight <= 9.0)  commodity = "VEH 6001-9000Kgs";
-            else if (weight <= 30.0) commodity = "VEH 9001-30000Kgs";
-            else                     commodity = "VEH +30000Kgs";
+            if      (weight <= 1500)  commodity = "VEH 0-1500Kgs";
+            else if (weight <= 3000)  commodity = "VEH 1501-3000Kgs";
+            else if (weight <= 6000)  commodity = "VEH 3001-6000Kgs";
+            else if (weight <= 9000)  commodity = "VEH 6001-9000Kgs";
+            else if (weight <= 30000) commodity = "VEH 9001-30000Kgs";
+            else                      commodity = "VEH +30000Kgs";
             rec.data.put("blitem_commodity", commodity);
         } else {
             rec.data.put("blitem_commodity", "");
