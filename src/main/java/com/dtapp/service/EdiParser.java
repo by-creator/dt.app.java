@@ -225,7 +225,7 @@ public class EdiParser {
         h.put("shipper",                          "Shipper");
         h.put("forwarder",                        "Forwarder");
         h.put("related_customer",                 "Related Customer");
-        h.put("forwarding_agent",                 "Clearing and Forwarding Agent");
+        h.put("forwarding_agent",                 "Forwarding Agent");
         h.put("final_destination_country",        "Final Destination Country");
         h.put("manifest",                         "Manifest");
         h.put("number_of_yard_items",             "Number of Yard Items");
@@ -241,8 +241,8 @@ public class EdiParser {
         h.put("bl_volume",                        "BLVolume");
         h.put("bl_weight",                        "BLWeight");
         h.put("incoterm",                         "Incoterm");
-        h.put("port_of_loading",                  "Port Of Loading City UNLOCODE");
-        h.put("reception_location",               "Reception Location UNLOCODE");
+        h.put("port_of_loading",                  "Port_of_Loading UNLOCODE");
+        h.put("reception_location",               "Reception_Location UNLOCODE");
         h.put("transshipment_port_1",             "Transshipment port 1 UNLOCODE");
         h.put("transshipment_port_2",             "Transshipment port 2 UNLOCODE");
         h.put("commodity",                        "Commodity");
