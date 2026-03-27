@@ -68,14 +68,14 @@
 
     <!-- Tab bar -->
     <div class="subpage-tabs">
-      <a th:href="@{/menu/compagnie/upload-manifest}" class="subpage-tab">
+      <a th:href="@{/menu/planification/upload-manifest}" class="subpage-tab">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
           <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
         </svg>
         Upload Manifeste
       </a>
-      <a th:href="@{/menu/compagnie/{id}/preview(id=${codification.id})}" class="subpage-tab active">
+      <a th:href="@{/menu/planification/{id}/preview(id=${codification.id})}" class="subpage-tab active">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
           <circle cx="12" cy="12" r="3"/>
@@ -90,9 +90,11 @@
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:24px; font-size:13px; color:#64748b;">
         <a th:href="@{/menu}" style="color:#6366f1; text-decoration:none; font-weight:500;">Menu</a>
         <span>&#8250;</span>
-        <a th:href="@{/menu/compagnie}" style="color:#6366f1; text-decoration:none; font-weight:500;">Compagnie</a>
+        <a th:href="@{/menu/dt}" style="color:#6366f1; text-decoration:none; font-weight:500;">Menu DT</a>
         <span>&#8250;</span>
-        <a th:href="@{/menu/compagnie/upload-manifest}" style="color:#6366f1; text-decoration:none; font-weight:500;">Manifeste</a>
+        <a th:href="@{/menu/planification}" style="color:#6366f1; text-decoration:none; font-weight:500;">Planification</a>
+        <span>&#8250;</span>
+        <a th:href="@{/menu/planification/upload-manifest}" style="color:#6366f1; text-decoration:none; font-weight:500;">Manifeste</a>
         <span>&#8250;</span>
         <span class="topbar-title" th:text="${codification.callNumber}">Aperçu</span>
       </div>
@@ -109,7 +111,7 @@
         </div>
         <p class="blocage-card-subtitle">Téléchargez les fichiers générés à partir du manifeste importé.</p>
         <div class="blocage-actions">
-          <a th:href="@{/menu/compagnie/{id}/download-manifest(id=${codification.id})}"
+          <a th:href="@{/menu/planification/{id}/download-manifest(id=${codification.id})}"
              class="btn-debloquer" style="text-decoration:none;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -117,7 +119,7 @@
             </svg>
             Manifeste (.txt)
           </a>
-          <a th:href="@{/menu/compagnie/{id}/download-xls(id=${codification.id})}"
+          <a th:href="@{/menu/planification/{id}/download-xls(id=${codification.id})}"
              class="btn-bloquer" style="text-decoration:none; background:#16a34a; border-color:#15803d;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -125,7 +127,7 @@
             </svg>
             Excel (.xlsx)
           </a>
-          <a th:href="@{/menu/compagnie/{id}/download-iftmin(id=${codification.id})}"
+          <a th:href="@{/menu/planification/{id}/download-iftmin(id=${codification.id})}"
              class="btn-bloquer" style="text-decoration:none; background:#0369a1; border-color:#075985;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -133,7 +135,7 @@
             </svg>
             IFTMIN
           </a>
-          <a th:href="@{/menu/compagnie/upload-manifest}"
+          <a th:href="@{/menu/planification/upload-manifest}"
              class="btn-actualiser" style="text-decoration:none;">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
@@ -257,7 +259,7 @@
                      style="padding-left:32px; width:260px;">
             </div>
             <span id="ediCount" class="pagination-info">0 segment</span>
-            <a th:href="@{/menu/compagnie/{id}/download-iftmin(id=${codification.id})}"
+            <a th:href="@{/menu/planification/{id}/download-iftmin(id=${codification.id})}"
                class="btn-actualiser" style="text-decoration:none; font-size:12px;">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>

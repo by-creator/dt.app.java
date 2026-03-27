@@ -1,3 +1,5 @@
+@import url('/css/brand-base.css');
+
 /* =====================================================
    DAKAR TERMINAL — Main Stylesheet
    ===================================================== */
@@ -54,14 +56,14 @@ body {
 }
 
 .login-title {
-  font-size: 30px;
-  font-weight: 700;
+  font-size: 28px;
+  font-weight: 800;
   color: #0f172a;
   margin-bottom: 8px;
 }
 
 .login-subtitle {
-  font-size: 14px;
+  font-size: 15px;
   color: #64748b;
   margin-bottom: 32px;
   line-height: 1.5;
@@ -69,7 +71,7 @@ body {
 
 .form-label {
   display: block;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 1px;
   color: #374151;
@@ -332,14 +334,14 @@ body {
 }
 
 .page-title {
-  font-size: 30px;
-  font-weight: 700;
+  font-size: 28px;
+  font-weight: 800;
   color: #0f172a;
   margin-bottom: 6px;
 }
 
 .page-subtitle {
-  font-size: 14px;
+  font-size: 15px;
   color: #64748b;
   max-width: 520px;
   line-height: 1.5;
@@ -785,7 +787,7 @@ body {
 }
 
 .module-title {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
   color: #0f172a;
   margin-bottom: 8px;

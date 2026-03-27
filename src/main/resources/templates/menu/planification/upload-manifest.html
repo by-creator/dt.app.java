@@ -70,7 +70,7 @@
 
     <!-- Tab bar -->
     <div class="subpage-tabs">
-      <a th:href="@{/menu/compagnie/upload-manifest}" class="subpage-tab active">
+      <a th:href="@{/menu/planification/upload-manifest}" class="subpage-tab active">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
           <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
@@ -85,7 +85,9 @@
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:24px; font-size:13px; color:#64748b;">
         <a th:href="@{/menu}" style="color:#6366f1; text-decoration:none; font-weight:500;">Menu</a>
         <span>&#8250;</span>
-        <a th:href="@{/menu/compagnie}" style="color:#6366f1; text-decoration:none; font-weight:500;">Compagnie</a>
+        <a th:href="@{/menu/dt}" style="color:#6366f1; text-decoration:none; font-weight:500;">Menu DT</a>
+        <span>&#8250;</span>
+        <a th:href="@{/menu/planification}" style="color:#6366f1; text-decoration:none; font-weight:500;">Planification</a>
         <span>&#8250;</span>
         <span class="topbar-title">Gestion de Manifeste</span>
       </div>
@@ -109,7 +111,7 @@
         </div>
         <p class="blocage-card-subtitle">Formats acceptés : .txt — Taille max : 50 Mo</p>
 
-        <form th:action="@{/menu/compagnie/upload-manifest}" method="post" enctype="multipart/form-data">
+        <form th:action="@{/menu/planification/upload-manifest}" method="post" enctype="multipart/form-data">
           <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
           <div class="form-group" style="margin-bottom:24px;">
             <label for="manifest" class="form-label">FICHIER MANIFESTE (.txt)</label>
@@ -133,7 +135,7 @@
 
         <!-- Table toolbar -->
         <div class="table-toolbar">
-          <form th:action="@{/menu/compagnie/upload-manifest}" method="get"
+          <form th:action="@{/menu/planification/upload-manifest}" method="get"
                 style="display:flex; align-items:center; gap:12px; flex:1;">
             <div style="position:relative; flex:1; max-width:400px;">
               <svg style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#94a3b8;"
@@ -152,7 +154,7 @@
               Rechercher
             </button>
           </form>
-          <a th:href="@{/menu/compagnie/upload-manifest}" class="btn-actualiser" style="text-decoration:none;">
+          <a th:href="@{/menu/planification/upload-manifest}" class="btn-actualiser" style="text-decoration:none;">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="23 4 23 10 17 10"/>
               <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
@@ -186,7 +188,7 @@
               <td th:text="${cod.compagnie != null ? cod.compagnie.name : '—'}">—</td>
               <td class="td-item" th:text="${cod.callNumber}">CALL123</td>
               <td>
-                <a th:href="@{/menu/compagnie/{id}/download-manifest(id=${cod.id})}"
+                <a th:href="@{/menu/planification/{id}/download-manifest(id=${cod.id})}"
                    class="btn-table-action debloque">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -196,7 +198,7 @@
                 </a>
               </td>
               <td>
-                <a th:href="@{/menu/compagnie/{id}/download-xls(id=${cod.id})}"
+                <a th:href="@{/menu/planification/{id}/download-xls(id=${cod.id})}"
                    class="btn-table-action" style="background:#dcfce7; color:#16a34a; border-color:#bbf7d0;">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -206,7 +208,7 @@
                 </a>
               </td>
               <td>
-                <a th:href="@{/menu/compagnie/{id}/download-iftmin(id=${cod.id})}"
+                <a th:href="@{/menu/planification/{id}/download-iftmin(id=${cod.id})}"
                    class="btn-table-action" style="background:#e0f2fe; color:#0369a1; border-color:#bae6fd;">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -217,7 +219,7 @@
               </td>
               <td th:text="${cod.formattedDate}">01/01/2024</td>
               <td>
-                <a th:href="@{/menu/compagnie/{id}/preview(id=${cod.id})}"
+                <a th:href="@{/menu/planification/{id}/preview(id=${cod.id})}"
                    class="btn-table-action bloquer">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
@@ -242,14 +244,14 @@
             <!-- Première page -->
             <a class="page-btn"
                th:classappend="${codifications.first} ? 'disabled' : ''"
-               th:href="${codifications.first} ? '#' : @{/menu/compagnie/upload-manifest(page=0, search=${search})}">
+               th:href="${codifications.first} ? '#' : @{/menu/planification/upload-manifest(page=0, search=${search})}">
               ««
             </a>
 
             <!-- Précédent -->
             <a class="page-btn"
                th:classappend="${codifications.first} ? 'disabled' : ''"
-               th:href="${codifications.first} ? '#' : @{/menu/compagnie/upload-manifest(page=${codifications.number - 1}, search=${search})}">
+               th:href="${codifications.first} ? '#' : @{/menu/planification/upload-manifest(page=${codifications.number - 1}, search=${search})}">
               ‹
             </a>
 
@@ -257,21 +259,21 @@
             <th:block th:each="i : ${#numbers.sequence(0, codifications.totalPages - 1)}">
               <a class="page-btn"
                  th:classappend="${i == codifications.number} ? 'active' : ''"
-                 th:href="@{/menu/compagnie/upload-manifest(page=${i}, search=${search})}"
+                 th:href="@{/menu/planification/upload-manifest(page=${i}, search=${search})}"
                  th:text="${i + 1}">1</a>
             </th:block>
 
             <!-- Suivant -->
             <a class="page-btn"
                th:classappend="${codifications.last} ? 'disabled' : ''"
-               th:href="${codifications.last} ? '#' : @{/menu/compagnie/upload-manifest(page=${codifications.number + 1}, search=${search})}">
+               th:href="${codifications.last} ? '#' : @{/menu/planification/upload-manifest(page=${codifications.number + 1}, search=${search})}">
               ›
             </a>
 
             <!-- Dernière page -->
             <a class="page-btn"
                th:classappend="${codifications.last} ? 'disabled' : ''"
-               th:href="${codifications.last} ? '#' : @{/menu/compagnie/upload-manifest(page=${codifications.totalPages - 1}, search=${search})}">
+               th:href="${codifications.last} ? '#' : @{/menu/planification/upload-manifest(page=${codifications.totalPages - 1}, search=${search})}">
               »»
             </a>
 

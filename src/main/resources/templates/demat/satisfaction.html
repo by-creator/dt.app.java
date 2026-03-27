@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enquete de satisfaction - Dakar Terminal</title>
+  <th:block th:replace="~{fragments/pwa-head :: pwaMeta}"></th:block>
+  <link rel="stylesheet" th:href="@{/css/brand-base.css}">
+  <style>
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #f8fbff 0%, #edf3fb 100%);
+      color: #0f172a;
+    }
+
+    .shell {
+      min-height: 100vh;
+      padding: 24px;
+    }
+    .frame {
+      min-height: calc(100vh - 48px);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      box-shadow: 0 22px 50px rgba(15, 23, 42, 0.08);
+      overflow: hidden;
+    }
+    .page {
+      min-height: 100%;
+      padding: 28px 24px 50px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .card {
+      width: calc(100% - 12px);
+      max-width: 980px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 24px;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      box-shadow: 0 24px 52px rgba(15, 23, 42, 0.08);
+      padding: 28px 24px 22px;
+      overflow: hidden;
+    }
+
+    .back {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 10px;
+      background: #5447b0;
+      color: white;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .title {
+      margin: 22px 0 10px;
+      text-align: center;
+      font-size: 28px;
+      text-decoration: underline;
+      text-underline-offset: 5px;
+    }
+
+    .intro {
+      max-width: 760px;
+      margin: 0 auto 24px;
+      text-align: center;
+      color: #64748b;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    .wizard-steps {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .wizard-step {
+      border: 1px solid #d9e2ef;
+      background: #f8fbff;
+      border-radius: 12px;
+      padding: 12px 10px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: #64748b;
+      cursor: pointer;
+      transition: all .18s ease;
+    }
+
+    .wizard-step.active {
+      background: #5447b0;
+      color: white;
+      border-color: #5447b0;
+      box-shadow: 0 10px 22px rgba(84, 71, 176, 0.22);
+    }
+
+    .section {
+      display: none;
+      padding: 22px;
+      border-radius: 18px;
+      background: #fbfdff;
+      border: 1px solid #e2e8f0;
+    }
+
+    .section.active {
+      display: block;
+    }
+
+    .section h2 {
+      font-size: 21px;
+      margin: 0 0 10px;
+      color: #172554;
+    }
+
+    .section p.section-desc {
+      margin: 0 0 18px;
+      color: #64748b;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      margin-bottom: 16px;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #334155;
+    }
+
+    input[type="text"],
+    textarea {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid #d9e2ef;
+      padding: 12px 14px;
+      font-size: 15px;
+      box-sizing: border-box;
+      background: white;
+    }
+
+    textarea {
+      min-height: 110px;
+      resize: vertical;
+    }
+
+    .question {
+      margin-bottom: 20px;
+      padding: 18px;
+      border-radius: 14px;
+      background: white;
+      border: 1px solid #e5edf7;
+    }
+
+    .question-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 12px;
+      line-height: 1.55;
+    }
+
+    .options {
+      display: grid;
+      gap: 10px;
+    }
+
+    .option {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      color: #334155;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .option input {
+      margin-top: 3px;
+      accent-color: #5447b0;
+    }
+
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      margin-top: 24px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 150px;
+      height: 48px;
+      border: 0;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    .btn-secondary {
+      background: #e9eef8;
+      color: #334155;
+    }
+
+    .btn-primary {
+      background: #3367bf;
+      color: white;
+    }
+
+    .submit-note {
+      margin-top: 18px;
+      text-align: center;
+      font-size: 12px;
+      color: #64748b;
+    }
+
+    @media (max-width: 900px) {
+      .wizard-steps {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 640px) {
+      .shell {
+        padding: 16px;
+      }
+      .page {
+        padding: 20px 20px 32px;
+      }
+      .card {
+        width: calc(100% - 14px);
+        padding: 22px 16px 18px;
+      }
+      .field-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .wizard-steps {
+        grid-template-columns: 1fr;
+      }
+
+      .nav {
+        flex-direction: column;
+      }
+
+      .btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="shell">
+  <div class="frame">
+    <div class="page">
+      <div class="card">
+    <a th:href="@{/demat}" class="back">&#8592; Retour</a>
+    <h1 class="title">Enquete de satisfaction</h1>
+    <p class="intro">
+      Dans le cadre de notre demarche qualite, et dans un souci d'ameliorer nos prestations,
+      nous souhaitons obtenir votre avis sur votre degre de satisfaction. Merci de nous accorder
+      quelques minutes pour repondre a ce questionnaire.
+    </p>
+
+    <div class="wizard-steps">
+      <button type="button" class="wizard-step active" data-step="0" onclick="showSurveyStep(0)">Infos</button>
+      <button type="button" class="wizard-step" data-step="1" onclick="showSurveyStep(1)">General</button>
+      <button type="button" class="wizard-step" data-step="2" onclick="showSurveyStep(2)">Facturation</button>
+      <button type="button" class="wizard-step" data-step="3" onclick="showSurveyStep(3)">BAE</button>
+      <button type="button" class="wizard-step" data-step="4" onclick="showSurveyStep(4)">Accueil</button>
+      <button type="button" class="wizard-step" data-step="5" onclick="showSurveyStep(5)">Livraison</button>
+      <button type="button" class="wizard-step" data-step="6" onclick="showSurveyStep(6)">Communication</button>
+    </div>
+
+    <form>
+      <section class="section active" data-panel="0">
+        <h2>Informations d'identification</h2>
+        <p class="section-desc">Renseignez vos informations avant de commencer le questionnaire.</p>
+        <div class="field-grid">
+          <div class="field">
+            <label for="nom-prenom">Nom et prenom</label>
+            <input id="nom-prenom" type="text" placeholder="Nom et prenom">
+          </div>
+          <div class="field">
+            <label for="email">Email</label>
+            <input id="email" type="text" placeholder="Votre email">
+          </div>
+          <div class="field full">
+            <label for="telephone">Telephone</label>
+            <input id="telephone" type="text" placeholder="Votre telephone">
+          </div>
+        </div>
+      </section>
+
+      <section class="section" data-panel="1">
+        <h2>Partie 1 : Informations generales</h2>
+        <div class="question">
+          <div class="question-title">Quel est le volume moyen de marchandises que vous gerez via notre terminal chaque mois ?</div>
+          <div class="options">
+            <label class="option"><input type="radio" name="volume"> Moins de 10 conteneurs ou vehicules</label>
+            <label class="option"><input type="radio" name="volume"> 10 a 50 conteneurs ou vehicules</label>
+            <label class="option"><input type="radio" name="volume"> Plus de 50 conteneurs ou vehicules</label>
+          </div>
+        </div>
+        <div class="question">
+          <div class="question-title">Depuis combien de temps travaillez-vous avec notre terminal ?</div>
+          <div class="options">
+            <label class="option"><input type="radio" name="anciennete"> Moins de 1 an</label>
+            <label class="option"><input type="radio" name="anciennete"> 1 a 3 ans</label>
+            <label class="option"><input type="radio" name="anciennete"> Plus de 3 ans</label>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" data-panel="2">
+        <h2>Partie 2 : Facturation</h2>
+        <div class="question">
+          <div class="question-title">Les delais de traitement des demandes de facturation sont-ils satisfaisants ?</div>
+          <div class="options">
+            <label class="option"><input type="radio" name="delais-facturation"> Toujours</label>
+            <label class="option"><input type="radio" name="delais-facturation"> Souvent</label>
+            <label class="option"><input type="radio" name="delais-facturation"> Parfois</label>
+            <label class="option"><input type="radio" name="delais-facturation"> Rarement</label>
+            <label class="option"><input type="radio" name="delais-facturation"> Jamais</label>
+          </div>
+        </div>
+        <div class="question">
+          <div class="question-title">Recevez-vous des notifications ou rappels sur les echeances et paiements a effectuer ?</div>
+          <div class="options">
+            <label class="option"><input type="radio" name="notifications"> Oui, toujours</label>
+            <label class="option"><input type="radio" name="notifications"> Oui, parfois</label>
+            <label class="option"><input type="radio" name="notifications"> Non</label>
+          </div>
+        </div>
+        <div class="question">
+          <div class="question-title">Comment evaluez-vous la reactivite en cas de demande ou reclamation liee a une facture ?</div>
+          <div class="options">
+            <label class="option"><input type="radio" name="reactivite-facture"> Tres insatisfaisant</label>
+            <label class="option"><input type="radio" name="reactivite-facture"> Insatisfaisant</label>
+            <label class="option"><input type="radio" name="reactivite-facture"> Neutre</label>
+            <label class="option"><input type="radio" name="reactivite-facture"> Satisfaisant</label>
+            <label class="option"><input type="radio" name="reactivite-facture"> Tres satisfaisant</label>
+          </div>
+        </div>
+        <div class="question">
+          <div class="question-title">Utilisez-vous regulierement notre plateforme digitalisee pour consulter vos factures ou effectuer vos paiements ?</div>
+          <div class="options">
+            <label class="option"><input type="radio" name="usage-plateforme"> Oui, systematiquement</label>
+            <label class="option"><input type="radio" name="usage-plateforme"> Oui, occasionnellement</label>
+            <label class="option"><input type="radio" name="usage-plateforme"> Non (precisez pourquoi)</label>
+          </div>
+          <textarea placeholder="Si non, precisez pourquoi"></textarea>
+        </div>
+        <div class="question">
+          <div class="question-title">La plateforme est-elle facile a utiliser ?</div>
+          <div class="options">
+            <label class="option"><input type="radio" name="facilite-plateforme"> Tres difficile a utiliser</label>
+            <label class="option"><input type="radio" name="facilite-plateforme"> Difficile a utiliser</label>
+            <label class="option"><input type="radio" name="facilite-plateforme"> Moyennement facile</label>
+            <label class="option"><input type="radio" name="facilite-plateforme"> Facile a utiliser</label>
+            <label class="option"><input type="radio" name="facilite-plateforme"> Tres facile a utiliser</label>
+          </div>
+        </div>
+        <div class="question">
+          <div class="question-title">Les fonctionnalites de la plateforme repondent-elles a vos besoins ?</div>
+          <div class="options">
+            <label class="option"><input type="radio" name="fonctionnalites-plateforme"> Oui, parfaitement</label>
+            <label class="option"><input type="radio" name="fonctionnalites-plateforme"> Partiellement</label>
+            <label class="option"><input type="radio" name="fonctionnalites-plateforme"> Non (precisez les fonctionnalites manquantes)</label>
+          </div>
+          <textarea placeholder="Fonctionnalites manquantes"></textarea>
+        </div>
+        <div class="question">
+          <div class="question-title">Avez-vous rencontre des problemes techniques ou des bugs sur la plateforme ?</div>
+          <div class="options">
+            <label class="option"><input type="radio" name="bugs-plateforme"> Oui, souvent</label>
+            <label class="option"><input type="radio" name="bugs-plateforme"> Oui, parfois</label>
+            <label class="option"><input type="radio" name="bugs-plateforme"> Non</label>
+          </div>
+          <textarea placeholder="Precisez si besoin"></textarea>
+        </div>
+        <div class="question">
+          <div class="question-title">Recevez-vous une assistance rapide en cas de probleme ou de question concernant l'utilisation de la plateforme ?</div>
+          <div class="options">
+            <label class="option"><input type="radio" name="assistance-plateforme"> Toujours</label>
+            <label class="option"><input type="radio" name="assistance-plateforme"> Souvent</label>
+            <label class="option"><input type="radio" name="assistance-plateforme"> Parfois</label>
+            <label class="option"><input type="radio" name="assistance-plateforme"> Rarement</label>
+            <label class="option"><input type="radio" name="assistance-plateforme"> Jamais</label>
+          </div>
+        </div>
+        <div class="question">
+          <div class="question-title">Quelles ameliorations suggereriez-vous pour rendre la plateforme plus adaptee a vos besoins ?</div>
+          <textarea placeholder="Vos suggestions"></textarea>
+        </div>
+      </section>
+
+      <section class="section" data-panel="3">
+        <h2>Partie 3 : Temps de passage pour l'obtention du BAE</h2>
+        <div class="question">
+          <div class="question-title">Trouvez-vous les delais d'obtention du BAE satisfaisants ?</div>
+          <div class="options">
+            <label class="option"><input type="radio" name="delais-bae"> Tres insatisfaisants</label>
+            <label class="option"><input type="radio" name="delais-bae"> Insatisfaisants</label>
+            <label class="option"><input type="radio" name="delais-bae"> Neutres</label>
+            <label class="option"><input type="radio" name="delais-bae"> Satisfaisants</label>
+            <label class="option"><input type="radio" name="delais-bae"> Tres satisfaisants</label>
+          </div>
+        </div>
+        <div class="question">
+          <div class="question-title">Avez-vous des suggestions pour reduire le temps d'attente pour l'obtention du BAE ?</div>
+          <div class="options">
+            <label class="option"><input type="radio" name="suggestions-bae"> Oui</label>
+            <label class="option"><input type="radio" name="suggestions-bae"> Non</label>
+          </div>
+          <textarea placeholder="Si oui, precisez vos suggestions"></textarea>
+        </div>
+      </section>
+
+      <section class="section" data-panel="4">
+        <h2>Partie 4 : Accueil dans nos locaux</h2>
+        <div class="question">
+          <div class="question-title">Comment evaluez-vous l'accueil dans nos locaux lors de vos visites ?</div>
+          <div class="options">
+            <label class="option"><input type="radio" name="accueil-locaux"> Tres insatisfaisant</label>
+            <label class="option"><input type="radio" name="accueil-locaux"> Insatisfaisant</label>
+            <label class="option"><input type="radio" name="accueil-locaux"> Neutre</label>
+            <label class="option"><input type="radio" name="accueil-locaux"> Satisfaisant</label>
+            <label class="option"><input type="radio" name="accueil-locaux"> Tres satisfaisant</label>
+          </div>
+        </div>
+        <div class="question">
+          <div class="question-title">Le personnel d'accueil est-il courtois et disponible pour repondre a vos questions ?</div>
+          <div class="options">
+            <label class="option"><input type="radio" name="personnel-accueil"> Toujours</label>
+            <label class="option"><input type="radio" name="personnel-accueil"> Souvent</label>
+            <label class="option"><input type="radio" name="personnel-accueil"> Parfois</label>
+            <label class="option"><input type="radio" name="personnel-accueil"> Rarement</label>
+            <label class="option"><input type="radio" name="personnel-accueil"> Jamais</label>
+          </div>
+        </div>
+        <div class="question">
+          <div class="question-title">Les infrastructures de nos locaux repondent-elles a vos attentes ?</div>
+          <div class="options">
+            <label class="option"><input type="radio" name="infrastructures"> Oui, totalement</label>
+            <label class="option"><input type="radio" name="infrastructures"> Partiellement</label>
+            <label class="option"><input type="radio" name="infrastructures"> Non (precisez)</label>
+          </div>
+          <textarea placeholder="Si non, precisez"></textarea>
+        </div>
+      </section>
+
+      <section class="section" data-panel="5">
+        <h2>Partie 5 : Livraison</h2>
+        <div class="question">
+          <div class="question-title">Comment evaluez-vous la fluidite du processus de livraison des marchandises ?</div>
+          <div class="options">
+            <label class="option"><input type="radio" name="fluidite-livraison"> Tres insatisfaisant</label>
+            <label class="option"><input type="radio" name="fluidite-livraison"> Insatisfaisant</label>
+            <label class="option"><input type="radio" name="fluidite-livraison"> Neutre</label>
+            <label class="option"><input type="radio" name="fluidite-livraison"> Satisfaisant</label>
+            <label class="option"><input type="radio" name="fluidite-livraison"> Tres satisfaisant</label>
+          </div>
+        </div>
+        <div class="question">
+          <div class="question-title">Les horaires de livraison proposes sont-ils adaptes a vos besoins operationnels ?</div>
+          <div class="options">
+            <label class="option"><input type="radio" name="horaires-livraison"> Oui, parfaitement adaptes</label>
+            <label class="option"><input type="radio" name="horaires-livraison"> Oui, mais necessitent des ajustements mineurs</label>
+            <label class="option"><input type="radio" name="horaires-livraison"> Non, ils sont souvent contraignants</label>
+          </div>
+          <textarea placeholder="Si des ajustements sont necessaires, precisez"></textarea>
+        </div>
+        <div class="question">
+          <div class="question-title">Avez-vous rencontre des obstacles ou des retards lies a l'organisation des livraisons ?</div>
+          <div class="options">
+            <label class="option"><input type="radio" name="retards-livraison"> Oui</label>
+            <label class="option"><input type="radio" name="retards-livraison"> Non</label>
+          </div>
+          <textarea placeholder="Si oui, precisez"></textarea>
+        </div>
+        <div class="question">
+          <div class="question-title">La coordination entre les differentes etapes est-elle efficace ?</div>
+          <div class="options">
+            <label class="option"><input type="radio" name="coordination-livraison"> Tres inefficace</label>
+            <label class="option"><input type="radio" name="coordination-livraison"> Peu efficace</label>
+            <label class="option"><input type="radio" name="coordination-livraison"> Moyennement efficace</label>
+            <label class="option"><input type="radio" name="coordination-livraison"> Efficace</label>
+            <label class="option"><input type="radio" name="coordination-livraison"> Tres efficace</label>
+          </div>
+        </div>
+        <div class="question">
+          <div class="question-title">Quelles ameliorations proposeriez-vous pour rendre le processus de livraison plus fluide ?</div>
+          <textarea placeholder="Vos recommandations"></textarea>
+        </div>
+      </section>
+
+      <section class="section" data-panel="6">
+        <h2>Partie 6 : Communication proactive et suggestions generales</h2>
+        <div class="question">
+          <div class="question-title">Comment evaluez-vous la qualite de notre communication proactive pour vos operations ?</div>
+          <div class="options">
+            <label class="option"><input type="radio" name="communication-proactive"> Tres insatisfaisant</label>
+            <label class="option"><input type="radio" name="communication-proactive"> Insatisfaisant</label>
+            <label class="option"><input type="radio" name="communication-proactive"> Neutre</label>
+            <label class="option"><input type="radio" name="communication-proactive"> Satisfaisant</label>
+            <label class="option"><input type="radio" name="communication-proactive"> Tres satisfaisant</label>
+          </div>
+        </div>
+        <div class="question">
+          <div class="question-title">Recevez-vous des alertes ou mises a jour sur des changements dans nos procedures ou tarifs ?</div>
+          <div class="options">
+            <label class="option"><input type="radio" name="alertes"> Oui, toujours</label>
+            <label class="option"><input type="radio" name="alertes"> Oui, parfois</label>
+            <label class="option"><input type="radio" name="alertes"> Non</label>
+          </div>
+        </div>
+        <div class="question">
+          <div class="question-title">Quelles suggestions avez-vous pour ameliorer nos canaux de communication ?</div>
+          <textarea placeholder="Vos suggestions sur la communication"></textarea>
+        </div>
+        <div class="question">
+          <div class="question-title">Avez-vous d'autres recommandations pour ameliorer nos services ?</div>
+          <textarea placeholder="Vos recommandations generales"></textarea>
+        </div>
+      </section>
+
+      <div class="nav">
+        <button type="button" class="btn btn-secondary" onclick="moveSurveyStep(-1)">Precedent</button>
+        <button type="button" class="btn btn-primary" id="nextSurveyBtn" onclick="moveSurveyStep(1)">Suivant</button>
+      </div>
+
+      <div class="submit-note">Formulaire visuel pret a etre relie a une vraie soumission si tu veux la prochaine etape.</div>
+    </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentSurveyStep = 0;
+  const surveySteps = document.querySelectorAll('.wizard-step');
+  const surveyPanels = document.querySelectorAll('.section');
+  const nextSurveyBtn = document.getElementById('nextSurveyBtn');
+
+  function showSurveyStep(index) {
+    currentSurveyStep = Math.max(0, Math.min(index, surveyPanels.length - 1));
+
+    surveySteps.forEach((step, i) => {
+      step.classList.toggle('active', i === currentSurveyStep);
+    });
+
+    surveyPanels.forEach((panel, i) => {
+      panel.classList.toggle('active', i === currentSurveyStep);
+    });
+
+    nextSurveyBtn.textContent = currentSurveyStep === surveyPanels.length - 1 ? 'Terminer' : 'Suivant';
+  }
+
+  function moveSurveyStep(direction) {
+    if (direction > 0 && currentSurveyStep === surveyPanels.length - 1) {
+      showSurveyStep(0);
+      return;
+    }
+
+    showSurveyStep(currentSurveyStep + direction);
+  }
+</script>
+</body>
+</html>

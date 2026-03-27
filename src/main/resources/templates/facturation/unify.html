@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestion Unify - Dakar Terminal</title>
+  <th:block th:replace="~{fragments/pwa-head :: pwaMeta}"></th:block>
+  <script th:src="@{/js/theme.js}"></script>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-box">
+        <img th:src="@{/img/image.png}" alt="Dakar Terminal" style="max-height: 40px; width: 150px;">
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <a th:href="@{/dashboard}" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+          <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+        </svg>
+        Dashboard
+      </a>
+      <a th:href="@{/menu}" class="nav-item active">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/>
+          <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+        Menu
+      </a>
+      <a th:href="@{/parametres}" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        Parametres
+      </a>
+    </nav>
+    <div class="sidebar-user">
+      <div class="user-row">
+        <div class="user-avatar-sm" th:text="${#strings.toUpperCase(#strings.substring(loggedUser.username, 0, 1))}">A</div>
+        <span class="user-display-name" th:text="${loggedUser.username}">Admin</span>
+        <form th:action="@{/logout}" method="post" style="margin:0">
+          <button type="submit" class="logout-btn" title="Se deconnecter">&#x2192;</button>
+        </form>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content" style="padding:0;">
+    <div class="subpage-topbar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 12h6"/><path d="M9 16h6"/><path d="M9 8h6"/><path d="M5 3h11l3 3v15H5z"/><path d="M16 3v4h4"/>
+      </svg>
+      Gestion Unify
+    </div>
+
+    <div class="subpage-tabs">
+      <a th:href="@{/menu/facturation/unify(tab='formulaire-creation', step=1)}" class="subpage-tab"
+         th:classappend="${activeTab == 'formulaire-creation'} ? ' active' : ''">Formulaire de creation</a>
+      <a th:href="@{/menu/facturation/unify(tab='liste-tiers')}" class="subpage-tab"
+         th:classappend="${activeTab == 'liste-tiers'} ? ' active' : ''">Liste des tiers</a>
+      <a th:href="@{/menu/facturation/unify(tab='tutoriel')}" class="subpage-tab"
+         th:classappend="${activeTab == 'tutoriel'} ? ' active' : ''">Tutoriel</a>
+      <a th:href="@{/menu/facturation/unify(tab='admin')}" class="subpage-tab"
+         th:classappend="${activeTab == 'admin'} ? ' active' : ''">Admin</a>
+    </div>
+
+    <div style="padding: 32px 36px;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:24px; font-size:13px; color:#64748b;">
+        <a th:href="@{/menu}" style="color:#6366f1; text-decoration:none; font-weight:500;">Menu</a>
+        <span>&#8250;</span>
+        <a th:href="@{/menu/dt}" style="color:#6366f1; text-decoration:none; font-weight:500;">Menu DT</a>
+        <span>&#8250;</span>
+        <a th:href="@{/menu/facturation}" style="color:#6366f1; text-decoration:none; font-weight:500;">Facturation</a>
+        <span>&#8250;</span>
+        <span class="topbar-title">Gestion Unify</span>
+      </div>
+
+      <div class="page-section-card" th:if="${activeTab == 'formulaire-creation'}" style="max-width:980px;">
+        <div class="menu-header-row" style="margin-bottom:20px;">
+          <div>
+            <div class="page-badge"><span class="page-badge-dot"></span> WIZARD UNIFY</div>
+            <h1 class="page-title" style="font-size:26px; margin-bottom:4px;">Formulaire de creation</h1>
+            <p class="page-subtitle">Suivez les etapes pour preparer la fiche Unify.</p>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:12px; margin-bottom:24px;">
+          <a th:href="@{/menu/facturation/unify(tab='formulaire-creation', step=1)}" class="module-card"
+             style="padding:18px 16px; min-height:auto;" th:classappend="${activeStep == 1} ? ' active-card' : ''">
+            <div class="module-title" style="font-size:15px;">Step 1</div>
+            <div class="module-desc">Informations Unify</div>
+          </a>
+          <a th:href="@{/menu/facturation/unify(tab='formulaire-creation', step=2)}" class="module-card"
+             style="padding:18px 16px; min-height:auto;" th:classappend="${activeStep == 2} ? ' active-card' : ''">
+            <div class="module-title" style="font-size:15px;">Step 2</div>
+            <div class="module-desc">Contacts</div>
+          </a>
+          <a th:href="@{/menu/facturation/unify(tab='formulaire-creation', step=3)}" class="module-card"
+             style="padding:18px 16px; min-height:auto;" th:classappend="${activeStep == 3} ? ' active-card' : ''">
+            <div class="module-title" style="font-size:15px;">Step 3</div>
+            <div class="module-desc">Responsable societe</div>
+          </a>
+          <a th:href="@{/menu/facturation/unify(tab='formulaire-creation', step=4)}" class="module-card"
+             style="padding:18px 16px; min-height:auto;" th:classappend="${activeStep == 4} ? ' active-card' : ''">
+            <div class="module-title" style="font-size:15px;">Step 4</div>
+            <div class="module-desc">Finalisation</div>
+          </a>
+        </div>
+
+        <form>
+          <div th:if="${activeStep == 1}">
+            <div class="form-group" style="margin-bottom:18px;">
+              <label class="form-label" for="unify-date">Date</label>
+              <input id="unify-date" type="date" class="form-input">
+            </div>
+            <div class="form-group" style="margin-bottom:18px;">
+              <label class="form-label" for="type-personne">Type de personne</label>
+              <input id="type-personne" type="text" class="form-input" value="MORALE">
+            </div>
+            <div class="form-group" style="margin-bottom:18px;">
+              <label class="form-label" for="compte-ipaki">Compte Ipaki</label>
+              <input id="compte-ipaki" type="text" class="form-input">
+            </div>
+            <div class="form-group" style="margin-bottom:24px;">
+              <label class="form-label" for="compte-neptune">Compte Neptune</label>
+              <input id="compte-neptune" type="text" class="form-input">
+            </div>
+          </div>
+
+          <div th:if="${activeStep == 2}">
+            <div class="form-group" style="margin-bottom:18px;">
+              <label class="form-label" for="raison-sociale">Raison sociale</label>
+              <input id="raison-sociale" type="text" class="form-input">
+            </div>
+            <div class="form-group" style="margin-bottom:18px;">
+              <label class="form-label" for="telephone">Telephone</label>
+              <input id="telephone" type="text" class="form-input">
+            </div>
+            <div class="form-group" style="margin-bottom:18px;">
+              <label class="form-label" for="email">Email</label>
+              <input id="email" type="email" class="form-input">
+            </div>
+            <div class="form-group" style="margin-bottom:24px;">
+              <label class="form-label" for="adresse">Adresse</label>
+              <input id="adresse" type="text" class="form-input">
+            </div>
+          </div>
+
+          <div th:if="${activeStep == 3}">
+            <div class="form-group" style="margin-bottom:18px;">
+              <label class="form-label" for="dg">Directeur General</label>
+              <input id="dg" type="text" class="form-input">
+            </div>
+            <div class="form-group" style="margin-bottom:18px;">
+              <label class="form-label" for="telephone-dg">Telephone DG</label>
+              <input id="telephone-dg" type="text" class="form-input">
+            </div>
+            <div class="form-group" style="margin-bottom:18px;">
+              <label class="form-label" for="df">Directeur Financier</label>
+              <input id="df" type="text" class="form-input">
+            </div>
+            <div class="form-group" style="margin-bottom:24px;">
+              <label class="form-label" for="telephone-df">Telephone DF</label>
+              <input id="telephone-df" type="text" class="form-input">
+            </div>
+          </div>
+
+          <div th:if="${activeStep == 4}">
+            <div class="form-group" style="margin-bottom:18px;">
+              <label class="form-label" for="ninea">NINEA</label>
+              <input id="ninea" type="text" class="form-input">
+            </div>
+            <div class="form-group" style="margin-bottom:24px;">
+              <label class="form-label" for="registre">Registre de commerce</label>
+              <input id="registre" type="text" class="form-input">
+            </div>
+            <div class="blocage-actions">
+              <button type="button" class="btn-actualiser">Imprimer fiche</button>
+              <button type="button" class="btn-actualiser">Imprimer attestation</button>
+              <button type="button" class="btn-debloquer">Terminer</button>
+            </div>
+          </div>
+
+          <div class="blocage-actions" th:if="${activeStep < 4}" style="justify-content:space-between; margin-top:16px;">
+            <a th:href="${activeStep > 1} ? @{/menu/facturation/unify(tab='formulaire-creation', step=${activeStep - 1})} : '#'"
+               class="btn-actualiser" style="text-decoration:none;" th:classappend="${activeStep == 1} ? ' disabled' : ''">Precedent</a>
+            <a th:href="@{/menu/facturation/unify(tab='formulaire-creation', step=${activeStep + 1})}"
+               class="btn-debloquer" style="text-decoration:none;">Suivant</a>
+          </div>
+        </form>
+      </div>
+
+      <div class="page-section-card" th:if="${activeTab == 'liste-tiers'}" style="padding:0; overflow:hidden;">
+        <div class="table-toolbar">
+          <div style="font-weight:600; font-size:14px;">Liste des tiers</div>
+          <input id="tiersSearch" type="search" class="table-search-input" placeholder="Rechercher un tiers..." oninput="filterSimpleRows('tiersTable', this.value)">
+        </div>
+        <table class="data-table" id="tiersTable">
+          <thead>
+          <tr>
+            <th>Compte Ipaki</th>
+            <th>Raison sociale</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td>IPK-0001</td>
+            <td>Transit Senegal Services</td>
+          </tr>
+          <tr>
+            <td>IPK-0002</td>
+            <td>Logistique Atlantique</td>
+          </tr>
+          <tr>
+            <td>IPK-0003</td>
+            <td>Dakar Freight Hub</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="page-section-card" th:if="${activeTab == 'tutoriel'}" style="padding:24px;">
+        <div class="menu-header-row" style="margin-bottom:20px;">
+          <div>
+            <div class="page-badge"><span class="page-badge-dot"></span> TUTORIEL</div>
+            <h1 class="page-title" style="font-size:26px; margin-bottom:4px;">Document PDF</h1>
+            <p class="page-subtitle">Consultez le document d'accompagnement Unify.</p>
+          </div>
+        </div>
+        <div style="border:1px solid rgba(148,163,184,0.25); border-radius:18px; overflow:hidden; background:#0f172a;">
+          <iframe th:src="@{/docs/unify-tutoriel.pdf}" title="Tutoriel Unify"
+                  style="width:100%; height:720px; border:0; background:white;"></iframe>
+        </div>
+      </div>
+
+      <div class="page-section-card" th:if="${activeTab == 'admin'}" style="padding:24px;">
+        <div class="menu-header-row" style="margin-bottom:20px;">
+          <div>
+            <div class="page-badge"><span class="page-badge-dot"></span> ADMIN UNIFY</div>
+            <h1 class="page-title" style="font-size:26px; margin-bottom:4px;">CRUD des tiers</h1>
+            <p class="page-subtitle">Gerez les informations Unify et importez ou exportez les donnees.</p>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:minmax(280px, 360px) 1fr; gap:24px; margin-bottom:24px; align-items:start;">
+          <div class="page-section-card" style="margin:0;">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px;">
+              <div>
+                <div style="font-size:17px; font-weight:700; color:#e2e8f0;">Import / Export</div>
+                <p style="margin:6px 0 0; color:#94a3b8; font-size:14px;">Selectionnez un fichier puis lancez l'import depuis cette zone dediee.</p>
+              </div>
+            </div>
+
+            <form onsubmit="return submitUnifyImport(event)">
+              <div class="form-group" style="margin-bottom:18px;">
+                <label class="form-label" for="unify-import-file">Fichier a importer</label>
+                <input id="unify-import-file" type="file" class="form-input" accept=".xlsx,.xls,.csv" onchange="updateUnifyFileName(this)">
+                <div id="unifyImportFileName" style="margin-top:10px; color:#94a3b8; font-size:13px;">Aucun fichier selectionne.</div>
+              </div>
+              <div class="blocage-actions" style="justify-content:flex-start;">
+                <button type="submit" class="btn-debloquer">Importer</button>
+                <button type="button" class="btn-actualiser" onclick="triggerUnifyExport()">Exporter</button>
+              </div>
+            </form>
+
+            <div id="unifyImportFeedback" style="display:none; margin-top:16px; padding:12px 14px; border-radius:12px; background:rgba(99,102,241,0.12); color:#c7d2fe; font-size:13px;"></div>
+          </div>
+
+          <div class="page-section-card" style="margin:0;">
+          <div class="form-group" style="margin-bottom:18px;">
+            <label class="form-label" for="admin-raison">Raison sociale</label>
+            <input id="admin-raison" type="text" class="form-input" placeholder="Raison sociale">
+          </div>
+          <div class="form-group" style="margin-bottom:18px;">
+            <label class="form-label" for="admin-ipaki">Compte Ipaki</label>
+            <input id="admin-ipaki" type="text" class="form-input" placeholder="Compte Ipaki">
+          </div>
+          <div class="form-group" style="margin-bottom:24px;">
+            <label class="form-label" for="admin-neptune">Compte Neptune</label>
+            <input id="admin-neptune" type="text" class="form-input" placeholder="Compte Neptune">
+          </div>
+          <div class="blocage-actions">
+            <button type="button" class="btn-debloquer">Ajouter</button>
+            <button type="button" class="btn-actualiser">Reinitialiser</button>
+          </div>
+          </div>
+        </div>
+
+        <div class="table-toolbar" style="padding-left:0; padding-right:0;">
+          <div style="font-weight:600; font-size:14px;">Liste admin</div>
+          <input id="adminSearch" type="search" class="table-search-input" placeholder="Rechercher..." oninput="filterSimpleRows('unifyAdminTable', this.value)">
+        </div>
+
+        <table class="data-table" id="unifyAdminTable">
+          <thead>
+          <tr>
+            <th>Raison sociale</th>
+            <th>Compte Ipaki</th>
+            <th>Compte Neptune</th>
+            <th>Actions</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td>Transit Senegal Services</td>
+            <td>IPK-0001</td>
+            <td>NEP-0001</td>
+            <td>
+              <div style="display:flex; gap:10px;">
+                <button type="button" class="btn-table-action debloque">Modifier</button>
+                <button type="button" class="btn-table-action bloquer">Supprimer</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>Logistique Atlantique</td>
+            <td>IPK-0002</td>
+            <td>NEP-0002</td>
+            <td>
+              <div style="display:flex; gap:10px;">
+                <button type="button" class="btn-table-action debloque">Modifier</button>
+                <button type="button" class="btn-table-action bloquer">Supprimer</button>
+              </div>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  function filterSimpleRows(tableId, query) {
+    const q = (query || '').toLowerCase().trim();
+    document.querySelectorAll('#' + tableId + ' tbody tr').forEach(row => {
+      row.style.display = (!q || row.textContent.toLowerCase().includes(q)) ? '' : 'none';
+    });
+  }
+
+  function updateUnifyFileName(input) {
+    const target = document.getElementById('unifyImportFileName');
+    if (!target) {
+      return;
+    }
+
+    if (input.files && input.files.length > 0) {
+      target.textContent = 'Fichier selectionne : ' + input.files[0].name;
+      return;
+    }
+
+    target.textContent = 'Aucun fichier selectionne.';
+  }
+
+  function submitUnifyImport(event) {
+    event.preventDefault();
+    const input = document.getElementById('unify-import-file');
+    const feedback = document.getElementById('unifyImportFeedback');
+
+    if (!input || !feedback) {
+      return false;
+    }
+
+    if (!input.files || input.files.length === 0) {
+      feedback.style.display = 'block';
+      feedback.textContent = 'Veuillez selectionner un fichier avant de lancer l import.';
+      return false;
+    }
+
+    feedback.style.display = 'block';
+    feedback.textContent = 'Import prepare pour le fichier : ' + input.files[0].name;
+    return false;
+  }
+
+  function triggerUnifyExport() {
+    const feedback = document.getElementById('unifyImportFeedback');
+    if (!feedback) {
+      return;
+    }
+
+    feedback.style.display = 'block';
+    feedback.textContent = 'Export pret a etre branche sur la source de donnees Unify.';
+  }
+</script>
+
+</body>
+</html>

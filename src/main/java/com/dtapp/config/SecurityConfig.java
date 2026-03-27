@@ -15,9 +15,12 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     private final UserDetailsServiceImpl userDetailsService;
+    private final AuditLogFilter auditLogFilter;
 
-    public SecurityConfig(UserDetailsServiceImpl userDetailsService) {
+    public SecurityConfig(UserDetailsServiceImpl userDetailsService,
+                          AuditLogFilter auditLogFilter) {
         this.userDetailsService = userDetailsService;
+        this.auditLogFilter = auditLogFilter;
     }
 
     @Bean
@@ -26,9 +29,11 @@ public class SecurityConfig {
             .authenticationProvider(authenticationProvider())
             .authorizeHttpRequests(authz -> authz
                 .requestMatchers("/login", "/css/**", "/js/**", "/img/**",
+                                 "/gfa/display", "/demat/**",
                                  "/images/**", "/actuator/health").permitAll()
                 .anyRequest().authenticated()
             )
+            .addFilterAfter(auditLogFilter, org.springframework.security.web.context.SecurityContextHolderFilter.class)
             .formLogin(form -> form
                 .loginPage("/login")
                 .usernameParameter("email")

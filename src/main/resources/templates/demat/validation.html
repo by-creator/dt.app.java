@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Demande de validation - Dakar Terminal</title>
+  <th:block th:replace="~{fragments/pwa-head :: pwaMeta}"></th:block>
+  <link rel="stylesheet" th:href="@{/css/brand-base.css}">
+  <style>
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #f8fbff 0%, #edf3fb 100%);
+      color: #0f172a;
+    }
+    .shell {
+      min-height: 100vh;
+      padding: 24px;
+    }
+    .frame {
+      min-height: calc(100vh - 48px);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid rgba(148,163,184,0.25);
+      box-shadow: 0 22px 50px rgba(15,23,42,0.08);
+      overflow: hidden;
+    }
+    .page {
+      min-height: 100%;
+      padding: 28px 24px 50px;
+    }
+    .card {
+      width: min(calc(100% - 12px), 620px);
+      margin: 0 auto;
+      background: white;
+      border-radius: 24px;
+      border: 1px solid rgba(148,163,184,0.2);
+      box-shadow: 0 24px 52px rgba(15,23,42,0.08);
+      padding: 28px 28px 22px;
+    }
+    .back {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 10px;
+      background: #5447b0;
+      color: white;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 14px;
+    }
+    h1 {
+      margin: 22px 0 22px;
+      text-align: center;
+      font-size: 28px;
+      text-decoration: underline;
+      text-underline-offset: 5px;
+    }
+    .social {
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+      background: #edf3fb;
+      border: 1px solid #d7e1f1;
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 24px;
+    }
+    .social span {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      color: white;
+      font-weight: 800;
+      font-size: 24px;
+    }
+    .f1 { background: #ff9f2f; }
+    .f2 { background: #316bca; }
+    .f3 { background: #ef4444; }
+    .f4 { background: #0f9c88; }
+    .f5 { background: #8c35bf; }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #334155;
+      text-transform: uppercase;
+    }
+    input {
+      width: 100%;
+      height: 48px;
+      border-radius: 12px;
+      border: 1px solid #d9e2ef;
+      padding: 0 16px;
+      font-size: 15px;
+      box-sizing: border-box;
+      margin-bottom: 16px;
+    }
+    input[type="file"] {
+      padding: 10px 12px;
+      height: auto;
+      background: white;
+    }
+    .submit {
+      width: 100%;
+      margin-top: 12px;
+      height: 56px;
+      border: 0;
+      border-radius: 10px;
+      background: #3367bf;
+      color: white;
+      font-size: 18px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 20px;
+      color: #64748b;
+      font-size: 12px;
+    }
+    @media (max-width: 640px) {
+      .shell {
+        padding: 16px;
+      }
+      .page {
+        padding: 20px 20px 32px;
+      }
+      .card {
+        width: calc(100% - 14px);
+        padding: 22px 16px 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="shell">
+  <div class="frame">
+    <div class="page">
+      <div class="card">
+    <a th:href="@{/demat}" class="back">&#8592; Retour</a>
+    <h1>Formulaire de demande de validation</h1>
+
+    <div class="social">
+      <span class="f1">✉</span>
+      <span class="f2">⌘</span>
+      <span class="f3">G</span>
+      <span class="f4">➤</span>
+      <span class="f5">@</span>
+    </div>
+
+    <form>
+      <label for="nom">Nom</label>
+      <input id="nom" type="text" placeholder="Votre nom">
+
+      <label for="prenom">Prenom</label>
+      <input id="prenom" type="text" placeholder="Votre prenom">
+
+      <label for="email">Email</label>
+      <input id="email" type="email" placeholder="Votre email">
+
+      <label for="bl-number">Numero de BL</label>
+      <input id="bl-number" type="text" placeholder="Votre numero de BL">
+
+      <label for="maison-transit">Maison de transit</label>
+      <input id="maison-transit" type="text" placeholder="Votre maison de transit">
+
+      <label for="bl-file">BL</label>
+      <input id="bl-file" type="file">
+
+      <label for="bad-shipping">Bad shipping</label>
+      <input id="bad-shipping" type="file">
+
+      <label for="declaration">Declaration</label>
+      <input id="declaration" type="file">
+
+      <button type="button" class="submit">ENVOYER LA DEMANDE DE VALIDATION</button>
+    </form>
+
+    <div class="footer">© 2026 DakarTerminal. Tous droits reserves.</div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

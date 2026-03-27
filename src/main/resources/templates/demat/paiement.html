@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Paiement - Dakar Terminal</title>
+  <th:block th:replace="~{fragments/pwa-head :: pwaMeta}"></th:block>
+  <link rel="stylesheet" th:href="@{/css/brand-base.css}">
+  <style>
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #f8fbff 0%, #edf3fb 100%);
+      color: #0f172a;
+    }
+    .shell {
+      min-height: 100vh;
+      padding: 24px;
+    }
+    .frame {
+      min-height: calc(100vh - 48px);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid rgba(148,163,184,0.25);
+      box-shadow: 0 22px 50px rgba(15,23,42,0.08);
+      overflow: hidden;
+    }
+    .page {
+      min-height: 100%;
+      padding: 28px 18px 50px;
+    }
+    .card {
+      width: min(100%, 700px);
+      margin: 0 auto;
+      background: white;
+      border-radius: 24px;
+      border: 1px solid rgba(148,163,184,0.2);
+      box-shadow: 0 24px 52px rgba(15,23,42,0.08);
+      padding: 28px 28px 26px;
+    }
+    .back {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 10px;
+      background: #5447b0;
+      color: white;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 14px;
+    }
+    h1 {
+      margin: 22px 0 16px;
+      text-align: center;
+      font-size: 30px;
+      text-decoration: underline;
+      text-underline-offset: 5px;
+    }
+    .subtitle {
+      text-align: center;
+      color: #64748b;
+      font-size: 18px;
+      margin-bottom: 28px;
+    }
+    .operators {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(220px, 1fr));
+      gap: 20px;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+    .operator {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 150px;
+      background: #edf3fb;
+      border: 1px solid #d7e1f1;
+      border-radius: 18px;
+      text-decoration: none;
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+      box-shadow: 0 12px 28px rgba(15,23,42,0.04);
+      padding: 18px;
+    }
+    .operator:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 16px 36px rgba(15,23,42,0.08);
+    }
+    .operator img {
+      max-width: 170px;
+      max-height: 80px;
+      object-fit: contain;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 24px;
+      color: #64748b;
+      font-size: 12px;
+    }
+    @media (max-width: 700px) {
+      .operators {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="shell">
+  <div class="frame">
+    <div class="page">
+      <div class="card">
+    <a th:href="@{/demat}" class="back">&#8592; Retour</a>
+    <h1>Paiement</h1>
+    <div class="subtitle">Choisissez votre operateur de paiement</div>
+
+    <div class="operators">
+      <a href="#" class="operator" aria-label="SycaPay">
+        <img th:src="@{/img/operateur/sycapay.png}" alt="SycaPay">
+      </a>
+      <a href="#" class="operator" aria-label="InTouch">
+        <img th:src="@{/img/operateur/intouch.png}" alt="InTouch">
+      </a>
+    </div>
+
+    <div class="footer">© 2026 DakarTerminal. Tous droits reserves.</div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

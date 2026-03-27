@@ -1,0 +1,35 @@
+:root {
+  --dt-font-sans: "Overpass", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  --dt-text-base: 15px;
+  --dt-line-base: 1.5;
+  --dt-letter-base: 0;
+  --dt-heading-weight: 800;
+  --dt-heading-letter: -0.02em;
+}
+
+html {
+  font-size: 16px;
+}
+
+body {
+  font-family: var(--dt-font-sans);
+  font-size: var(--dt-text-base);
+  line-height: var(--dt-line-base);
+  letter-spacing: var(--dt-letter-base);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--dt-font-sans);
+  font-weight: var(--dt-heading-weight);
+  letter-spacing: var(--dt-heading-letter);
+}
+
+button, input, select, textarea {
+  font: inherit;
+}
+
+small {
+  font-size: 12px;
+}

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestion IES - Dakar Terminal</title>
+  <th:block th:replace="~{fragments/pwa-head :: pwaMeta}"></th:block>
+  <script th:src="@{/js/theme.js}"></script>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<div class="app-layout">
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-box">
+        <img th:src="@{/img/image.png}" alt="Dakar Terminal" style="max-height: 40px; width: 150px;">
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <a th:href="@{/dashboard}" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+          <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+        </svg>
+        Dashboard
+      </a>
+      <a th:href="@{/menu}" class="nav-item active">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/>
+          <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+        Menu
+      </a>
+      <a th:href="@{/parametres}" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        Parametres
+      </a>
+    </nav>
+
+    <div class="sidebar-user">
+      <div class="user-row">
+        <div class="user-avatar-sm"
+             th:text="${#strings.toUpperCase(#strings.substring(loggedUser.username, 0, 1))}">A</div>
+        <span class="user-display-name" th:text="${loggedUser.username}">Admin</span>
+        <form th:action="@{/logout}" method="post" style="margin:0">
+          <button type="submit" class="logout-btn" title="Se deconnecter">&#x2192;</button>
+        </form>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content" style="padding:0;">
+
+    <div class="subpage-topbar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+      Gestion IES
+    </div>
+
+    <div class="subpage-tabs">
+      <a th:href="@{/menu/facturation/ies(tab='lien-acces')}"
+         class="subpage-tab"
+         th:classappend="${activeTab == 'lien-acces'} ? ' active' : ''">
+        Lien d'acces
+      </a>
+      <a th:href="@{/menu/facturation/ies(tab='creation-compte')}"
+         class="subpage-tab"
+         th:classappend="${activeTab == 'creation-compte'} ? ' active' : ''">
+        Creation de compte
+      </a>
+      <a th:href="@{/menu/facturation/ies(tab='reinitialisation-compte')}"
+         class="subpage-tab"
+         th:classappend="${activeTab == 'reinitialisation-compte'} ? ' active' : ''">
+        Reinitialisation de compte
+      </a>
+    </div>
+
+    <div style="padding: 32px 36px;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:24px; font-size:13px; color:#64748b;">
+        <a th:href="@{/menu}" style="color:#6366f1; text-decoration:none; font-weight:500;">Menu</a>
+        <span>&#8250;</span>
+        <a th:href="@{/menu/dt}" style="color:#6366f1; text-decoration:none; font-weight:500;">Menu DT</a>
+        <span>&#8250;</span>
+        <a th:href="@{/menu/facturation}" style="color:#6366f1; text-decoration:none; font-weight:500;">Facturation</a>
+        <span>&#8250;</span>
+        <span class="topbar-title">Gestion IES</span>
+      </div>
+
+      <div th:if="${success}" class="alert-success" style="margin-bottom:20px;">
+        <span th:text="${success}"></span>
+      </div>
+
+      <div class="page-section-card" style="max-width:760px;">
+        <div class="blocage-card-header">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+          <span th:if="${activeTab == 'lien-acces'}">Lien d'acces</span>
+          <span th:if="${activeTab == 'creation-compte'}">Creation de compte</span>
+          <span th:if="${activeTab == 'reinitialisation-compte'}">Reinitialisation de compte</span>
+        </div>
+
+        <p class="blocage-card-subtitle" th:if="${activeTab == 'lien-acces'}">
+          Saisissez l'adresse email du destinataire puis envoyez le lien d'acces.
+        </p>
+        <p class="blocage-card-subtitle" th:if="${activeTab == 'creation-compte'}">
+          Renseignez l'email et le mot de passe pour preparer la creation du compte.
+        </p>
+        <p class="blocage-card-subtitle" th:if="${activeTab == 'reinitialisation-compte'}">
+          Renseignez l'email et le nouveau mot de passe pour preparer la reinitialisation.
+        </p>
+
+        <form th:if="${activeTab == 'lien-acces'}"
+              th:action="@{/menu/facturation/ies/lien-acces}"
+              method="post">
+          <div class="form-group" style="margin-bottom:24px;">
+            <label for="access-email" class="form-label">Email</label>
+            <input type="email" id="access-email" name="email" class="form-input"
+                   placeholder="ex: utilisateur@dakar-terminal.com" required>
+          </div>
+          <div class="blocage-actions">
+            <button type="submit" class="btn-actualiser">Envoyer</button>
+          </div>
+        </form>
+
+        <form th:if="${activeTab == 'creation-compte'}"
+              th:action="@{/menu/facturation/ies/creation-compte}"
+              method="post">
+          <div class="form-group" style="margin-bottom:20px;">
+            <label for="create-email" class="form-label">Email</label>
+            <input type="email" id="create-email" name="email" class="form-input"
+                   placeholder="ex: nouvel.utilisateur@dakar-terminal.com" required>
+          </div>
+          <div class="form-group" style="margin-bottom:24px;">
+            <label for="create-password" class="form-label">Mot de passe</label>
+            <input type="password" id="create-password" name="password" class="form-input"
+                   placeholder="Entrez un mot de passe" required>
+          </div>
+          <div class="blocage-actions">
+            <button type="submit" class="btn-actualiser">Envoyer</button>
+          </div>
+        </form>
+
+        <form th:if="${activeTab == 'reinitialisation-compte'}"
+              th:action="@{/menu/facturation/ies/reinitialisation-compte}"
+              method="post">
+          <div class="form-group" style="margin-bottom:20px;">
+            <label for="reset-email" class="form-label">Email</label>
+            <input type="email" id="reset-email" name="email" class="form-input"
+                   placeholder="ex: utilisateur@dakar-terminal.com" required>
+          </div>
+          <div class="form-group" style="margin-bottom:24px;">
+            <label for="reset-password" class="form-label">Mot de passe</label>
+            <input type="password" id="reset-password" name="password" class="form-input"
+                   placeholder="Entrez le nouveau mot de passe" required>
+          </div>
+          <div class="blocage-actions">
+            <button type="submit" class="btn-actualiser">Envoyer</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+</div>
+
+</body>
+</html>

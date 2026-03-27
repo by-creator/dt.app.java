@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestion des rapports - Dakar Terminal</title>
+  <th:block th:replace="~{fragments/pwa-head :: pwaMeta}"></th:block>
+  <script th:src="@{/js/theme.js}"></script>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-box">
+        <img th:src="@{/img/image.png}" alt="Dakar Terminal" style="max-height: 40px; width: 150px;">
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <a th:href="@{/dashboard}" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+          <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+        </svg>
+        Dashboard
+      </a>
+      <a th:href="@{/menu}" class="nav-item active">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/>
+          <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+        Menu
+      </a>
+      <a th:href="@{/parametres}" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        Parametres
+      </a>
+    </nav>
+    <div class="sidebar-user">
+      <div class="user-row">
+        <div class="user-avatar-sm" th:text="${#strings.toUpperCase(#strings.substring(loggedUser.username, 0, 1))}">A</div>
+        <span class="user-display-name" th:text="${loggedUser.username}">Admin</span>
+        <form th:action="@{/logout}" method="post" style="margin:0">
+          <button type="submit" class="logout-btn" title="Se deconnecter">&#x2192;</button>
+        </form>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content" style="padding:0;">
+    <div class="subpage-topbar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="14" y2="17"/>
+      </svg>
+      Gestion des rapports
+    </div>
+
+    <div class="subpage-tabs">
+      <a th:href="@{/menu/facturation/gestion-rapports(tab='suivi-vides')}" class="subpage-tab"
+         th:classappend="${activeTab == 'suivi-vides'} ? ' active' : ''">Suivi vides</a>
+      <a th:href="@{/menu/facturation/gestion-rapports(tab='suivi-stationnement')}" class="subpage-tab"
+         th:classappend="${activeTab == 'suivi-stationnement'} ? ' active' : ''">Suivi stationnement</a>
+      <a th:href="@{/menu/facturation/gestion-rapports(tab='admin')}" class="subpage-tab"
+         th:classappend="${activeTab == 'admin'} ? ' active' : ''">Admin</a>
+    </div>
+
+    <div style="padding: 32px 36px;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:24px; font-size:13px; color:#64748b;">
+        <a th:href="@{/menu}" style="color:#6366f1; text-decoration:none; font-weight:500;">Menu</a>
+        <span>&#8250;</span>
+        <a th:href="@{/menu/dt}" style="color:#6366f1; text-decoration:none; font-weight:500;">Menu DT</a>
+        <span>&#8250;</span>
+        <a th:href="@{/menu/facturation}" style="color:#6366f1; text-decoration:none; font-weight:500;">Facturation</a>
+        <span>&#8250;</span>
+        <span class="topbar-title">Gestion des rapports</span>
+      </div>
+
+      <div th:if="${success}" class="alert-success" style="margin-bottom:20px;">
+        <span th:text="${success}"></span>
+      </div>
+
+      <div class="page-section-card" th:if="${activeTab == 'suivi-vides'}" style="padding:0; overflow:hidden;">
+        <table class="data-table">
+          <thead>
+          <tr>
+            <th>Terminal</th>
+            <th>Equipment Number</th>
+            <th>Type / Size</th>
+            <th>Event Code</th>
+            <th>Event Name</th>
+            <th>Event Family</th>
+            <th>Event Date</th>
+            <th>Booking Sec No</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td colspan="8" style="text-align:center; color:#94a3b8; padding:32px;">
+              Aucune donnee disponible pour le suivi vides.
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="page-section-card" th:if="${activeTab == 'suivi-stationnement'}" style="padding:0; overflow:hidden;">
+        <table class="data-table">
+          <thead>
+          <tr>
+            <th>Terminal</th>
+            <th>Billing Date</th>
+            <th>Shipowner</th>
+            <th>BL Number</th>
+            <th>Item Number</th>
+            <th>Item Type</th>
+            <th>Type</th>
+            <th>Entry Date</th>
+            <th>Exit Date</th>
+            <th>Days Since In</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td colspan="10" style="text-align:center; color:#94a3b8; padding:32px;">
+              Aucune donnee disponible pour le suivi stationnement.
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="page-section-card" th:if="${activeTab == 'admin'}" style="max-width:760px;">
+        <div class="blocage-card-header">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 20h9"/><path d="M12 4h9"/><path d="M12 12h9"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/>
+          </svg>
+          <span>Administration des rapports</span>
+        </div>
+        <p class="blocage-card-subtitle">Selectionnez le type de rapport puis importez un fichier xlsx, xls ou csv.</p>
+
+        <form th:action="@{/menu/facturation/gestion-rapports/admin}" method="post" enctype="multipart/form-data">
+          <div class="form-group" style="margin-bottom:20px;">
+            <label for="reportType" class="form-label">Type de rapport</label>
+            <select id="reportType" name="reportType" class="form-input" required>
+              <option value="">Selectionner un type</option>
+              <option value="suivi-vides">Suivi vides</option>
+              <option value="suivi-stationnement">Suivi stationnement</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:24px;">
+            <label for="reportFile" class="form-label">Fichier</label>
+            <input type="file" id="reportFile" name="file" class="form-input"
+                   accept=".xlsx,.xls,.csv" style="padding:8px 12px; cursor:pointer;" required>
+          </div>
+          <div class="blocage-actions">
+            <button type="submit" class="btn-actualiser">Valider</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+</div>
+
+</body>
+</html>

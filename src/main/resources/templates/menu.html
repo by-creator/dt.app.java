@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Menu - Dakar Terminal</title>
+  <th:block th:replace="~{fragments/pwa-head :: pwaMeta}"></th:block>
   <script th:src="@{/js/theme.js}"></script>
   <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
@@ -11,7 +12,6 @@
 
 <div class="app-layout">
 
-  <!-- ===== SIDEBAR ===== -->
   <aside class="sidebar">
     <div class="sidebar-logo">
       <div class="sidebar-logo-box">
@@ -39,7 +39,7 @@
           <circle cx="12" cy="12" r="3"/>
           <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
         </svg>
-        Paramètres
+        Parametres
       </a>
     </nav>
 
@@ -49,30 +49,83 @@
              th:text="${#strings.toUpperCase(#strings.substring(loggedUser.username, 0, 1))}">A</div>
         <span class="user-display-name" th:text="${loggedUser.username}">Admin</span>
         <form th:action="@{/logout}" method="post" style="margin:0">
-          <button type="submit" class="logout-btn" title="Se déconnecter">&#x2192;</button>
+          <button type="submit" class="logout-btn" title="Se deconnecter">&#x2192;</button>
         </form>
       </div>
     </div>
   </aside>
 
-  <!-- ===== MAIN ===== -->
   <main class="main-content">
 
     <div class="page-header-card">
-      <div>
+      <div th:if="${menuView == 'dt'}">
+        <div class="page-badge"><span class="page-badge-dot"></span> SOUS-MENU DT</div>
+        <h1 class="page-title" style="font-size:26px; margin-bottom:4px;">Menu DT</h1>
+        <p class="page-subtitle">Accedez rapidement aux espaces DT disponibles, sans la section Administration.</p>
+        <div style="margin-top:14px;">
+          <a th:href="@{/menu}" style="color:#a5b4fc; text-decoration:none; font-weight:600;">&#8592; Retour au menu principal</a>
+        </div>
+      </div>
+
+      <div th:if="${menuView == 'facturation'}">
+        <div class="page-badge"><span class="page-badge-dot"></span> NAVIGATION RAPIDE</div>
+        <h1 class="page-title" style="font-size:26px; margin-bottom:4px;">Menu Facturation</h1>
+        <p class="page-subtitle">Retrouvez les principaux acces du module Facturation.</p>
+        <div style="margin-top:14px;">
+          <a th:href="@{/menu/dt}" style="color:#a5b4fc; text-decoration:none; font-weight:600;">&#8592; Retour au menu principal</a>
+        </div>
+      </div>
+
+      <div th:if="${menuView == 'planification'}">
+        <div class="page-badge"><span class="page-badge-dot"></span> NAVIGATION RAPIDE</div>
+        <h1 class="page-title" style="font-size:26px; margin-bottom:4px;">Menu Planification</h1>
+        <p class="page-subtitle">Retrouvez les acces du module Planification.</p>
+        <div style="margin-top:14px;">
+          <a th:href="@{/menu/dt}" style="color:#a5b4fc; text-decoration:none; font-weight:600;">&#8592; Retour au menu principal</a>
+        </div>
+      </div>
+
+      <div th:if="${menuView == 'direction-generale'}">
+        <div class="page-badge"><span class="page-badge-dot"></span> NAVIGATION RAPIDE</div>
+        <h1 class="page-title" style="font-size:26px; margin-bottom:4px;">Menu Direction Generale</h1>
+        <p class="page-subtitle">Retrouvez les acces du module Direction Generale.</p>
+        <div style="margin-top:14px;">
+          <a th:href="@{/menu/dt}" style="color:#a5b4fc; text-decoration:none; font-weight:600;">&#8592; Retour au menu principal</a>
+        </div>
+      </div>
+
+      <div th:if="${menuView == 'direction-financiere'}">
+        <div class="page-badge"><span class="page-badge-dot"></span> NAVIGATION RAPIDE</div>
+        <h1 class="page-title" style="font-size:26px; margin-bottom:4px;">Menu Direction Financiere</h1>
+        <p class="page-subtitle">Retrouvez les acces du module Direction Financiere.</p>
+        <div style="margin-top:14px;">
+          <a th:href="@{/menu/dt}" style="color:#a5b4fc; text-decoration:none; font-weight:600;">&#8592; Retour au menu principal</a>
+        </div>
+      </div>
+
+      <div th:if="${menuView == 'direction-exploitation'}">
+        <div class="page-badge"><span class="page-badge-dot"></span> NAVIGATION RAPIDE</div>
+        <h1 class="page-title" style="font-size:26px; margin-bottom:4px;">Menu Direction Exploitation</h1>
+        <p class="page-subtitle">Retrouvez les acces du module Direction Exploitation.</p>
+        <div style="margin-top:14px;">
+          <a th:href="@{/menu/dt}" style="color:#a5b4fc; text-decoration:none; font-weight:600;">&#8592; Retour au menu principal</a>
+        </div>
+      </div>
+
+      <div th:if="${menuView != 'dt' and menuView != 'facturation' and menuView != 'planification' and menuView != 'direction-generale' and menuView != 'direction-financiere' and menuView != 'direction-exploitation'}">
         <div class="page-badge"><span class="page-badge-dot"></span> NAVIGATION RAPIDE</div>
         <h1 class="page-title" style="font-size:26px; margin-bottom:4px;">Menu administrateur</h1>
-        <p class="page-subtitle">Recherchez un module et accédez aux espaces disponibles pour votre rôle.</p>
+        <p class="page-subtitle">Recherchez un module et accedez aux espaces disponibles pour votre role.</p>
       </div>
+
       <div class="menu-search-wrap">
         <input type="search" class="menu-search" placeholder="Rechercher un menu..." id="menuSearch" oninput="filterModules(this.value)">
       </div>
     </div>
 
-    <div class="modules-grid" id="modulesGrid">
+    <div class="modules-grid" id="modulesGrid" th:if="${menuView != 'dt' and menuView != 'facturation' and menuView != 'planification' and menuView != 'direction-generale' and menuView != 'direction-financiere' and menuView != 'direction-exploitation'}">
 
-      <!-- Menu DT -->
-      <a href="#" class="module-card" data-name="menu dt">
+      <a th:href="@{/menu/dt}" class="module-card" data-name="menu dt">
         <div class="module-icon">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
@@ -80,11 +133,10 @@
           </svg>
         </div>
         <div class="module-title">Menu DT</div>
-        <div class="module-desc">Accédez au sous-menu de DT.</div>
+        <div class="module-desc">Accedez au sous-menu de DT.</div>
         <div class="module-link">Ouvrir <span>&#x2197;</span></div>
       </a>
 
-      <!-- Menu Compagnie -->
       <a th:href="@{/menu/compagnie}" class="module-card" data-name="menu compagnie">
         <div class="module-icon">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -93,11 +145,10 @@
           </svg>
         </div>
         <div class="module-title">Menu Compagnie</div>
-        <div class="module-desc">Accédez au sous-menu des compagnies.</div>
+        <div class="module-desc">Accedez au sous-menu des compagnies.</div>
         <div class="module-link">Ouvrir <span>&#x2197;</span></div>
       </a>
 
-      <!-- Menu Douane -->
       <a th:href="@{/menu/douane}" class="module-card" data-name="menu douane">
         <div class="module-icon">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -106,11 +157,21 @@
           </svg>
         </div>
         <div class="module-title">Menu Douane</div>
-        <div class="module-desc">Accédez au sous-menu de la douane.</div>
+        <div class="module-desc">Accedez au sous-menu de la douane.</div>
         <div class="module-link">Ouvrir <span>&#x2197;</span></div>
       </a>
 
-      <!-- Administration -->
+      <a th:href="@{/menu/audit}" class="module-card" data-name="audit">
+        <div class="module-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 12h6"/><path d="M9 16h6"/><path d="M9 8h6"/><path d="M5 3h11l3 3v15H5z"/><path d="M16 3v4h4"/>
+          </svg>
+        </div>
+        <div class="module-title">Audit</div>
+        <div class="module-desc">Consultation des journaux et traces d'activite.</div>
+        <div class="module-link">Ouvrir <span>&#x2197;</span></div>
+      </a>
+
       <a th:href="@{/admin}" class="module-card" data-name="administration">
         <div class="module-icon">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -118,12 +179,213 @@
           </svg>
         </div>
         <div class="module-title">Administration</div>
-        <div class="module-desc">Gérer les utilisateurs, compagnies et rôles.</div>
+        <div class="module-desc">Gerer les utilisateurs, compagnies et roles.</div>
+        <div class="module-link">Ouvrir <span>&#x2197;</span></div>
+      </a>
+    </div>
+
+    <div class="modules-grid" id="modulesGridDt" th:if="${menuView == 'dt'}">
+
+      <a th:href="@{/menu/direction-generale}" class="module-card" data-name="direction generale">
+        <div class="module-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/><path d="M9 9h.01"/><path d="M9 13h.01"/><path d="M9 17h.01"/>
+          </svg>
+        </div>
+        <div class="module-title">Direction Generale</div>
+        <div class="module-desc">Accedez au sous-menu de la Direction Generale.</div>
         <div class="module-link">Ouvrir <span>&#x2197;</span></div>
       </a>
 
+      <a th:href="@{/menu/direction-financiere}" class="module-card" data-name="direction financiere">
+        <div class="module-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><path d="M7 15h.01"/><path d="M11 15h2"/>
+          </svg>
+        </div>
+        <div class="module-title">Direction Financiere</div>
+        <div class="module-desc">Accedez au sous-menu de la Direction Financiere.</div>
+        <div class="module-link">Ouvrir <span>&#x2197;</span></div>
+      </a>
 
+      <a th:href="@{/menu/direction-exploitation}" class="module-card" data-name="direction exploitation">
+        <div class="module-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+          </svg>
+        </div>
+        <div class="module-title">Direction Exploitation</div>
+        <div class="module-desc">Accedez au sous-menu de la Direction Exploitation.</div>
+        <div class="module-link">Ouvrir <span>&#x2197;</span></div>
+      </a>
 
+      <a th:href="@{/menu/planification}" class="module-card" data-name="planification">
+        <div class="module-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+        </div>
+        <div class="module-title">Planification</div>
+        <div class="module-desc">Accedez au sous-menu du module Planification.</div>
+        <div class="module-link">Ouvrir <span>&#x2197;</span></div>
+      </a>
+
+      <a th:href="@{/menu/facturation}" class="module-card" data-name="facturation">
+        <div class="module-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5V4a2 2 0 0 1 2-2h8l6 6v11.5a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 19.5z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/>
+          </svg>
+        </div>
+        <div class="module-title">Facturation</div>
+        <div class="module-desc">Accedez au sous-menu du module Facturation.</div>
+        <div class="module-link">Ouvrir <span>&#x2197;</span></div>
+      </a>
+
+      <a href="#" class="module-card" data-name="repas">
+        <div class="module-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 11h18"/><path d="M5 11a7 7 0 0 1 14 0"/><path d="M8 15h8"/><path d="M12 15v5"/>
+          </svg>
+        </div>
+        <div class="module-title">Repas</div>
+        <div class="module-desc">Envoyez le menu du jour par email.</div>
+        <div class="module-link">Ouvrir <span>&#x2197;</span></div>
+      </a>
+    </div>
+
+    <div class="modules-grid" id="modulesGridFacturation" th:if="${menuView == 'facturation'}">
+
+      <a th:href="@{/menu/facturation/guichet-gfa}" class="module-card" data-name="guichet gfa">
+        <div class="module-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="14" rx="2"/><line x1="7" y1="20" x2="17" y2="20"/><line x1="12" y1="18" x2="12" y2="20"/>
+          </svg>
+        </div>
+        <div class="module-title">Guichet GFA</div>
+        <div class="module-desc">Acces au guichet public GFA.</div>
+        <div class="module-link">Ouvrir <span>&#x2197;</span></div>
+      </a>
+
+      <a th:href="@{/menu/facturation/gestion-validations}" class="module-card" data-name="gestion des validations">
+        <div class="module-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>
+          </svg>
+        </div>
+        <div class="module-title">Gestion des validations</div>
+        <div class="module-desc">Consultez et traitez les validations en attente.</div>
+        <div class="module-link">Ouvrir <span>&#x2197;</span></div>
+      </a>
+
+      <a th:href="@{/menu/facturation/gestion-remises}" class="module-card" data-name="gestion des remises">
+        <div class="module-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"/><path d="m9 12 2 2 4-4"/><path d="M12 7v2"/><path d="M7 12h2"/>
+          </svg>
+        </div>
+        <div class="module-title">Gestion des remises</div>
+        <div class="module-desc">Traitez les demandes de remises cote facturation.</div>
+        <div class="module-link">Ouvrir <span>&#x2197;</span></div>
+      </a>
+
+      <a th:href="@{/menu/facturation/gestion-rapports}" class="module-card" data-name="gestion des rapports">
+        <div class="module-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="14" y2="17"/>
+          </svg>
+        </div>
+        <div class="module-title">Gestion des rapports</div>
+        <div class="module-desc">Consultez et administrez les rapports de suivi.</div>
+        <div class="module-link">Ouvrir <span>&#x2197;</span></div>
+      </a>
+
+      <a th:href="@{/menu/facturation/unify}" class="module-card" data-name="gestion unify">
+        <div class="module-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 12h6"/><path d="M9 16h6"/><path d="M9 8h6"/><path d="M5 3h11l3 3v15H5z"/><path d="M16 3v4h4"/>
+          </svg>
+        </div>
+        <div class="module-title">Gestion Unify</div>
+        <div class="module-desc">Gerez les tiers et imports du module Unity.</div>
+        <div class="module-link">Ouvrir <span>&#x2197;</span></div>
+      </a>
+
+      <a th:href="@{/menu/facturation/ies}" class="module-card" data-name="gestion ies">
+        <div class="module-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+        </div>
+        <div class="module-title">Gestion IES</div>
+        <div class="module-desc">Acces aux operations IES.</div>
+        <div class="module-link">Ouvrir <span>&#x2197;</span></div>
+      </a>
+
+      <a href="#" class="module-card" data-name="gfa admin">
+        <div class="module-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="6" rx="2"/><rect x="3" y="14" width="18" height="6" rx="2"/><path d="M7 7h.01"/><path d="M7 17h.01"/>
+          </svg>
+        </div>
+        <div class="module-title">Gfa Admin</div>
+        <div class="module-desc">Administration complete du module GFA.</div>
+        <div class="module-link">Ouvrir <span>&#x2197;</span></div>
+      </a>
+    </div>
+
+    <div class="modules-grid" id="modulesGridPlanification" th:if="${menuView == 'planification'}">
+      <a th:href="@{/menu/planification/upload-manifest}" class="module-card" data-name="gestion de manifeste">
+        <div class="module-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="8" y1="13" x2="16" y2="13"/>
+            <line x1="8" y1="17" x2="16" y2="17"/>
+          </svg>
+        </div>
+        <div class="module-title">Gestion de manifeste</div>
+        <div class="module-desc">Accedez au traitement et a la consultation des manifestes.</div>
+        <div class="module-link">Ouvrir <span>&#x2197;</span></div>
+      </a>
+    </div>
+
+    <div class="modules-grid" id="modulesGridDirectionGenerale" th:if="${menuView == 'direction-generale'}">
+      <a th:href="@{/menu/direction-generale/gestion-remises}" class="module-card" data-name="gestion des remises">
+        <div class="module-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"/><path d="m9 12 2 2 4-4"/><path d="M12 7v2"/><path d="M7 12h2"/>
+          </svg>
+        </div>
+        <div class="module-title">Gestion des remises</div>
+        <div class="module-desc">Consultez et traitez les remises de la Direction Generale.</div>
+        <div class="module-link">Ouvrir <span>&#x2197;</span></div>
+      </a>
+    </div>
+
+    <div class="modules-grid" id="modulesGridDirectionFinanciere" th:if="${menuView == 'direction-financiere'}">
+      <a th:href="@{/menu/direction-financiere/gestion-remises}" class="module-card" data-name="gestion des remises">
+        <div class="module-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"/><path d="m9 12 2 2 4-4"/><path d="M12 7v2"/><path d="M7 12h2"/>
+          </svg>
+        </div>
+        <div class="module-title">Gestion des remises</div>
+        <div class="module-desc">Consultez et traitez les remises de la Direction Financiere.</div>
+        <div class="module-link">Ouvrir <span>&#x2197;</span></div>
+      </a>
+    </div>
+
+    <div class="modules-grid" id="modulesGridDirectionExploitation" th:if="${menuView == 'direction-exploitation'}">
+      <a th:href="@{/menu/direction-exploitation/gestion-remises}" class="module-card" data-name="gestion des remises">
+        <div class="module-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"/><path d="m9 12 2 2 4-4"/><path d="M12 7v2"/><path d="M7 12h2"/>
+          </svg>
+        </div>
+        <div class="module-title">Gestion des remises</div>
+        <div class="module-desc">Consultez et traitez les remises de la Direction Exploitation.</div>
+        <div class="module-link">Ouvrir <span>&#x2197;</span></div>
+      </a>
     </div>
 
   </main>
@@ -131,11 +393,14 @@
 
 <script>
   function filterModules(query) {
-    const cards = document.querySelectorAll('#modulesGrid .module-card');
+    const groups = ['#modulesGrid .module-card', '#modulesGridDt .module-card', '#modulesGridFacturation .module-card', '#modulesGridPlanification .module-card', '#modulesGridDirectionGenerale .module-card', '#modulesGridDirectionFinanciere .module-card', '#modulesGridDirectionExploitation .module-card'];
     const q = query.toLowerCase().trim();
-    cards.forEach(card => {
-      const name = card.dataset.name || '';
-      card.style.display = (!q || name.includes(q)) ? '' : 'none';
+
+    groups.forEach(selector => {
+      document.querySelectorAll(selector).forEach(card => {
+        const name = (card.dataset.name || '').toLowerCase();
+        card.style.display = (!q || name.includes(q)) ? '' : 'none';
+      });
     });
   }
 </script>

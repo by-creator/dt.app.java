@@ -4,7 +4,3 @@ mvn clean install
 
 mvn spring-boot:run
 
-Etapes
-
-- gérer l'audit
-- gérer la compatibilité de la codification txt - xlsx - edi

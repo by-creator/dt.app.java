@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Audit - Dakar Terminal</title>
+  <th:block th:replace="~{fragments/pwa-head :: pwaMeta}"></th:block>
+  <script th:src="@{/js/theme.js}"></script>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<div class="app-layout">
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-box">
+        <img th:src="@{/img/image.png}" alt="Dakar Terminal" style="max-height: 40px; width: 150px;">
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <a th:href="@{/dashboard}" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+          <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+        </svg>
+        Dashboard
+      </a>
+      <a th:href="@{/menu}" class="nav-item active">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/>
+          <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+        Menu
+      </a>
+      <a th:href="@{/parametres}" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        Parametres
+      </a>
+    </nav>
+    <div class="sidebar-user">
+      <div class="user-row">
+        <div class="user-avatar-sm"
+             th:text="${#strings.toUpperCase(#strings.substring(loggedUser.username, 0, 1))}">A</div>
+        <span class="user-display-name" th:text="${loggedUser.username}">Admin</span>
+        <form th:action="@{/logout}" method="post" style="margin:0">
+          <button type="submit" class="logout-btn" title="Se deconnecter">&#x2192;</button>
+        </form>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content" style="padding:0;">
+
+    <div class="subpage-topbar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 12h6"/><path d="M9 16h6"/><path d="M9 8h6"/><path d="M5 3h11l3 3v15H5z"/><path d="M16 3v4h4"/>
+      </svg>
+      Audit
+    </div>
+
+    <div style="padding: 32px 36px;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:24px; font-size:13px; color:#64748b;">
+        <a th:href="@{/menu}" style="color:#6366f1; text-decoration:none; font-weight:500;">Menu</a>
+        <span>&#8250;</span>
+        <a th:href="@{/menu/dt}" style="color:#6366f1; text-decoration:none; font-weight:500;">Menu DT</a>
+        <span>&#8250;</span>
+        <span class="topbar-title">Audit</span>
+      </div>
+
+      <div class="page-section-card" style="padding:24px; margin-bottom:28px;">
+        <div class="menu-header-row">
+          <div>
+            <div class="page-badge"><span class="page-badge-dot"></span> JOURNAL DES ACTIONS</div>
+            <h1 class="page-title" style="font-size:26px; margin-bottom:4px;">Audit des acces et operations</h1>
+            <p class="page-subtitle">Consultez les requetes enregistrees par l'application.</p>
+          </div>
+          <form th:action="@{/menu/audit}" method="get" style="display:flex; align-items:center; gap:12px;">
+            <div class="menu-search-wrap">
+              <input type="search" name="search" class="menu-search" placeholder="Rechercher un audit..." th:value="${search}">
+            </div>
+            <button type="submit" class="btn-actualiser" style="white-space:nowrap;">Actualiser</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="page-section-card" style="padding:0; overflow:hidden;">
+        <table class="data-table">
+          <thead>
+          <tr>
+            <th>DATE</th>
+            <th>UTILISATEUR</th>
+            <th>ROLE</th>
+            <th>METHODE</th>
+            <th>URL</th>
+            <th>STATUT</th>
+            <th>DUREE</th>
+            <th>IP</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr th:each="log : ${auditLogs}">
+            <td th:text="${log.createdAt != null ? #temporals.format(log.createdAt, 'dd/MM/yyyy HH:mm:ss') : '—'}">—</td>
+            <td>
+              <div style="font-weight:600;" th:text="${log.userName != null ? log.userName : 'Anonyme'}">Anonyme</div>
+              <div style="font-size:12px; color:#94a3b8;" th:text="${log.userEmail != null ? log.userEmail : '—'}">—</div>
+            </td>
+            <td th:text="${log.userRole != null ? log.userRole : '—'}">—</td>
+            <td>
+              <span class="status-badge"
+                    th:classappend="${log.method == 'POST'} ? ' bloque' : (${log.method == 'GET'} ? ' debloque' : '')"
+                    th:text="${log.method}">GET</span>
+            </td>
+            <td>
+              <div style="font-weight:600;" th:text="${log.routeName != null ? log.routeName : '—'}">—</div>
+              <div style="font-size:12px; color:#94a3b8; max-width:360px; word-break:break-all;" th:text="${log.url}">—</div>
+            </td>
+            <td th:text="${log.responseStatus != null ? log.responseStatus : '—'}">—</td>
+            <td th:text="${log.durationMs != null ? log.durationMs + ' ms' : '—'}">—</td>
+            <td th:text="${log.ipAddress != null ? log.ipAddress : '—'}">—</td>
+          </tr>
+          <tr th:if="${#lists.isEmpty(auditLogs)}">
+            <td colspan="8" style="text-align:center; color:#94a3b8; padding:32px;">
+              Aucun log d'audit disponible pour le moment.
+            </td>
+          </tr>
+          </tbody>
+        </table>
+
+        <div class="pagination-bar" th:if="${totalPages > 0}">
+          <span class="pagination-info"
+                th:text="${totalItems} + ' enregistrement' + (${totalItems} > 1 ? 's' : '') +
+                          ' · Page ' + (${currentPage} + 1) + ' / ' + ${totalPages}">
+          </span>
+
+          <div class="pagination-controls">
+            <a class="page-btn"
+               th:classappend="${currentPage == 0} ? 'disabled' : ''"
+               th:href="${currentPage == 0} ? '#' : @{/menu/audit(page=0, search=${search})}">««</a>
+
+            <a class="page-btn"
+               th:classappend="${currentPage == 0} ? 'disabled' : ''"
+               th:href="${currentPage == 0} ? '#' : @{/menu/audit(page=${currentPage - 1}, search=${search})}">‹</a>
+
+            <th:block th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
+              <a class="page-btn"
+                 th:classappend="${i == currentPage} ? 'active' : ''"
+                 th:href="@{/menu/audit(page=${i}, search=${search})}"
+                 th:text="${i + 1}">1</a>
+            </th:block>
+
+            <a class="page-btn"
+               th:classappend="${currentPage + 1 >= totalPages} ? 'disabled' : ''"
+               th:href="${currentPage + 1 >= totalPages} ? '#' : @{/menu/audit(page=${currentPage + 1}, search=${search})}">›</a>
+
+            <a class="page-btn"
+               th:classappend="${currentPage + 1 >= totalPages} ? 'disabled' : ''"
+               th:href="${currentPage + 1 >= totalPages} ? '#' : @{/menu/audit(page=${totalPages - 1}, search=${search})}">»»</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+</body>
+</html>
