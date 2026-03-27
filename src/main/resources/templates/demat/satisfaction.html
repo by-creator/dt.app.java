@@ -27,20 +27,21 @@
     }
     .page {
       min-height: 100%;
-      padding: 28px 24px 50px;
-      max-width: 1000px;
+      padding: 28px 30px 50px;
+      max-width: 1100px;
       margin: 0 auto;
     }
 
     .card {
-      width: calc(100% - 12px);
+      width: 100%;
+      box-sizing: border-box;
       max-width: 980px;
       margin: 0 auto;
       background: white;
       border-radius: 24px;
       border: 1px solid rgba(148, 163, 184, 0.2);
       box-shadow: 0 24px 52px rgba(15, 23, 42, 0.08);
-      padding: 28px 24px 22px;
+      padding: 28px 40px 22px;
       overflow: hidden;
     }
 
@@ -245,11 +246,11 @@
         padding: 16px;
       }
       .page {
-        padding: 20px 20px 32px;
+        padding: 20px 28px 32px;
+        max-width: 980px;
       }
       .card {
-        width: calc(100% - 14px);
-        padding: 22px 16px 18px;
+        padding: 22px 28px 18px;
       }
       .field-grid {
         grid-template-columns: 1fr;
@@ -302,12 +303,12 @@
             <input id="nom-prenom" type="text" placeholder="Nom et prenom">
           </div>
           <div class="field">
-            <label for="email">Email</label>
-            <input id="email" type="text" placeholder="Votre email">
-          </div>
-          <div class="field full">
             <label for="telephone">Telephone</label>
             <input id="telephone" type="text" placeholder="Votre telephone">
+          </div>
+          <div class="field full">
+            <label for="email">Email</label>
+            <input id="email" type="text" placeholder="Votre email">
           </div>
         </div>
       </section>

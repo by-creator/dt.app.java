@@ -4,3 +4,25 @@ mvn clean install
 
 mvn spring-boot:run
 
+Je souhaite que tu crée une migration v5 de rattachement_bls à l'image de ceci : 
+
+Schema::create('rattachement_bls', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('nom', 100)->nullable();
+            $table->string('prenom', 100)->nullable();
+            $table->string('email', 150)->nullable();
+            $table->string('bl', 100);
+            $table->string('maison', 100)->nullable();
+            $table->string('motif_rejet', 100)->nullable();
+            $table->string('statut', 50)->default('EN_ATTENTE');
+            $table->string('type', 50)->nullable();
+            $table->decimal('pourcentage', 8, 2)->nullable();
+            $table->bigInteger('time_elapsed')->nullable();
+            $table->timestamps();
+
+            $table->index('bl', 'idx_rattachement_bl');
+            $table->index('user_id', 'idx_rattachement_user');
+            $table->index('statut', 'idx_rattachement_statut');
+        });
+
