@@ -4,25 +4,73 @@ mvn clean install
 
 mvn spring-boot:run
 
-Je souhaite que tu crée une migration v5 de rattachement_bls à l'image de ceci : 
+Je souhaite que tu crée une migration v6 de tiers_unify à l'image de ceci : 
 
-Schema::create('rattachement_bls', function (Blueprint $table) {
+ Schema::create('tiers_unify', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
-            $table->string('nom', 100)->nullable();
+            $table->string('compte_ipaki', 50)->nullable();
+            $table->string('compte_neptune', 50)->nullable();
+            $table->string('raison_sociale')->nullable();
+            $table->timestamp('created_at')->useCurrent();
+        });
+
+Puis une migration v7 gfa
+
+ Schema::create('services', function (Blueprint $table) {
+            $table->id();
+            $table->string('nom', 100);
+            $table->string('code', 50)->nullable()->unique();
+            $table->boolean('actif')->default(true);
+        });
+
+        Schema::create('guichets', function (Blueprint $table) {
+            $table->id();
+            $table->string('numero', 20);
+            $table->string('infos', 20);
+            $table->foreignId('service_id')->nullable()->constrained('services')->nullOnDelete();
+            $table->boolean('actif')->default(true);
+        });
+
+        Schema::create('agents', function (Blueprint $table) {
+            $table->id();
+            $table->string('nom', 100);
             $table->string('prenom', 100)->nullable();
-            $table->string('email', 150)->nullable();
-            $table->string('bl', 100);
-            $table->string('maison', 100)->nullable();
-            $table->string('motif_rejet', 100)->nullable();
+            $table->foreignId('service_id')->nullable()->constrained('services')->nullOnDelete();
+            $table->foreignId('guichet_id')->nullable()->constrained('guichets')->nullOnDelete();
+            $table->boolean('actif')->default(true);
+        });
+
+        Schema::create('tickets', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('service_id')->nullable()->constrained('services')->nullOnDelete();
+            $table->foreignId('agent_id')->nullable()->constrained('agents')->nullOnDelete();
+            $table->foreignId('guichet_id')->nullable()->constrained('guichets')->nullOnDelete();
             $table->string('statut', 50)->default('EN_ATTENTE');
-            $table->string('type', 50)->nullable();
-            $table->decimal('pourcentage', 8, 2)->nullable();
-            $table->bigInteger('time_elapsed')->nullable();
+            $table->string('numero', 20);
+            $table->dateTime('waiting_time')->nullable();
+            $table->dateTime('called_at')->nullable();
+            $table->dateTime('closed_at')->nullable();
+            $table->bigInteger('processing_time')->nullable();
             $table->timestamps();
 
-            $table->index('bl', 'idx_rattachement_bl');
-            $table->index('user_id', 'idx_rattachement_user');
-            $table->index('statut', 'idx_rattachement_statut');
+            $table->index('statut', 'idx_ticket_statut');
+            $table->index('service_id', 'idx_ticket_service');
+            $table->index('created_at', 'idx_ticket_created');
         });
+
+        Schema::create('gfa_wifi_settings', function (Blueprint $table) {
+            $table->id();
+            $table->string('ssid', 100);
+            $table->string('password', 100)->default('');
+            $table->timestamp('updated_at')->useCurrent()->useCurrentOnUpdate();
+        });
+
+        DB::table('gfa_wifi_settings')->updateOrInsert(
+            ['id' => 1],
+            [
+                'ssid' => 'DakarTerminal_WiFi',
+                'password' => '',
+                'updated_at' => now(),
+            ],
+        );
 
