@@ -10,6 +10,7 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.Locale;
 
 /**
  * Convertit une liste d'EdiRecord en fichier EDI IFTMIN D04 96B UN.
@@ -112,7 +113,7 @@ public class EdiExporter {
 
         // Volume en m³
         double rawVolume = parseDouble(d.get("bl_volume"));
-        String volume    = rawVolume > 0 ? rtrimZeros(String.format("%.3f", rawVolume)) : "";
+        String volume    = rawVolume > 0 ? rtrimZeros(String.format(Locale.ROOT, "%.3f", rawVolume)) : "";
 
         String seal1      = cleanSeal(d.getOrDefault("blitem_seal_number_1", ""));
         String seal2      = cleanSeal(d.getOrDefault("blitem_seal_number_2", ""));
@@ -261,7 +262,7 @@ public class EdiExporter {
 
     private static double parseDouble(String s) {
         if (s == null || s.isEmpty()) return 0;
-        try { return Double.parseDouble(s); } catch (NumberFormatException e) { return 0; }
+        try { return Double.parseDouble(s.replace(',', '.')); } catch (NumberFormatException e) { return 0; }
     }
 
     /** Supprime les zéros et le point décimal de fin : "1.000" → "1", "1.500" → "1.5" */

@@ -3,7 +3,7 @@ package com.dtapp;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
+@SpringBootTest(properties = "app.data-initializer.enabled=false")
 public class DtAppApplicationTests {
 
     @Test

@@ -9,10 +9,13 @@ import com.dtapp.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
+@ConditionalOnProperty(name = "app.data-initializer.enabled", havingValue = "true", matchIfMissing = true)
 public class DataInitializer implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DataInitializer.class);
@@ -38,6 +41,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     @Override
+    @Transactional
     public void run(String... args) {
         // 1. Créer la compagnie DAKAR-TERMINAL si elle n'existe pas
         Compagnie dakarTerminal = compagnieRepository.findByName(DEFAULT_COMPAGNIE)
@@ -57,7 +61,13 @@ public class DataInitializer implements CommandLineRunner {
                         userRepository.save(admin);
                         log.info("Compagnie '{}' rattachée au compte admin existant.", DEFAULT_COMPAGNIE);
                     } else {
-                        log.info("Compte admin déjà présent et rattaché à '{}'.", admin.getCompagnie().getName());
+                        Integer compagnieId = admin.getCompagnie().getId();
+                        String compagnieName = dakarTerminal.getId().equals(compagnieId)
+                                ? dakarTerminal.getName()
+                                : compagnieRepository.findById(compagnieId)
+                                        .map(Compagnie::getName)
+                                        .orElse("compagnie inconnue");
+                        log.info("Compte admin déjà présent et rattaché à '{}'.", compagnieName);
                     }
                 },
                 () -> {

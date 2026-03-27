@@ -314,6 +314,6 @@ public class EdiParser {
 
     private static double parseDouble(String s) {
         if (s == null || s.isEmpty()) return 0;
-        try { return Double.parseDouble(s); } catch (NumberFormatException e) { return 0; }
+        try { return Double.parseDouble(s.replace(',', '.')); } catch (NumberFormatException e) { return 0; }
     }
 }

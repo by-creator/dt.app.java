@@ -53,16 +53,16 @@ public class XlsExporter {
             for (EdiRecord record : records) {
                 Map<String, String> data = new java.util.LinkedHashMap<>(record.toArray());
 
-                // ── Poids déjà en kg (EdiRecord divise par 1000) ────────────
+                // ── Poids : EdiRecord stocke les poids en tonnes ─────────────
                 double rawWeight = parseDouble(data.get("bl_weight"));
                 data.put("bl_weight", rawWeight > 0
-                        ? formatNum(EdiRecord.roundTo(rawWeight, 2)) : null);
+                        ? formatNum(EdiRecord.roundTo(rawWeight * 1000, 2)) : null);
 
                 double rawItemWeight = parseDouble(data.get("blitem_commodity_weight"));
                 boolean isVehicle = "VEHICULE".equals(data.get("blitem_yard_item_type"));
                 double itemWeightKg = 0;
                 if (rawItemWeight > 0) {
-                    itemWeightKg = EdiRecord.roundTo(rawItemWeight, 2);
+                    itemWeightKg = EdiRecord.roundTo(rawItemWeight * 1000, 2);
                     data.put("blitem_commodity_weight", formatNum(itemWeightKg));
                 } else {
                     data.put("blitem_commodity_weight", isVehicle ? "0" : null);
@@ -142,7 +142,7 @@ public class XlsExporter {
 
     private static double parseDouble(String s) {
         if (s == null || s.isEmpty()) return 0;
-        try { return Double.parseDouble(s); } catch (NumberFormatException e) { return 0; }
+        try { return Double.parseDouble(s.replace(',', '.')); } catch (NumberFormatException e) { return 0; }
     }
 
     private static String formatNum(double d) {
