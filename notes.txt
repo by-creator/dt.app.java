@@ -4,73 +4,8 @@ mvn clean install
 
 mvn spring-boot:run
 
-Je souhaite que tu crée une migration v6 de tiers_unify à l'image de ceci : 
+git add . && git commit -m "update" && git push -u origin main
 
- Schema::create('tiers_unify', function (Blueprint $table) {
-            $table->id();
-            $table->string('compte_ipaki', 50)->nullable();
-            $table->string('compte_neptune', 50)->nullable();
-            $table->string('raison_sociale')->nullable();
-            $table->timestamp('created_at')->useCurrent();
-        });
+Je souhaite que lorsque l'on clique sur gfa admin que l'on arrive sur un écran composé d'un wizard avec ces onglets : 
 
-Puis une migration v7 gfa
-
- Schema::create('services', function (Blueprint $table) {
-            $table->id();
-            $table->string('nom', 100);
-            $table->string('code', 50)->nullable()->unique();
-            $table->boolean('actif')->default(true);
-        });
-
-        Schema::create('guichets', function (Blueprint $table) {
-            $table->id();
-            $table->string('numero', 20);
-            $table->string('infos', 20);
-            $table->foreignId('service_id')->nullable()->constrained('services')->nullOnDelete();
-            $table->boolean('actif')->default(true);
-        });
-
-        Schema::create('agents', function (Blueprint $table) {
-            $table->id();
-            $table->string('nom', 100);
-            $table->string('prenom', 100)->nullable();
-            $table->foreignId('service_id')->nullable()->constrained('services')->nullOnDelete();
-            $table->foreignId('guichet_id')->nullable()->constrained('guichets')->nullOnDelete();
-            $table->boolean('actif')->default(true);
-        });
-
-        Schema::create('tickets', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('service_id')->nullable()->constrained('services')->nullOnDelete();
-            $table->foreignId('agent_id')->nullable()->constrained('agents')->nullOnDelete();
-            $table->foreignId('guichet_id')->nullable()->constrained('guichets')->nullOnDelete();
-            $table->string('statut', 50)->default('EN_ATTENTE');
-            $table->string('numero', 20);
-            $table->dateTime('waiting_time')->nullable();
-            $table->dateTime('called_at')->nullable();
-            $table->dateTime('closed_at')->nullable();
-            $table->bigInteger('processing_time')->nullable();
-            $table->timestamps();
-
-            $table->index('statut', 'idx_ticket_statut');
-            $table->index('service_id', 'idx_ticket_service');
-            $table->index('created_at', 'idx_ticket_created');
-        });
-
-        Schema::create('gfa_wifi_settings', function (Blueprint $table) {
-            $table->id();
-            $table->string('ssid', 100);
-            $table->string('password', 100)->default('');
-            $table->timestamp('updated_at')->useCurrent()->useCurrentOnUpdate();
-        });
-
-        DB::table('gfa_wifi_settings')->updateOrInsert(
-            ['id' => 1],
-            [
-                'ssid' => 'DakarTerminal_WiFi',
-                'password' => '',
-                'updated_at' => now(),
-            ],
-        );
-
+Vue globale - Services - Guichets - Agents - Tickets - Paramètres - Ecran

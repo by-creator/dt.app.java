@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS rattachement_bls (
     id           BIGINT AUTO_INCREMENT PRIMARY KEY,
-    user_id      BIGINT               NULL,
+    user_id      INT                  NULL,
     nom          VARCHAR(100)         NULL,
     prenom       VARCHAR(100)         NULL,
     email        VARCHAR(150)         NULL,
