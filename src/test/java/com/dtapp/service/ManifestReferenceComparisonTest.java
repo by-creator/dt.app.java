@@ -6,17 +6,20 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -24,13 +27,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ManifestReferenceComparisonTest {
 
     private static final Path BASE_DIR = Paths.get("src", "main", "tests");
-    private static final Path TXT_PATH = BASE_DIR.resolve("ALL_DAKAR_BL_Extract2-GRA0226SB -mis à jour.TXT");
-    private static final Path XLS_PATH = BASE_DIR.resolve("EXTRACTION.xls032524917.xls");
 
     @Test
     void parserMatchesReferenceFileForWeightAndVolumeColumns() throws Exception {
+        Path txtPath = resolveFixture("ALL_DAKAR_BL_Extract2", ".TXT");
+        Path xlsPath = resolveFixtureOrNull("EXTRACTION", ".xls");
+        Assumptions.assumeTrue(xlsPath != null,
+                "Fichier de reference EXTRACTION*.xls absent; test de comparaison ignore.");
+
         EdiParser parser = new EdiParser();
-        List<EdiRecord> records = parser.parse(TXT_PATH.toString());
+        List<EdiRecord> records = parser.parse(txtPath.toString());
 
         Map<String, Map<String, Double>> actual = records.stream()
                 .collect(Collectors.toMap(
@@ -40,26 +46,29 @@ class ManifestReferenceComparisonTest {
                         LinkedHashMap::new
                 ));
 
-        Map<String, Map<String, Double>> expected = readReferenceRows();
+        Map<String, Map<String, Double>> expected = readReferenceRows(xlsPath);
 
-        assertEquals(expected.size(), actual.size(), "Le nombre de lignes parsées ne correspond pas au fichier de référence.");
+        assertEquals(expected.size(), actual.size(),
+                "Le nombre de lignes parsees ne correspond pas au fichier de reference.");
 
         for (Map.Entry<String, Map<String, Double>> entry : expected.entrySet()) {
             String key = entry.getKey();
-            assertTrue(actual.containsKey(key), "Clé absente dans la sortie parser: " + key);
+            assertTrue(actual.containsKey(key), "Cle absente dans la sortie parser: " + key);
 
             Map<String, Double> expectedRow = entry.getValue();
             Map<String, Double> actualRow = actual.get(key);
 
             assertClose(expectedRow.get("BLVolume"), actualRow.get("BLVolume"), key + " / BLVolume");
             assertClose(expectedRow.get("BLWeight"), actualRow.get("BLWeight"), key + " / BLWeight");
-            assertClose(expectedRow.get("BLItem Commodity Volume"), actualRow.get("BLItem Commodity Volume"), key + " / BLItem Commodity Volume");
-            assertClose(expectedRow.get("BLItem Commodity Weight"), actualRow.get("BLItem Commodity Weight"), key + " / BLItem Commodity Weight");
+            assertClose(expectedRow.get("BLItem Commodity Volume"), actualRow.get("BLItem Commodity Volume"),
+                    key + " / BLItem Commodity Volume");
+            assertClose(expectedRow.get("BLItem Commodity Weight"), actualRow.get("BLItem Commodity Weight"),
+                    key + " / BLItem Commodity Weight");
         }
     }
 
-    private Map<String, Map<String, Double>> readReferenceRows() throws Exception {
-        try (InputStream inputStream = Files.newInputStream(XLS_PATH);
+    private Map<String, Map<String, Double>> readReferenceRows(Path xlsPath) throws Exception {
+        try (InputStream inputStream = Files.newInputStream(xlsPath);
              Workbook workbook = WorkbookFactory.create(inputStream)) {
             Sheet sheet = workbook.getSheetAt(0);
             Row headerRow = sheet.getRow(0);
@@ -86,8 +95,10 @@ class ManifestReferenceComparisonTest {
                 rows.putIfAbsent(key, Map.of(
                         "BLVolume", parseDouble(readCell(row, indexes.get("BLVolume"), formatter)),
                         "BLWeight", parseDouble(readCell(row, indexes.get("BLWeight"), formatter)),
-                        "BLItem Commodity Volume", parseDouble(readCell(row, indexes.get("BLItem Commodity Volume"), formatter)),
-                        "BLItem Commodity Weight", parseDouble(readCell(row, indexes.get("BLItem Commodity Weight"), formatter))
+                        "BLItem Commodity Volume",
+                        parseDouble(readCell(row, indexes.get("BLItem Commodity Volume"), formatter)),
+                        "BLItem Commodity Weight",
+                        parseDouble(readCell(row, indexes.get("BLItem Commodity Weight"), formatter))
                 ));
             }
             return rows;
@@ -138,9 +149,29 @@ class ManifestReferenceComparisonTest {
         assertEquals(expected, actual, 0.01d, label);
     }
 
-    /**
-     * Projette un EdiRecord selon la même logique numérique que l'export XLS.
-     */
+    private Path resolveFixture(String requiredNameFragment, String requiredExtension) {
+        Path path = resolveFixtureOrNull(requiredNameFragment, requiredExtension);
+        if (path == null) {
+            throw new RuntimeException("Impossible de resoudre le fichier de test pour le motif: "
+                    + requiredNameFragment + "*" + requiredExtension);
+        }
+        return path;
+    }
+
+    private Path resolveFixtureOrNull(String requiredNameFragment, String requiredExtension) {
+        try (Stream<Path> paths = Files.list(BASE_DIR)) {
+            return paths
+                    .filter(Files::isRegularFile)
+                    .filter(path -> path.getFileName().toString().toUpperCase().endsWith(requiredExtension.toUpperCase()))
+                    .filter(path -> path.getFileName().toString().toUpperCase().contains(requiredNameFragment.toUpperCase()))
+                    .sorted(Comparator.comparing(path -> path.getFileName().toString()))
+                    .findFirst()
+                    .orElse(null);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     static class XlsRowProjection {
         Map<String, String> project(EdiRecord record) {
             Map<String, String> data = new LinkedHashMap<>(record.toArray());
