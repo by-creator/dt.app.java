@@ -286,6 +286,15 @@ public class EdiParser {
         h.put("is_transfer",                      "Is Transfer");
         h.put("blitem_hazardous_class",           "BLItem HazardousClass");
         h.put("attach_to_bl",                     "Attach to BL");
+        h.put("adresse_2",                        "Adresse 2");
+        h.put("adresse_3",                        "Adresse 3");
+        h.put("adresse_4",                        "Adresse 4");
+        h.put("adresse_5",                        "Adresse 5");
+        h.put("notify1",                          "Notify1");
+        h.put("notify2",                          "Notify2");
+        h.put("notify3",                          "Notify3");
+        h.put("notify4",                          "Notify4");
+        h.put("notify5",                          "Notify5");
         return h;
     }
 
