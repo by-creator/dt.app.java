@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Menu - Dakar Terminal</title>
+  <title>Menu Compagnie - Dakar Terminal</title>
   <script th:src="@{/js/theme.js}"></script>
   <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
@@ -60,73 +60,39 @@
 
     <div class="page-header-card">
       <div>
-        <div class="page-badge"><span class="page-badge-dot"></span> NAVIGATION RAPIDE</div>
-        <h1 class="page-title" style="font-size:26px; margin-bottom:4px;">Menu administrateur</h1>
-        <p class="page-subtitle">Recherchez un module et accédez aux espaces disponibles pour votre rôle.</p>
+        <div class="page-badge"><span class="page-badge-dot"></span> MENU COMPAGNIE</div>
+        <h1 class="page-title" style="font-size:26px; margin-bottom:4px;">Menu Compagnie</h1>
+        <p class="page-subtitle">Accédez aux modules disponibles pour la gestion des compagnies.</p>
       </div>
-      <div class="menu-search-wrap">
-        <input type="search" class="menu-search" placeholder="Rechercher un menu..." id="menuSearch" oninput="filterModules(this.value)">
+      <div style="display:flex; align-items:center; gap:8px; font-size:13px; color:#64748b;">
+        <a th:href="@{/menu}" style="color:#6366f1; text-decoration:none; font-weight:500;">Menu</a>
+        <span>&#8250;</span>
+        <span>Compagnie</span>
       </div>
     </div>
 
-    <div class="modules-grid" id="modulesGrid">
+    <div class="modules-grid">
 
-      <!-- Menu DT -->
-      <a href="#" class="module-card" data-name="menu dt">
+      <!-- Gestion de Manifeste -->
+      <a href="#" class="module-card" data-name="gestion manifeste">
         <div class="module-icon">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-            <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+            <polyline points="10 9 9 9 8 9"/>
           </svg>
         </div>
-        <div class="module-title">Menu DT</div>
-        <div class="module-desc">Accédez au sous-menu de DT.</div>
+        <div class="module-title">Gestion de Manifeste</div>
+        <div class="module-desc">Gérez les manifestes des compagnies maritimes.</div>
         <div class="module-link">Ouvrir <span>&#x2197;</span></div>
       </a>
-
-      <!-- Menu Compagnie -->
-      <a th:href="@{/menu/compagnie}" class="module-card" data-name="menu compagnie">
-        <div class="module-icon">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-            <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
-          </svg>
-        </div>
-        <div class="module-title">Menu Compagnie</div>
-        <div class="module-desc">Accédez au sous-menu des compagnies.</div>
-        <div class="module-link">Ouvrir <span>&#x2197;</span></div>
-      </a>
-
-      <!-- Menu Douane -->
-      <a th:href="@{/menu/douane}" class="module-card" data-name="menu douane">
-        <div class="module-icon">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-            <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
-          </svg>
-        </div>
-        <div class="module-title">Menu Douane</div>
-        <div class="module-desc">Accédez au sous-menu de la douane.</div>
-        <div class="module-link">Ouvrir <span>&#x2197;</span></div>
-      </a>
-
-
 
     </div>
 
   </main>
 </div>
-
-<script>
-  function filterModules(query) {
-    const cards = document.querySelectorAll('#modulesGrid .module-card');
-    const q = query.toLowerCase().trim();
-    cards.forEach(card => {
-      const name = card.dataset.name || '';
-      card.style.display = (!q || name.includes(q)) ? '' : 'none';
-    });
-  }
-</script>
 
 </body>
 </html>

@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Menu Douane - Dakar Terminal</title>
+  <script th:src="@{/js/theme.js}"></script>
   <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
@@ -33,6 +34,13 @@
         </svg>
         Menu
       </a>
+      <a th:href="@{/parametres}" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        Paramètres
+      </a>
     </nav>
 
     <div class="sidebar-user">
@@ -50,22 +58,20 @@
   <!-- ===== MAIN ===== -->
   <main class="main-content">
 
-    <!-- Breadcrumb -->
-    <div style="display:flex; align-items:center; gap:8px; margin-bottom:28px; font-size:13px; color:#64748b;">
-      <a th:href="@{/menu}" style="color:#6366f1; text-decoration:none; font-weight:500;">Menu</a>
-      <span>&#8250;</span>
-      <span style="color:#0f172a; font-weight:600;">Douane</span>
-    </div>
-
-    <div class="page-header" style="margin-bottom:32px;">
+    <div class="page-header-card">
       <div>
         <div class="page-badge"><span class="page-badge-dot"></span> MENU DOUANE</div>
-        <h1 class="page-title">Douane</h1>
+        <h1 class="page-title" style="font-size:26px; margin-bottom:4px;">Douane</h1>
         <p class="page-subtitle">Accédez aux fonctionnalités disponibles pour le module Douane.</p>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px; font-size:13px; color:#64748b;">
+        <a th:href="@{/menu}" style="color:#6366f1; text-decoration:none; font-weight:500;">Menu</a>
+        <span>&#8250;</span>
+        <span>Douane</span>
       </div>
     </div>
 
-    <div class="modules-grid" style="grid-template-columns: repeat(4, 1fr);">
+    <div class="modules-grid">
 
       <!-- Gestion Blocage / Déblocage -->
       <a th:href="@{/menu/douane/blocage}" class="module-card">
