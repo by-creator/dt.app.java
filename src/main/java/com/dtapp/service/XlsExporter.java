@@ -10,35 +10,117 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Génère un fichier Excel (.xlsx) à partir d'une liste d'EdiRecord.
+ * Traduit exactement la logique PHP de App\Services\XlsExporter.
+ */
 @Service
 @Slf4j
 public class XlsExporter {
 
-    /**
-     * Exporte des enregistrements en fichier Excel
-     * @param records Liste des enregistrements à exporter
-     * @param headers En-têtes de colonnes
-     * @param outputPath Chemin du fichier de sortie
-     */
-    public void export(List<Map<String, String>> records, List<String> headers, String outputPath) {
+    public void export(List<EdiRecord> records, Map<String, String> headers, String outputPath) {
         try (Workbook workbook = new XSSFWorkbook()) {
-            Sheet sheet = workbook.createSheet("Data");
+            Sheet sheet = workbook.createSheet("Bl importer");
 
-            // Créer les en-têtes
-            createHeaderRow(sheet, headers);
+            // ── Ligne 1 : en-têtes ────────────────────────────────────────────
+            CellStyle headerStyle = workbook.createCellStyle();
+            Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerFont.setColor(IndexedColors.WHITE.getIndex());
+            headerStyle.setFont(headerFont);
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            headerStyle.setFillForegroundColor(IndexedColors.BLUE.getIndex());
+            headerStyle.setAlignment(HorizontalAlignment.CENTER);
 
-            // Créer les lignes de données
-            createDataRows(sheet, records, headers);
+            Row headerRow = sheet.createRow(0);
+            int col = 0;
+            for (String displayName : headers.values()) {
+                Cell cell = headerRow.createCell(col++);
+                cell.setCellValue(displayName);
+                cell.setCellStyle(headerStyle);
+            }
 
-            // Auto-ajuster les colonnes
+            // ── Lignes de données (à partir de la ligne 2) ───────────────────
+            int rowIdx = 1;
+            for (EdiRecord record : records) {
+                Map<String, String> data = new java.util.LinkedHashMap<>(record.toArray());
+
+                // ── Conversion poids : tonnes → kg ──────────────────────────
+                double rawWeight = parseDouble(data.get("bl_weight"));
+                data.put("bl_weight", rawWeight > 0
+                        ? formatNum(EdiRecord.roundTo(rawWeight * 1000, 2)) : null);
+
+                double rawItemWeight = parseDouble(data.get("blitem_commodity_weight"));
+                boolean isVehicle = "VEHICULE".equals(data.get("blitem_yard_item_type"));
+                double itemWeightKg = 0;
+                if (rawItemWeight > 0) {
+                    itemWeightKg = EdiRecord.roundTo(rawItemWeight * 1000, 2);
+                    data.put("blitem_commodity_weight", formatNum(itemWeightKg));
+                } else {
+                    data.put("blitem_commodity_weight", isVehicle ? "0" : null);
+                }
+
+                // ── Conversion volume : m³ → float ──────────────────────────
+                double rawVolume = parseDouble(data.get("bl_volume"));
+                data.put("bl_volume", rawVolume > 0
+                        ? formatNum(EdiRecord.roundTo(rawVolume, 3)) : "0");
+
+                double rawItemVol = parseDouble(data.get("blitem_commodity_volume"));
+                String itemType = data.getOrDefault("blitem_yard_item_type", "");
+                if (rawItemVol > 0) {
+                    data.put("blitem_commodity_volume", formatNum(EdiRecord.roundTo(rawItemVol, 3)));
+                } else {
+                    data.put("blitem_commodity_volume",
+                            ("CONTENEUR".equals(itemType) || "VEHICULE".equals(itemType)) ? "0" : null);
+                }
+
+                // ── Recalcul commodity véhicule depuis le poids individuel ──
+                if (isVehicle) {
+                    String commodity;
+                    if      (itemWeightKg <= 0)     commodity = "VEH 0-1500Kgs";
+                    else if (itemWeightKg <= 1500)  commodity = "VEH 0-1500Kgs";
+                    else if (itemWeightKg <= 3000)  commodity = "VEH 1501-3000Kgs";
+                    else if (itemWeightKg <= 6000)  commodity = "VEH 3001-6000Kgs";
+                    else if (itemWeightKg <= 9000)  commodity = "VEH 6001-9000Kgs";
+                    else if (itemWeightKg <= 30000) commodity = "VEH 9001-30000Kgs";
+                    else                            commodity = "VEH +30000Kgs";
+                    data.put("blitem_commodity", commodity);
+                }
+
+                // ── Champs vidés dans le XLS ─────────────────────────────────
+                data.put("consignee",                 "");
+                data.put("shipper_name",              "");
+                data.put("final_destination_country", "");
+                data.put("transshipment_port_1",      "");
+                data.put("transshipment_port_2",      "");
+
+                // ── Écriture des cellules dans l'ordre des headers ───────────
+                Row row = sheet.createRow(rowIdx++);
+                col = 0;
+                for (String key : headers.keySet()) {
+                    Cell cell = row.createCell(col++);
+                    String value = data.get(key);
+                    if (value == null || value.isEmpty()) {
+                        // Cellule vide
+                    } else {
+                        // Tenter d'écrire comme nombre si possible
+                        try {
+                            cell.setCellValue(Double.parseDouble(value));
+                        } catch (NumberFormatException e) {
+                            cell.setCellValue(value);
+                        }
+                    }
+                }
+            }
+
+            // ── Auto-size colonnes ────────────────────────────────────────────
             for (int i = 0; i < headers.size(); i++) {
                 sheet.autoSizeColumn(i);
             }
 
-            // Écrire le fichier
-            try (FileOutputStream fileOut = new FileOutputStream(outputPath)) {
-                workbook.write(fileOut);
-                log.info("Excel file exported successfully: {}", outputPath);
+            try (FileOutputStream fos = new FileOutputStream(outputPath)) {
+                workbook.write(fos);
+                log.info("Excel file exported: {}", outputPath);
             }
         } catch (IOException e) {
             log.error("Error exporting Excel file: {}", outputPath, e);
@@ -46,55 +128,15 @@ public class XlsExporter {
         }
     }
 
-    /**
-     * Crée la ligne d'en-tête
-     * @param sheet Feuille de calcul
-     * @param headers En-têtes
-     */
-    private void createHeaderRow(Sheet sheet, List<String> headers) {
-        Row headerRow = sheet.createRow(0);
-
-        CellStyle headerStyle = sheet.getWorkbook().createCellStyle();
-        Font headerFont = sheet.getWorkbook().createFont();
-        headerFont.setBold(true);
-        headerFont.setColor(IndexedColors.WHITE.getIndex());
-        headerStyle.setFont(headerFont);
-        headerStyle.setFill(FillPatternType.SOLID_FOREGROUND);
-        headerStyle.setFillForegroundColor(IndexedColors.BLUE.getIndex());
-        headerStyle.setAlignment(HorizontalAlignment.CENTER);
-        headerStyle.setVerticalAlignment(VerticalAlignment.CENTER);
-
-        for (int i = 0; i < headers.size(); i++) {
-            Cell cell = headerRow.createCell(i);
-            cell.setCellValue(headers.get(i));
-            cell.setCellStyle(headerStyle);
-        }
+    private static double parseDouble(String s) {
+        if (s == null || s.isEmpty()) return 0;
+        try { return Double.parseDouble(s); } catch (NumberFormatException e) { return 0; }
     }
 
-    /**
-     * Crée les lignes de données
-     * @param sheet Feuille de calcul
-     * @param records Enregistrements
-     * @param headers En-têtes
-     */
-    private void createDataRows(Sheet sheet, List<Map<String, String>> records, List<String> headers) {
-        CellStyle dataStyle = sheet.getWorkbook().createCellStyle();
-        dataStyle.setAlignment(HorizontalAlignment.LEFT);
-        dataStyle.setVerticalAlignment(VerticalAlignment.TOP);
-        dataStyle.setWrapText(true);
-
-        for (int rowIndex = 0; rowIndex < records.size(); rowIndex++) {
-            Row row = sheet.createRow(rowIndex + 1);
-            Map<String, String> record = records.get(rowIndex);
-
-            for (int colIndex = 0; colIndex < headers.size(); colIndex++) {
-                String headerName = headers.get(colIndex);
-                String value = record.getOrDefault(headerName, "");
-
-                Cell cell = row.createCell(colIndex);
-                cell.setCellValue(value);
-                cell.setCellStyle(dataStyle);
-            }
+    private static String formatNum(double d) {
+        if (d == Math.floor(d) && !Double.isInfinite(d)) {
+            return String.valueOf((long) d);
         }
+        return String.valueOf(d);
     }
 }

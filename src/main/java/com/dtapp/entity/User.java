@@ -27,6 +27,12 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+    private String telephone;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "compagnie_id")
+    private Compagnie compagnie;
+
     private Boolean enabled = true;
 
     @Column(name = "created_at")

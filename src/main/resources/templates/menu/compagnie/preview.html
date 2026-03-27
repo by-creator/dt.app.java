@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aperçu Manifeste - Dakar Terminal</title>
+  <script th:src="@{/js/theme.js}"></script>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<div class="app-layout">
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-box">
+        <img th:src="@{/img/image.png}" alt="Dakar Terminal" style="max-height: 40px; width: 150px;">
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <a th:href="@{/dashboard}" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+          <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+        </svg>
+        Dashboard
+      </a>
+      <a th:href="@{/menu}" class="nav-item active">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/>
+          <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+        Menu
+      </a>
+      <a th:href="@{/parametres}" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        Paramètres
+      </a>
+    </nav>
+    <div class="sidebar-user">
+      <div class="user-row">
+        <div class="user-avatar-sm"
+             th:text="${#strings.toUpperCase(#strings.substring(loggedUser.username, 0, 1))}">A</div>
+        <span class="user-display-name" th:text="${loggedUser.username}">Admin</span>
+        <form th:action="@{/logout}" method="post" style="margin:0">
+          <button type="submit" class="logout-btn" title="Se déconnecter">&#x2192;</button>
+        </form>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <main class="main-content" style="padding:0;">
+
+    <!-- Top bar -->
+    <div class="subpage-topbar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+        <circle cx="12" cy="12" r="3"/>
+      </svg>
+      Aperçu Manifeste
+    </div>
+
+    <!-- Tab bar -->
+    <div class="subpage-tabs">
+      <a th:href="@{/menu/compagnie/upload-manifest}" class="subpage-tab">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        Upload Manifeste
+      </a>
+      <a th:href="@{/menu/compagnie/{id}/preview(id=${codification.id})}" class="subpage-tab active">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+        Aperçu — <span th:text="${codification.callNumber}">CALL123</span>
+      </a>
+    </div>
+
+    <div style="padding: 32px 36px;">
+
+      <!-- Breadcrumb -->
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:24px; font-size:13px; color:#64748b;">
+        <a th:href="@{/menu}" style="color:#6366f1; text-decoration:none; font-weight:500;">Menu</a>
+        <span>&#8250;</span>
+        <a th:href="@{/menu/compagnie}" style="color:#6366f1; text-decoration:none; font-weight:500;">Compagnie</a>
+        <span>&#8250;</span>
+        <a th:href="@{/menu/compagnie/upload-manifest}" style="color:#6366f1; text-decoration:none; font-weight:500;">Manifeste</a>
+        <span>&#8250;</span>
+        <span class="topbar-title" th:text="${codification.callNumber}">Aperçu</span>
+      </div>
+
+      <!-- ===== DOWNLOAD CARD ===== -->
+      <div class="page-section-card" style="margin-bottom:28px;">
+        <div class="blocage-card-header">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          <span>Téléchargements — <span th:text="${codification.callNumber}">CALL123</span></span>
+          <span style="margin-left:auto; font-size:12px; font-weight:400; color:#94a3b8;" th:text="${codification.formattedDate}"></span>
+        </div>
+        <p class="blocage-card-subtitle">Téléchargez les fichiers générés à partir du manifeste importé.</p>
+        <div class="blocage-actions">
+          <a th:href="@{/menu/compagnie/{id}/download-manifest(id=${codification.id})}"
+             class="btn-debloquer" style="text-decoration:none;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Manifeste (.txt)
+          </a>
+          <a th:href="@{/menu/compagnie/{id}/download-xls(id=${codification.id})}"
+             class="btn-bloquer" style="text-decoration:none; background:#16a34a; border-color:#15803d;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Excel (.xlsx)
+          </a>
+          <a th:href="@{/menu/compagnie/{id}/download-iftmin(id=${codification.id})}"
+             class="btn-bloquer" style="text-decoration:none; background:#0369a1; border-color:#075985;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            IFTMIN
+          </a>
+          <a th:href="@{/menu/compagnie/upload-manifest}"
+             class="btn-actualiser" style="text-decoration:none;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+            </svg>
+            Retour
+          </a>
+        </div>
+      </div>
+
+      <!-- ===== TABLE CARD ===== -->
+      <div class="page-section-card" style="padding:0; overflow:hidden; margin-bottom:28px;">
+
+        <!-- Table toolbar avec recherche intégrée -->
+        <div class="table-toolbar">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/>
+            </svg>
+            <span style="font-weight:600; font-size:14px;">Données du manifeste (XLSX)</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div th:if="${!xlsHeaders.isEmpty()}" style="position:relative;">
+              <svg style="position:absolute; left:10px; top:50%; transform:translateY(-50%); color:#94a3b8;"
+                   width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <input id="xlsSearch" type="search" class="table-search-input"
+                     placeholder="Filtrer les lignes..."
+                     oninput="filterXlsRows(this.value)"
+                     style="padding-left:32px; width:260px;">
+            </div>
+            <span id="xlsCount" class="pagination-info"
+                  th:text="${xlsRows.size()} + ' ligne' + (${xlsRows.size()} > 1 ? 's' : '')">0 ligne</span>
+          </div>
+        </div>
+
+        <div th:if="${xlsHeaders.isEmpty()}" style="color:#94a3b8; padding:40px; text-align:center; font-size:13px;">
+          Fichier XLSX non disponible.
+        </div>
+
+        <!-- Fenêtre de 10 lignes avec scroll interne — en-tête collant -->
+        <div th:if="${!xlsHeaders.isEmpty()}"
+             style="overflow: auto; max-height: 484px;">
+          <table class="data-table" id="xlsTable"
+                 style="border-collapse: separate; border-spacing: 0;">
+            <thead>
+              <tr>
+                <th th:each="h : ${xlsHeaders}" th:text="${h}"
+                    style="position: sticky; top: 0; z-index: 2;">Colonne</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="row : ${xlsRows}">
+                <td th:each="h : ${xlsHeaders}" th:text="${row.get(h)}"></td>
+              </tr>
+              <tr th:if="${xlsRows.isEmpty()}">
+                <td th:attr="colspan=${xlsHeaders.size()}"
+                    style="text-align:center; color:#94a3b8; padding:32px;">
+                  Aucune donnée.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div id="xlsNoMatch" style="display:none; text-align:center; color:#94a3b8; padding:32px; font-size:13px;">
+            Aucune ligne ne correspond à la recherche.
+          </div>
+        </div>
+
+        <script>
+          (function() {
+            var totalRows = document.querySelectorAll('#xlsTable tbody tr').length;
+
+            function updateCount(visible) {
+              var el = document.getElementById('xlsCount');
+              if (!el) return;
+              if (visible === totalRows) {
+                el.textContent = totalRows + (totalRows > 1 ? ' lignes' : ' ligne');
+              } else {
+                el.textContent = visible + ' / ' + totalRows + ' lignes';
+              }
+            }
+
+            window.filterXlsRows = function(query) {
+              var q = query.trim().toLowerCase();
+              var rows = document.querySelectorAll('#xlsTable tbody tr');
+              var visible = 0;
+              rows.forEach(function(tr) {
+                var show = q === '' || tr.textContent.toLowerCase().includes(q);
+                tr.style.display = show ? '' : 'none';
+                if (show) visible++;
+              });
+              document.getElementById('xlsNoMatch').style.display =
+                (visible === 0 && q !== '') ? '' : 'none';
+              updateCount(visible);
+            };
+          })();
+        </script>
+
+      </div>
+
+      <!-- ===== IFTMIN CARD ===== -->
+      <div class="page-section-card" style="padding:0; overflow:hidden;" th:if="${!#strings.isEmpty(iftminContent)}">
+
+        <!-- Toolbar avec recherche intégrée -->
+        <div class="table-toolbar">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>
+            </svg>
+            <span style="font-weight:600; font-size:14px;">Contenu IFTMIN (.edi)</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div style="position:relative;">
+              <svg style="position:absolute; left:10px; top:50%; transform:translateY(-50%); color:#94a3b8;"
+                   width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <input id="ediSearch" type="search" class="table-search-input"
+                     placeholder="Filtrer les segments..."
+                     oninput="filterEdiLines(this.value)"
+                     style="padding-left:32px; width:260px;">
+            </div>
+            <span id="ediCount" class="pagination-info">0 segment</span>
+            <a th:href="@{/menu/compagnie/{id}/download-iftmin(id=${codification.id})}"
+               class="btn-actualiser" style="text-decoration:none; font-size:12px;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Télécharger (.edi)
+            </a>
+          </div>
+        </div>
+
+        <!-- Fenêtre de ~10 lignes avec scroll interne -->
+        <div style="padding:16px 24px 24px;">
+          <div id="ediContainer"
+               style="background:#0f172a; border-radius:10px; overflow:auto; max-height:484px;">
+            <table id="ediTable"
+                   style="width:100%; border-collapse:collapse; font-family:monospace; font-size:12px; line-height:1.7;">
+              <tbody></tbody>
+            </table>
+            <div id="ediNoMatch"
+                 style="display:none; color:#94a3b8; padding:32px; text-align:left; font-size:13px;">
+              Aucun segment ne correspond à la recherche.
+            </div>
+          </div>
+        </div>
+
+        <script th:inline="javascript">
+          (function() {
+            var raw = /*[[${iftminContent}]]*/ '';
+            var lines = raw.split('\n').filter(function(l) { return l.trim() !== ''; });
+            var tbody = document.querySelector('#ediTable tbody');
+            var totalLines = lines.length;
+
+            function renderLines(filter) {
+              tbody.innerHTML = '';
+              var visible = 0;
+              lines.forEach(function(line, i) {
+                if (filter && !line.toLowerCase().includes(filter)) return;
+                var tr = document.createElement('tr');
+                tr.style.cssText = 'border-bottom:1px solid rgba(255,255,255,0.04);';
+                tr.innerHTML =
+                  '<td style="padding:2px 16px; color:#475569; user-select:none; text-align:right; min-width:40px;">' +
+                    (i + 1) +
+                  '</td>' +
+                  '<td style="padding:2px 16px 2px 8px; color:#e2e8f0; white-space:pre; word-break:break-all; text-align:left;">' +
+                    escHtml(line) +
+                  '</td>';
+                tbody.appendChild(tr);
+                visible++;
+              });
+              var noMatch = document.getElementById('ediNoMatch');
+              noMatch.style.display = (visible === 0 && filter) ? '' : 'none';
+              var countEl = document.getElementById('ediCount');
+              countEl.textContent = visible === totalLines
+                ? totalLines + (totalLines > 1 ? ' segments' : ' segment')
+                : visible + ' / ' + totalLines + ' segments';
+            }
+
+            function escHtml(s) {
+              return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            }
+
+            renderLines('');
+
+            window.filterEdiLines = function(query) {
+              renderLines(query.trim().toLowerCase() || '');
+            };
+          })();
+        </script>
+
+      </div>
+
+    </div>
+  </main>
+</div>
+
+</body>
+</html>

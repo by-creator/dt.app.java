@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Entity
 @Table(name = "codifications", indexes = {
@@ -34,11 +35,20 @@ public class Codification {
     @Column(nullable = false, length = 500)
     private String iftmin;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "compagnie_id")
+    private Compagnie compagnie;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @Column(nullable = false)
     private LocalDateTime updatedAt;
+
+    public String getFormattedDate() {
+        if (createdAt == null) return "";
+        return createdAt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+    }
 
     @PrePersist
     protected void onCreate() {

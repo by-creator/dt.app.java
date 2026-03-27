@@ -1,0 +1,17 @@
+{
+    "name": "Dakar-Terminal",
+    "short_name": "Dakar-Terminal",
+    "description": "Application Dakar Terminal",
+    "start_url": "/demat",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#4B49AC",
+    "icons": [
+        {
+            "src": "/img/icon.png",
+            "sizes": "any",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}

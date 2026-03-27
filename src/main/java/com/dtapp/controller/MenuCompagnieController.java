@@ -2,10 +2,14 @@ package com.dtapp.controller;
 
 import com.dtapp.entity.Codification;
 import com.dtapp.repository.CodificationRepository;
+import com.dtapp.repository.UserRepository;
 import com.dtapp.service.EdiExporter;
 import com.dtapp.service.EdiParser;
+import com.dtapp.service.EdiRecord;
 import com.dtapp.service.XlsExporter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,9 +21,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -32,7 +36,6 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.regex.Pattern;
 
 @Controller
 @RequestMapping("/menu/compagnie")
@@ -43,6 +46,7 @@ public class MenuCompagnieController {
     private final EdiExporter exporter;
     private final XlsExporter xlsExporter;
     private final CodificationRepository codificationRepository;
+    private final UserRepository userRepository;
 
     @Value("${app.upload.dir:uploads/codifications}")
     private String uploadDir;
@@ -51,12 +55,14 @@ public class MenuCompagnieController {
             EdiParser parser,
             EdiExporter exporter,
             XlsExporter xlsExporter,
-            CodificationRepository codificationRepository
+            CodificationRepository codificationRepository,
+            UserRepository userRepository
     ) {
         this.parser = parser;
         this.exporter = exporter;
         this.xlsExporter = xlsExporter;
         this.codificationRepository = codificationRepository;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -66,19 +72,26 @@ public class MenuCompagnieController {
     public String showUpload(
             @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "0") int page,
-            Model model
+            Model model,
+            Authentication auth
     ) {
+        var loggedUser = userRepository.findByEmail(auth.getName()).orElseThrow();
+        var compagnie = loggedUser.getCompagnie();
+
         Pageable pageable = PageRequest.of(page, 10);
         Page<Codification> codifications;
 
-        if (search != null && !search.isEmpty()) {
-            codifications = codificationRepository.findByCallNumberContaining(search, pageable);
+        if (compagnie == null) {
+            codifications = Page.empty(pageable);
+        } else if (search != null && !search.isEmpty()) {
+            codifications = codificationRepository.findByCompagnieAndCallNumberContaining(compagnie, search, pageable);
         } else {
-            codifications = codificationRepository.findAll(pageable);
+            codifications = codificationRepository.findByCompagnie(compagnie, pageable);
         }
 
         model.addAttribute("codifications", codifications);
         model.addAttribute("search", search);
+        model.addAttribute("loggedUser", loggedUser);
         return "menu/compagnie/upload-manifest";
     }
 
@@ -88,7 +101,8 @@ public class MenuCompagnieController {
     @PostMapping("/upload-manifest")
     public String storeManifest(
             @RequestParam("manifest") MultipartFile file,
-            RedirectAttributes redirectAttributes
+            RedirectAttributes redirectAttributes,
+            Authentication auth
     ) {
         // Validation du fichier
         if (file.isEmpty()) {
@@ -101,16 +115,25 @@ public class MenuCompagnieController {
             return "redirect:/menu/compagnie/upload-manifest";
         }
 
+        var loggedUser = userRepository.findByEmail(auth.getName()).orElseThrow();
+        var compagnie = loggedUser.getCompagnie();
+
+        if (compagnie == null) {
+            redirectAttributes.addFlashAttribute("error", "Votre compte n'est rattaché à aucune compagnie.");
+            return "redirect:/menu/compagnie/upload-manifest";
+        }
+
         try {
             // Créer le répertoire s'il n'existe pas
-            Path uploadPath = Paths.get(uploadDir);
+            Path uploadPath = Paths.get(uploadDir).toAbsolutePath();
             Files.createDirectories(uploadPath);
 
             // Parser le fichier
-            String tempFilePath = uploadPath.resolve("temp_" + file.getOriginalFilename()).toString();
-            file.transferTo(new File(tempFilePath));
+            Path tempFile = uploadPath.resolve("temp_" + file.getOriginalFilename());
+            file.transferTo(tempFile);
+            String tempFilePath = tempFile.toString();
 
-            List<Map<String, String>> records = parser.parse(tempFilePath);
+            List<EdiRecord> records = parser.parse(tempFilePath);
 
             if (records.isEmpty()) {
                 redirectAttributes.addFlashAttribute("error", "Aucun enregistrement valide trouvé dans le fichier.");
@@ -119,7 +142,7 @@ public class MenuCompagnieController {
             }
 
             // Récupérer le call_number du premier enregistrement
-            String callNumber = records.get(0).getOrDefault("call_number", "").trim();
+            String callNumber = records.get(0).data.getOrDefault("call_number", "").trim();
             String baseName = sanitizeFileName(file.getOriginalFilename());
             String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
 
@@ -129,15 +152,15 @@ public class MenuCompagnieController {
             Path manifestFile = uploadPath.resolve(manifestName);
             Files.copy(Paths.get(tempFilePath), manifestFile);
 
-            // Générer le fichier XLS
-            String xlsName = timestamp + "_" + baseName + ".xls";
+            // Générer le fichier XLSX
+            String xlsName = timestamp + "_" + baseName + ".xlsx";
             String xlsPath = "codifications/" + xlsName;
             Path xlsAbsPath = uploadPath.resolve(xlsName);
-            List<String> headers = parser.getHeaders();
+            Map<String, String> headers = parser.getHeaders();
             xlsExporter.export(records, headers, xlsAbsPath.toString());
 
             // Générer le fichier IFTMIN
-            String iftminName = timestamp + "_" + baseName + ".iftmin";
+            String iftminName = timestamp + "_" + baseName + ".edi";
             String iftminPath = "codifications/" + iftminName;
             Path iftminAbsPath = uploadPath.resolve(iftminName);
             exporter.export(records, iftminAbsPath.toString());
@@ -148,6 +171,7 @@ public class MenuCompagnieController {
                     .manifest(manifestPath)
                     .xls(xlsPath)
                     .iftmin(iftminPath)
+                    .compagnie(compagnie)
                     .build();
 
             codificationRepository.save(codification);
@@ -170,7 +194,8 @@ public class MenuCompagnieController {
      * Affiche un aperçu du codification
      */
     @GetMapping("/{id}/preview")
-    public String preview(@PathVariable Integer id, Model model) {
+    public String preview(@PathVariable Integer id, Model model, Authentication auth) {
+        model.addAttribute("loggedUser", userRepository.findByEmail(auth.getName()).orElseThrow());
         Optional<Codification> codification = codificationRepository.findById(id);
 
         if (codification.isEmpty()) {
@@ -178,7 +203,7 @@ public class MenuCompagnieController {
         }
 
         Codification cod = codification.get();
-        Path uploadPath = Paths.get(uploadDir);
+        Path uploadPath = Paths.get(uploadDir).toAbsolutePath();
 
         // Lire le fichier XLS
         List<String> xlsHeaders = new ArrayList<>();
@@ -199,13 +224,14 @@ public class MenuCompagnieController {
                 }
 
                 // Récupérer les données
+                DataFormatter formatter = new DataFormatter();
                 for (int i = 1; i <= sheet.getLastRowNum(); i++) {
                     var row = sheet.getRow(i);
                     if (row != null) {
                         Map<String, String> rowData = new LinkedHashMap<>();
                         for (int j = 0; j < xlsHeaders.size(); j++) {
-                            var cell = row.getCell(j);
-                            rowData.put(xlsHeaders.get(j), cell != null ? cell.getStringCellValue() : "");
+                            Cell cell = row.getCell(j);
+                            rowData.put(xlsHeaders.get(j), cell != null ? formatter.formatCellValue(cell) : "");
                         }
                         xlsRows.add(rowData);
                     }
@@ -277,13 +303,13 @@ public class MenuCompagnieController {
         switch (fileType) {
             case "xls":
                 filePath = cod.getXls();
-                contentType = "application/vnd.ms-excel";
+                contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
                 filename = new File(filePath).getName();
                 break;
             case "iftmin":
                 filePath = cod.getIftmin();
                 contentType = "application/edifact";
-                filename = new File(filePath).getName();
+                filename = new File(filePath).getName().replaceAll("\\.(iftmin|edi)$", ".edi");
                 break;
             case "manifest":
                 filePath = cod.getManifest();
@@ -294,7 +320,7 @@ public class MenuCompagnieController {
                 return ResponseEntity.badRequest().build();
         }
 
-        Path file = Paths.get(uploadDir).resolve(filePath.replace("codifications/", ""));
+        Path file = Paths.get(uploadDir).toAbsolutePath().resolve(filePath.replace("codifications/", ""));
 
         if (!Files.exists(file)) {
             return ResponseEntity.notFound().build();
