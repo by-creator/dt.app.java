@@ -235,6 +235,20 @@
       .alert-success { background: #14532d; border-color: #166534; color: #4ade80; }
     }
 
+    .survey-error {
+      background: #fee2e2;
+      border: 1px solid #fca5a5;
+      color: #991b1b;
+      border-radius: 12px;
+      padding: 12px 18px;
+      margin-top: 16px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    @media (prefers-color-scheme: dark) {
+      .survey-error { background: #450a0a; border-color: #991b1b; color: #fca5a5; }
+    }
+
     @media (max-width: 900px) {
       .wizard-steps {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -563,6 +577,7 @@
         </div>
       </section>
 
+      <div id="surveyError" class="survey-error" style="display:none;"></div>
       <div class="nav">
         <button type="button" class="btn btn-secondary" onclick="moveSurveyStep(-1)">Precedent</button>
         <button type="button" class="btn btn-primary" id="nextSurveyBtn" onclick="moveSurveyStep(1)">Suivant</button>
@@ -580,13 +595,13 @@
   const surveyPanels = document.querySelectorAll('.section');
   const nextBtn      = document.getElementById('nextSurveyBtn');
   const submitBtn    = document.getElementById('submitSurveyBtn');
+  const errorBox     = document.getElementById('surveyError');
 
   function syncOptionValues() {
     document.querySelectorAll('label.option input[type="radio"], label.option input[type="checkbox"]').forEach((input) => {
       if (input.hasAttribute('value') && input.getAttribute('value') !== 'on') {
         return;
       }
-
       const optionText = input.parentElement.textContent.replace(/\s+/g, ' ').trim();
       if (optionText) {
         input.value = optionText;
@@ -594,7 +609,50 @@
     });
   }
 
+  function showError(msg) {
+    errorBox.textContent = msg;
+    errorBox.style.display = '';
+    errorBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function hideError() {
+    errorBox.style.display = 'none';
+    errorBox.textContent = '';
+  }
+
+  function validateCurrentStep() {
+    const panel = surveyPanels[currentSurveyStep];
+
+    // Panel 0 : champs texte obligatoires
+    if (currentSurveyStep === 0) {
+      const textInputs = panel.querySelectorAll('input[type="text"]');
+      for (const input of textInputs) {
+        if (!input.value.trim()) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    // Autres panneaux : tous les groupes radio doivent avoir une reponse
+    const radioNames = new Set();
+    panel.querySelectorAll('input[type="radio"]').forEach(r => radioNames.add(r.name));
+    for (const name of radioNames) {
+      if (!panel.querySelector(`input[type="radio"][name="${name}"]:checked`)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   function showSurveyStep(index) {
+    if (index > currentSurveyStep) {
+      if (!validateCurrentStep()) {
+        showError('Veuillez repondre a toutes les questions obligatoires avant de continuer.');
+        return;
+      }
+    }
+    hideError();
     currentSurveyStep = Math.max(0, Math.min(index, surveyPanels.length - 1));
     const isLast = currentSurveyStep === surveyPanels.length - 1;
 
@@ -603,6 +661,8 @@
 
     nextBtn.style.display   = isLast ? 'none' : '';
     submitBtn.style.display = isLast ? ''     : 'none';
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function moveSurveyStep(direction) {
@@ -610,7 +670,14 @@
   }
 
   syncOptionValues();
-  surveyForm?.addEventListener('submit', syncOptionValues);
+  surveyForm?.addEventListener('submit', function(e) {
+    if (!validateCurrentStep()) {
+      e.preventDefault();
+      showError('Veuillez repondre a toutes les questions obligatoires avant de soumettre.');
+      return;
+    }
+    syncOptionValues();
+  });
 </script>
 </body>
 </html>
