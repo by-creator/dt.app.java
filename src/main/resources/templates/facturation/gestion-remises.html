@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestion Remises - Dakar Terminal</title>
+  <th:block th:replace="~{fragments/pwa-head :: pwaMeta}"></th:block>
+  <script th:src="@{/js/theme.js}"></script>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    * { box-sizing: border-box; }
+    .inner-card { background: rgba(255,255,255,0.92); border-radius: 20px; box-shadow: 0 20px 50px rgba(15,23,42,0.07); border: 1px solid rgba(148,163,184,0.15); padding: 28px 32px; margin-bottom: 20px; }
+    .tbl-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th { text-align: left; padding: 10px 14px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #94a3b8; border-bottom: 1px solid #e2e8f0; white-space: nowrap; }
+    td { padding: 12px 14px; border-bottom: 1px solid #f1f5f9; color: #334155; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #f8fafc; }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+    .badge-green  { background: #dcfce7; color: #16a34a; }
+    .badge-yellow { background: #fef9c3; color: #92400e; }
+    .badge-orange { background: #ffedd5; color: #c2410c; }
+    .badge-red    { background: #fee2e2; color: #dc2626; }
+    .badge-gray   { background: #f1f5f9; color: #64748b; }
+    .row-actions { display: flex; gap: 8px; }
+    .btn-valider { padding: 6px 14px; border: none; border-radius: 8px; background: #dcfce7; color: #16a34a; font-weight: 700; font-size: 12px; cursor: pointer; }
+    .btn-rejeter { padding: 6px 14px; border: none; border-radius: 8px; background: #fee2e2; color: #dc2626; font-weight: 700; font-size: 12px; cursor: pointer; }
+    .alert-success { background: #dcfce7; border: 1px solid #86efac; color: #166534; border-radius: 12px; padding: 14px 18px; margin-bottom: 20px; font-weight: 600; font-size: 14px; }
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+    .section-title { font-size: 18px; font-weight: 800; color: #172554; margin: 0; }
+    /* Modal */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.5); z-index: 1000; align-items: center; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal-box { background: white; border-radius: 18px; padding: 32px; width: 100%; max-width: 440px; box-shadow: 0 24px 60px rgba(15,23,42,0.18); }
+    .modal-title { font-size: 17px; font-weight: 800; color: #0f172a; margin: 0 0 6px; }
+    .modal-desc { font-size: 13px; color: #64748b; margin: 0 0 20px; }
+    .modal-box label { display: block; font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 6px; }
+    .modal-box select, .modal-box input[type="number"] { width: 100%; height: 44px; border-radius: 10px; border: 1px solid #d9e2ef; padding: 0 14px; font-size: 14px; margin-bottom: 20px; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+    .btn-cancel  { padding: 10px 20px; border: none; border-radius: 10px; background: #f1f5f9; color: #334155; font-weight: 700; font-size: 13px; cursor: pointer; }
+    .btn-confirm { padding: 10px 20px; border: none; border-radius: 10px; background: #16a34a; color: white; font-weight: 700; font-size: 13px; cursor: pointer; }
+    .btn-confirm-red { padding: 10px 20px; border: none; border-radius: 10px; background: #dc2626; color: white; font-weight: 700; font-size: 13px; cursor: pointer; }
+    @media (max-width: 700px) { .inner-card { padding: 16px; } }
+  </style>
+</head>
+<body>
+
+<!-- Expose isDirection flag for JS -->
+<div id="isDirectionFlag" th:data-direction="${isDirection}" style="display:none"></div>
+
+<div class="app-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-box">
+        <img th:src="@{/img/image.png}" alt="Dakar Terminal" style="max-height:40px; width:150px;">
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <a th:href="@{/dashboard}" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+          <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+        </svg>
+        Dashboard
+      </a>
+      <a th:href="@{/menu}" class="nav-item active">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+        Menu
+      </a>
+      <a th:href="@{/facturation/gestion-validations}" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+        </svg>
+        Validations
+      </a>
+      <a th:href="@{/facturation/gestion-remises}" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20.59 13.41 11 23l-9-9V4h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="9" x2="7.01" y2="9"/>
+        </svg>
+        Remises
+      </a>
+    </nav>
+    <div class="sidebar-user">
+      <div class="user-row">
+        <div class="user-avatar-sm"
+             th:text="${#strings.toUpperCase(#strings.substring(loggedUser.username, 0, 1))}">A</div>
+        <span class="user-display-name" th:text="${loggedUser.username}">Admin</span>
+        <form th:action="@{/logout}" method="post" style="margin:0">
+          <button type="submit" class="logout-btn" title="Se deconnecter">&#x2192;</button>
+        </form>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-content" style="padding:0;">
+
+    <div class="subpage-topbar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20.59 13.41 11 23l-9-9V4h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="9" x2="7.01" y2="9"/>
+      </svg>
+      Gestion Remises
+    </div>
+
+    <div style="padding:32px 36px;">
+
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:24px; font-size:13px; color:#64748b;">
+        <a th:href="@{/menu}" style="color:#6366f1; text-decoration:none; font-weight:500;">Menu</a>
+        <span>&#8250;</span>
+        <a th:href="@{/menu}" style="color:#6366f1; text-decoration:none; font-weight:500;">Menu DT</a>
+        <span>&#8250;</span>
+        <a th:href="@{/menu/facturation}" style="color:#6366f1; text-decoration:none; font-weight:500;">Facturation</a>
+        <span>&#8250;</span>
+        <span>Gestion Remises</span>
+      </div>
+
+      <div class="page-header-card">
+        <div class="page-badge"><span class="page-badge-dot"></span> Facturation</div>
+        <h1 class="page-title" style="font-size:26px; margin-bottom:4px;">Gestion des Remises</h1>
+        <p class="page-subtitle">Traitez les demandes de remise selon votre niveau d'habilitation</p>
+      </div>
+
+      <div th:if="${successMsg}" class="alert-success" th:text="${successMsg}"></div>
+
+      <div class="inner-card">
+        <div class="section-header">
+          <h2 class="section-title">Demandes de remise</h2>
+          <span th:text="${#lists.size(demandes)} + ' demande(s)'" style="font-size:13px;color:#64748b;"></span>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Nom</th>
+                <th>Prenom</th>
+                <th>Email</th>
+                <th>N° BL</th>
+                <th>Maison de transit</th>
+                <th>%</th>
+                <th>Statut</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:if="${#lists.isEmpty(demandes)}">
+                <td colspan="10" style="text-align:center;color:#94a3b8;padding:32px;">Aucune demande pour le moment.</td>
+              </tr>
+              <tr th:each="d : ${demandes}">
+                <td th:text="${d.id}"></td>
+                <td th:text="${d.nom}"></td>
+                <td th:text="${d.prenom}"></td>
+                <td th:text="${d.email}"></td>
+                <td style="font-weight:700;" th:text="${d.bl}"></td>
+                <td th:text="${d.maison}"></td>
+                <td th:text="${d.pourcentage != null ? d.pourcentage + '%' : '-'}"></td>
+                <td>
+                  <span th:if="${d.statut == 'EN_ATTENTE'}" class="badge badge-yellow">EN ATTENTE</span>
+                  <span th:if="${d.statut == 'EN_ATTENTE_DIRECTION'}" class="badge badge-orange">ATT. DIRECTION</span>
+                  <span th:if="${d.statut == 'VALIDE'}" class="badge badge-green">VALIDE</span>
+                  <span th:if="${d.statut == 'REJETE'}" class="badge badge-red">REJETE</span>
+                  <span th:if="${d.statut != 'EN_ATTENTE' and d.statut != 'EN_ATTENTE_DIRECTION' and d.statut != 'VALIDE' and d.statut != 'REJETE'}"
+                        class="badge badge-gray" th:text="${d.statut}"></span>
+                </td>
+                <td th:text="${#temporals.format(d.createdAt, 'dd/MM/yyyy HH:mm')}"></td>
+                <td>
+                  <div th:if="${d.statut == 'EN_ATTENTE' or d.statut == 'EN_ATTENTE_DIRECTION'}" class="row-actions">
+                    <!-- Formulaire valider (facturation → EN_ATTENTE_DIRECTION, direction → VALIDE) -->
+                    <form th:action="@{/facturation/gestion-remises/{id}/valider(id=${d.id})}"
+                          method="post" th:id="'form-valider-' + ${d.id}">
+                      <input type="hidden" name="pourcentage" th:id="'pct-' + ${d.id}" value="">
+                    </form>
+                    <button type="button" class="btn-valider"
+                            th:onclick="'gererValidation(' + ${d.id} + ')'">Valider</button>
+                    <!-- Rejeter -->
+                    <button type="button" class="btn-rejeter"
+                            th:onclick="'ouvrirModalRejet(' + ${d.id} + ')'">Rejeter</button>
+                  </div>
+                  <div th:if="${d.statut == 'REJETE'}" style="font-size:12px;color:#94a3b8;" th:text="${d.motifRejet}"></div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- Modal Pourcentage (direction) -->
+<div class="modal-overlay" id="modalPourcentage">
+  <div class="modal-box">
+    <p class="modal-title">Valider la remise</p>
+    <p class="modal-desc">Saisissez le pourcentage de remise a accorder.</p>
+    <label>Pourcentage (%)</label>
+    <input type="number" id="inputPourcentage" min="0" max="100" step="0.01" placeholder="Ex : 10.00">
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" onclick="fermerModals()">Annuler</button>
+      <button type="button" class="btn-confirm" onclick="confirmerDirection()">Valider</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Rejet -->
+<div class="modal-overlay" id="modalRejet">
+  <div class="modal-box">
+    <p class="modal-title">Motif de rejet</p>
+    <p class="modal-desc">Selectionnez le motif de rejet pour cette demande.</p>
+    <form id="formRejet" method="post">
+      <label>Motif</label>
+      <select name="motif" required>
+        <option value="">-- Choisir un motif --</option>
+        <option value="Dossier incomplet">Dossier incomplet</option>
+        <option value="Dossier deja traite">Dossier deja traite</option>
+        <option value="Dossier en cours de traitement merci de patienter">Dossier en cours de traitement merci de patienter</option>
+        <option value="Le montant de la facture d'acconnage inferieur au seuil requis">Le montant de la facture d'acconnage inferieur au seuil requis</option>
+      </select>
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" onclick="fermerModals()">Annuler</button>
+        <button type="submit" class="btn-confirm-red">Confirmer le rejet</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  const isDirection = document.getElementById('isDirectionFlag').dataset.direction === 'true';
+  let currentId = null;
+
+  function gererValidation(id) {
+    currentId = id;
+    if (isDirection) {
+      // Modal pourcentage
+      document.getElementById('inputPourcentage').value = '';
+      document.getElementById('modalPourcentage').classList.add('open');
+    } else {
+      // SweetAlert confirm → EN_ATTENTE_DIRECTION
+      Swal.fire({
+        title: 'Transmettre a la direction ?',
+        text: 'Le statut passera a EN ATTENTE DIRECTION.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#16a34a',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'Oui, transmettre',
+        cancelButtonText: 'Annuler'
+      }).then(result => {
+        if (result.isConfirmed) {
+          document.getElementById('form-valider-' + id).submit();
+        }
+      });
+    }
+  }
+
+  function confirmerDirection() {
+    const pct = document.getElementById('inputPourcentage').value;
+    if (!pct || isNaN(pct) || pct < 0 || pct > 100) {
+      Swal.fire('Erreur', 'Veuillez saisir un pourcentage valide (0-100).', 'error');
+      return;
+    }
+    document.getElementById('pct-' + currentId).value = pct;
+    fermerModals();
+    document.getElementById('form-valider-' + currentId).submit();
+  }
+
+  function ouvrirModalRejet(id) {
+    const baseUrl = /*[[@{/facturation/gestion-remises}]]*/ '/facturation/gestion-remises';
+    document.getElementById('formRejet').action = baseUrl + '/' + id + '/rejeter';
+    document.getElementById('modalRejet').classList.add('open');
+  }
+
+  function fermerModals() {
+    document.getElementById('modalPourcentage').classList.remove('open');
+    document.getElementById('modalRejet').classList.remove('open');
+  }
+
+  document.querySelectorAll('.modal-overlay').forEach(m => {
+    m.addEventListener('click', e => { if (e.target === m) fermerModals(); });
+  });
+</script>
+</body>
+</html>

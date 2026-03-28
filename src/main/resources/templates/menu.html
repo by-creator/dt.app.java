@@ -27,7 +27,7 @@
         </svg>
         Dashboard
       </a>
-      <a th:href="@{/menu}" class="nav-item active">
+      <a th:href="${isFacturation != null and isFacturation ? '/menu/facturation' : '/menu'}" class="nav-item active">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/>
           <line x1="3" y1="18" x2="21" y2="18"/>
@@ -71,7 +71,7 @@
         <div class="page-badge"><span class="page-badge-dot"></span> NAVIGATION RAPIDE</div>
         <h1 class="page-title" style="font-size:26px; margin-bottom:4px;">Menu Facturation</h1>
         <p class="page-subtitle">Retrouvez les principaux acces du module Facturation.</p>
-        <div style="margin-top:14px;">
+        <div th:if="${!isFacturation}" style="margin-top:14px;">
           <a th:href="@{/menu/dt}" style="color:#a5b4fc; text-decoration:none; font-weight:600;">&#8592; Retour au menu principal</a>
         </div>
       </div>
@@ -321,7 +321,7 @@
         <div class="module-link">Ouvrir <span>&#x2197;</span></div>
       </a>
 
-      <a th:href="@{/menu/facturation/gfa/admin}" class="module-card" data-name="gfa admin">
+      <a th:if="${!isFacturation}" th:href="@{/menu/facturation/gfa/admin}" class="module-card" data-name="gfa admin">
         <div class="module-icon">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="4" width="18" height="6" rx="2"/><rect x="3" y="14" width="18" height="6" rx="2"/><path d="M7 7h.01"/><path d="M7 17h.01"/>

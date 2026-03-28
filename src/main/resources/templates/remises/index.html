@@ -7,6 +7,39 @@
   <th:block th:replace="~{fragments/pwa-head :: pwaMeta}"></th:block>
   <script th:src="@{/js/theme.js}"></script>
   <link rel="stylesheet" th:href="@{/css/style.css}">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    .btn-valider { padding: 5px 13px; border: none; border-radius: 8px; background: #dcfce7; color: #16a34a; font-weight: 700; font-size: 12px; cursor: pointer; }
+    .btn-rejeter { padding: 5px 13px; border: none; border-radius: 8px; background: #fee2e2; color: #dc2626; font-weight: 700; font-size: 12px; cursor: pointer; }
+    .row-actions { display: flex; gap: 7px; }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+    .badge-green  { background: #dcfce7; color: #16a34a; }
+    .badge-yellow { background: #fef9c3; color: #92400e; }
+    .badge-orange { background: #ffedd5; color: #c2410c; }
+    .badge-red    { background: #fee2e2; color: #dc2626; }
+    .badge-gray   { background: #f1f5f9; color: #64748b; }
+    .alert-flash  { background: #dcfce7; border: 1px solid #86efac; color: #166534; border-radius: 10px; padding: 12px 16px; margin-bottom: 18px; font-weight: 600; font-size: 14px; }
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.5); z-index: 1000; align-items: center; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal-box { background: white; border-radius: 18px; padding: 32px; width: 100%; max-width: 440px; box-shadow: 0 24px 60px rgba(15,23,42,0.18); }
+    .modal-box h3 { margin: 0 0 6px; font-size: 17px; font-weight: 800; color: #0f172a; }
+    .modal-box p { margin: 0 0 20px; font-size: 13px; color: #64748b; }
+    .modal-box label { display: block; font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 6px; }
+    .modal-box select, .modal-box input[type="number"] { width: 100%; height: 44px; border-radius: 10px; border: 1px solid #d9e2ef; padding: 0 14px; font-size: 14px; margin-bottom: 20px; background: white; color: #0f172a; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+    .btn-cancel   { padding: 10px 18px; border: none; border-radius: 10px; background: #f1f5f9; color: #334155; font-weight: 700; font-size: 13px; cursor: pointer; }
+    .btn-confirm  { padding: 10px 18px; border: none; border-radius: 10px; background: #16a34a; color: white; font-weight: 700; font-size: 13px; cursor: pointer; }
+    .btn-confirm-red { padding: 10px 18px; border: none; border-radius: 10px; background: #dc2626; color: white; font-weight: 700; font-size: 13px; cursor: pointer; }
+    @media (prefers-color-scheme: dark) {
+      .modal-box { background: #1e293b; box-shadow: 0 24px 60px rgba(0,0,0,0.4); }
+      .modal-box h3 { color: #e2e8f0; }
+      .modal-box p { color: #94a3b8; }
+      .modal-box label { color: #94a3b8; }
+      .modal-box select, .modal-box input[type="number"] { background: #0f172a; border-color: rgba(148,163,184,0.2); color: #e2e8f0; }
+      .btn-cancel { background: #334155; color: #cbd5e1; }
+      .alert-flash { background: #14532d; border-color: #166534; color: #4ade80; }
+    }
+  </style>
 </head>
 <body>
 
@@ -25,7 +58,7 @@
         </svg>
         Dashboard
       </a>
-      <a th:href="@{/menu}" class="nav-item active">
+      <a th:href="@{${sidebarMenuUrl}}" class="nav-item active">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/>
           <line x1="3" y1="18" x2="21" y2="18"/>
@@ -61,10 +94,12 @@
 
     <div style="padding: 32px 36px;">
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:24px; font-size:13px; color:#64748b;">
-        <a th:href="@{/menu}" style="color:#6366f1; text-decoration:none; font-weight:500;">Menu</a>
-        <span>&#8250;</span>
-        <a th:href="@{/menu/dt}" style="color:#6366f1; text-decoration:none; font-weight:500;">Menu DT</a>
-        <span>&#8250;</span>
+        <th:block th:if="${isAdmin}">
+          <a th:href="@{/menu}" style="color:#6366f1; text-decoration:none; font-weight:500;">Menu</a>
+          <span>&#8250;</span>
+          <a th:href="@{/menu/dt}" style="color:#6366f1; text-decoration:none; font-weight:500;">Menu DT</a>
+          <span>&#8250;</span>
+        </th:block>
         <a th:href="@{${parentMenuPath}}" style="color:#6366f1; text-decoration:none; font-weight:500;" th:text="${sectionLabel}">Direction</a>
         <span>&#8250;</span>
         <span class="topbar-title">Gestion des remises</span>
@@ -83,6 +118,11 @@
         </div>
       </div>
 
+      <!-- flag direction pour JS -->
+      <div id="dirFlag" th:data-direction="${isDirection}" style="display:none"></div>
+
+      <div th:if="${successMsg}" class="alert-flash" th:text="${successMsg}"></div>
+
       <div class="page-section-card" style="padding:0; overflow:hidden;">
         <table class="data-table">
           <thead>
@@ -93,15 +133,44 @@
             <th>Email</th>
             <th>Ndeg BL</th>
             <th>Maison de transit</th>
+            <th>%</th>
             <th>Statut</th>
-            <th>Motif rejet / %</th>
+            <th>Motif / info</th>
             <th>Actions</th>
           </tr>
           </thead>
           <tbody>
-          <tr>
-            <td colspan="9" style="text-align:center; color:#94a3b8; padding:32px;">
+          <tr th:if="${#lists.isEmpty(demandes)}">
+            <td colspan="10" style="text-align:center; color:#94a3b8; padding:32px;">
               Aucune remise disponible pour le moment.
+            </td>
+          </tr>
+          <tr th:each="d : ${demandes}">
+            <td th:text="${#temporals.format(d.createdAt, 'dd/MM/yyyy HH:mm')}"></td>
+            <td th:text="${d.nom}"></td>
+            <td th:text="${d.prenom}"></td>
+            <td th:text="${d.email}"></td>
+            <td style="font-weight:700;" th:text="${d.bl}"></td>
+            <td th:text="${d.maison}"></td>
+            <td th:text="${d.pourcentage != null ? d.pourcentage + '%' : '-'}"></td>
+            <td>
+              <span th:if="${d.statut == 'EN_ATTENTE'}" class="badge badge-yellow">EN ATTENTE</span>
+              <span th:if="${d.statut == 'EN_ATTENTE_DIRECTION'}" class="badge badge-orange">ATT. DIRECTION</span>
+              <span th:if="${d.statut == 'VALIDE'}" class="badge badge-green">VALIDE</span>
+              <span th:if="${d.statut == 'REJETE'}" class="badge badge-red">REJETE</span>
+              <span th:if="${d.statut != 'EN_ATTENTE' and d.statut != 'EN_ATTENTE_DIRECTION' and d.statut != 'VALIDE' and d.statut != 'REJETE'}" class="badge badge-gray" th:text="${d.statut}"></span>
+            </td>
+            <td style="font-size:12px; color:#94a3b8;" th:text="${d.motifRejet != null ? d.motifRejet : '-'}"></td>
+            <td>
+              <div th:if="${d.statut == 'EN_ATTENTE' or d.statut == 'EN_ATTENTE_DIRECTION'}" class="row-actions">
+                <!-- form valider -->
+                <form th:action="@{/menu/gestion-remises/{id}/valider(id=${d.id})}" method="post" th:id="'fv-' + ${d.id}">
+                  <input type="hidden" name="returnTo" th:value="${currentPagePath}">
+                  <input type="hidden" name="pourcentage" th:id="'pct-' + ${d.id}" value="">
+                </form>
+                <button type="button" class="btn-valider" th:onclick="'gererVal(' + ${d.id} + ')'">Valider</button>
+                <button type="button" class="btn-rejeter" th:onclick="'openRejet(' + ${d.id} + ')'">Rejeter</button>
+              </div>
             </td>
           </tr>
           </tbody>
@@ -111,5 +180,98 @@
   </main>
 </div>
 
+<!-- Modal pourcentage (direction) -->
+<div class="modal-overlay" id="modalPct">
+  <div class="modal-box">
+    <h3>Valider la remise</h3>
+    <p>Saisissez le pourcentage de remise a accorder.</p>
+    <label>Pourcentage (%)</label>
+    <input type="number" id="inputPct" min="0" max="100" step="0.01" placeholder="Ex : 10.00">
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" onclick="closeModals()">Annuler</button>
+      <button type="button" class="btn-confirm" onclick="confirmDirection()">Valider</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal rejet -->
+<div class="modal-overlay" id="modalRejet">
+  <div class="modal-box">
+    <h3>Motif de rejet</h3>
+    <p>Selectionnez le motif de rejet pour cette demande.</p>
+    <form id="formRejet" method="post">
+      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+      <input type="hidden" name="returnTo" th:value="${currentPagePath}">
+      <label>Motif</label>
+      <select name="motif" required>
+        <option value="">-- Choisir un motif --</option>
+        <option value="Dossier incomplet">Dossier incomplet</option>
+        <option value="Dossier deja traite">Dossier deja traite</option>
+        <option value="Dossier en cours de traitement merci de patienter">Dossier en cours de traitement merci de patienter</option>
+        <option value="Le montant de la facture d'acconnage inferieur au seuil requis">Le montant de la facture d'acconnage inferieur au seuil requis</option>
+      </select>
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" onclick="closeModals()">Annuler</button>
+        <button type="submit" class="btn-confirm-red">Confirmer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  const isDir = document.getElementById('dirFlag').dataset.direction === 'true';
+  let curId = null;
+
+  const darkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const mySwal = Swal.mixin({
+    background: darkMode ? '#1e293b' : '#ffffff',
+    color:      darkMode ? '#e2e8f0' : '#0f172a',
+    customClass: { popup: darkMode ? 'swal-dark' : '' }
+  });
+
+  function gererVal(id) {
+    curId = id;
+    if (isDir) {
+      document.getElementById('inputPct').value = '';
+      document.getElementById('modalPct').classList.add('open');
+    } else {
+      mySwal.fire({
+        title: 'Transmettre a la direction ?',
+        text: 'Le statut passera a EN ATTENTE DIRECTION.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#16a34a',
+        cancelButtonColor: darkMode ? '#475569' : '#64748b',
+        confirmButtonText: 'Oui, transmettre',
+        cancelButtonText: 'Annuler'
+      }).then(r => { if (r.isConfirmed) document.getElementById('fv-' + id).submit(); });
+    }
+  }
+
+  function confirmDirection() {
+    const pct = document.getElementById('inputPct').value;
+    if (!pct || isNaN(pct) || pct < 0 || pct > 100) {
+      mySwal.fire('Erreur', 'Veuillez saisir un pourcentage valide (0-100).', 'error');
+      return;
+    }
+    document.getElementById('pct-' + curId).value = pct;
+    closeModals();
+    document.getElementById('fv-' + curId).submit();
+  }
+
+  function openRejet(id) {
+    document.getElementById('formRejet').action = '/menu/gestion-remises/' + id + '/rejeter';
+    document.getElementById('modalRejet').classList.add('open');
+  }
+
+  function closeModals() {
+    document.getElementById('modalPct').classList.remove('open');
+    document.getElementById('modalRejet').classList.remove('open');
+  }
+
+  document.querySelectorAll('.modal-overlay').forEach(m => {
+    m.addEventListener('click', e => { if (e.target === m) closeModals(); });
+  });
+</script>
 </body>
 </html>

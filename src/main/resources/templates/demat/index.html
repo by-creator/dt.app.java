@@ -64,10 +64,10 @@
 
     .grid {
       width: 100%;
-      max-width: 860px;
+      max-width: 620px;
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 28px;
+      gap: 20px;
     }
 
     .card {
@@ -135,6 +135,23 @@
       .grid {
         grid-template-columns: 1fr;
       }
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body { background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%); color: #e2e8f0; color-scheme: dark; }
+      .frame { background: rgba(15, 23, 42, 0.97); border-color: rgba(148,163,184,0.12); }
+      .hero { background: #1e293b; border-bottom-color: rgba(148,163,184,0.12); }
+      .hero h1 { color: #e2e8f0; }
+      .hero p { color: #94a3b8; }
+      .card { background: #1e293b; border-color: rgba(148,163,184,0.14); color: #e2e8f0; }
+      .card:hover { box-shadow: 0 24px 44px rgba(0,0,0,0.35); }
+      .card h2 { color: #60a5fa; }
+      .card p { color: #cbd5e1; }
+      .green  { background: #14532d; color: #4ade80; }
+      .orange { background: #7c2d12; color: #fb923c; }
+      .blue   { background: #1e3a8a; color: #60a5fa; }
+      .red    { background: #7f1d1d; color: #f87171; }
+      .violet { background: #4c1d95; color: #a78bfa; }
     }
   </style>
 </head>

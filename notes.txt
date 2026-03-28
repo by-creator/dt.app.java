@@ -1,11 +1,8 @@
-Commandes
+Je souhaite que tu procèdes par étape si le user connecté a pour authoritie ROLE_FACTURATION :
 
-mvn clean install
+1- Partout où on doit cliquer pour Menu  même si on se trouve 
+dans /parametres sur la sidebar le lien Menu doit rediriger vers /menu/facturation
 
-mvn spring-boot:run
+2- Ne pas avoir ← Retour au menu principal
 
-git add . && git commit -m "update" && git push -u origin main
-
-Je souhaite que lorsque l'on clique sur gfa admin que l'on arrive sur un écran composé d'un wizard avec ces onglets : 
-
-Vue globale - Services - Guichets - Agents - Tickets - Paramètres - Ecran
+3- Ne pas avoir la card Gfa Admin

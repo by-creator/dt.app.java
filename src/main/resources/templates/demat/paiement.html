@@ -93,6 +93,15 @@
         grid-template-columns: 1fr;
       }
     }
+
+    @media (prefers-color-scheme: dark) {
+      body { background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%); color: #e2e8f0; color-scheme: dark; }
+      .frame { background: rgba(15, 23, 42, 0.97); border-color: rgba(148,163,184,0.12); }
+      .subtitle { color: #94a3b8; }
+      .operator { background: #1e293b; border-color: rgba(148,163,184,0.15); }
+      .operator:hover { box-shadow: 0 16px 36px rgba(0,0,0,0.4); }
+      .footer { color: #64748b; }
+    }
   </style>
 </head>
 <body>

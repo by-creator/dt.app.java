@@ -114,6 +114,19 @@
       color: #64748b;
       font-size: 12px;
     }
+    .alert-success {
+      background: #dcfce7;
+      border: 1px solid #86efac;
+      color: #166534;
+      border-radius: 12px;
+      padding: 14px 18px;
+      margin-bottom: 20px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    @media (prefers-color-scheme: dark) {
+      .alert-success { background: #14532d; border-color: #166534; color: #4ade80; }
+    }
     @media (max-width: 640px) {
       .shell {
         padding: 16px;
@@ -121,6 +134,16 @@
       .page {
         padding: 20px 20px 32px;
       }
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body { background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%); color: #e2e8f0; color-scheme: dark; }
+      .frame { background: rgba(15, 23, 42, 0.97); border-color: rgba(148,163,184,0.12); }
+      .social { background: #1e293b; border-color: rgba(148,163,184,0.15); }
+      label { color: #94a3b8; }
+      input { background: #1e293b; border-color: rgba(148,163,184,0.2); color: #e2e8f0; }
+      input[type="file"] { background: #1e293b; }
+      .footer { color: #64748b; }
     }
   </style>
 </head>
@@ -131,40 +154,36 @@
     <a th:href="@{/demat}" class="back">&#8592; Retour</a>
     <h1>Formulaire de demande de validation</h1>
 
-    <div class="social">
-      <span class="f1">✉</span>
-      <span class="f2">⌘</span>
-      <span class="f3">G</span>
-      <span class="f4">➤</span>
-      <span class="f5">@</span>
+    <div th:if="${param.success}" class="alert-success">
+      &#10003; Votre demande de validation a ete envoyee avec succes. Vous serez contacte(e) sous peu.
     </div>
 
-    <form>
+    <form th:action="@{/demat/validation}" method="post" enctype="multipart/form-data">
       <label for="nom">Nom</label>
-      <input id="nom" type="text" placeholder="Votre nom">
+      <input id="nom" name="nom" type="text" placeholder="Votre nom" required>
 
       <label for="prenom">Prenom</label>
-      <input id="prenom" type="text" placeholder="Votre prenom">
+      <input id="prenom" name="prenom" type="text" placeholder="Votre prenom" required>
 
       <label for="email">Email</label>
-      <input id="email" type="email" placeholder="Votre email">
+      <input id="email" name="email" type="email" placeholder="Votre email" required>
 
       <label for="bl-number">Numero de BL</label>
-      <input id="bl-number" type="text" placeholder="Votre numero de BL">
+      <input id="bl-number" name="bl-number" type="text" placeholder="Votre numero de BL" required>
 
       <label for="maison-transit">Maison de transit</label>
-      <input id="maison-transit" type="text" placeholder="Votre maison de transit">
+      <input id="maison-transit" name="maison-transit" type="text" placeholder="Votre maison de transit">
 
       <label for="bl-file">BL</label>
-      <input id="bl-file" type="file">
+      <input id="bl-file" name="bl-file" type="file">
 
       <label for="bad-shipping">Bad shipping</label>
-      <input id="bad-shipping" type="file">
+      <input id="bad-shipping" name="bad-shipping" type="file">
 
       <label for="declaration">Declaration</label>
-      <input id="declaration" type="file">
+      <input id="declaration" name="declaration" type="file">
 
-      <button type="button" class="submit">ENVOYER LA DEMANDE DE VALIDATION</button>
+      <button type="submit" class="submit">ENVOYER LA DEMANDE DE VALIDATION</button>
     </form>
 
     <div class="footer">© 2026 DakarTerminal. Tous droits reserves.</div>

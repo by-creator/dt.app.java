@@ -1,8 +1,10 @@
 package com.dtapp.controller;
 
 import com.dtapp.entity.Authority;
+import com.dtapp.entity.AuthorityDefinition;
 import com.dtapp.entity.Compagnie;
 import com.dtapp.entity.User;
+import com.dtapp.repository.AuthorityDefinitionRepository;
 import com.dtapp.repository.AuthorityRepository;
 import com.dtapp.repository.CompagnieRepository;
 import com.dtapp.repository.UserRepository;
@@ -24,16 +26,19 @@ public class AdminController {
     private final UserRepository userRepository;
     private final CompagnieRepository compagnieRepository;
     private final AuthorityRepository authorityRepository;
+    private final AuthorityDefinitionRepository authorityDefinitionRepository;
     private final PasswordEncoder passwordEncoder;
 
     public AdminController(UserRepository userRepository,
                            CompagnieRepository compagnieRepository,
                            AuthorityRepository authorityRepository,
+                           AuthorityDefinitionRepository authorityDefinitionRepository,
                            PasswordEncoder passwordEncoder) {
-        this.userRepository    = userRepository;
-        this.compagnieRepository = compagnieRepository;
-        this.authorityRepository = authorityRepository;
-        this.passwordEncoder   = passwordEncoder;
+        this.userRepository                 = userRepository;
+        this.compagnieRepository            = compagnieRepository;
+        this.authorityRepository            = authorityRepository;
+        this.authorityDefinitionRepository  = authorityDefinitionRepository;
+        this.passwordEncoder                = passwordEncoder;
     }
 
     // ===== INDEX =====
@@ -45,6 +50,7 @@ public class AdminController {
         model.addAttribute("users",      userRepository.findAllByOrderByCreatedAtDesc());
         model.addAttribute("compagnies", compagnieRepository.findAll(Sort.by("name")));
         model.addAttribute("authorities", authorityRepository.findAllWithUser());
+        model.addAttribute("authorityDefinitions", authorityDefinitionRepository.findAll(Sort.by("name")));
         model.addAttribute("tab", tab);
         return "admin/index";
     }
@@ -167,6 +173,33 @@ public class AdminController {
         return "redirect:/admin?tab=users";
     }
 
+    // ===== AUTHORITY DEFINITIONS =====
+
+    @PostMapping("/authority-definitions/create")
+    public String createAuthorityDefinition(@RequestParam String name, RedirectAttributes ra) {
+        String trimmed = name.trim().toUpperCase();
+        if (trimmed.isEmpty()) {
+            ra.addFlashAttribute("error", "Le nom de l'authority est requis.");
+            return "redirect:/admin?tab=authorities";
+        }
+        if (authorityDefinitionRepository.existsByName(trimmed)) {
+            ra.addFlashAttribute("error", "Cette authority existe déjà.");
+            return "redirect:/admin?tab=authorities";
+        }
+        AuthorityDefinition def = new AuthorityDefinition();
+        def.setName(trimmed);
+        authorityDefinitionRepository.save(def);
+        ra.addFlashAttribute("success", "Authority \"" + trimmed + "\" créée.");
+        return "redirect:/admin?tab=authorities";
+    }
+
+    @PostMapping("/authority-definitions/{id}/delete")
+    public String deleteAuthorityDefinition(@PathVariable Integer id, RedirectAttributes ra) {
+        authorityDefinitionRepository.deleteById(id);
+        ra.addFlashAttribute("success", "Authority supprimée.");
+        return "redirect:/admin?tab=authorities";
+    }
+
     // ===== AUTHORITIES =====
 
     @PostMapping("/authorities/create")
@@ -195,7 +228,7 @@ public class AdminController {
     @PostMapping("/authorities/{id}/delete")
     public String deleteAuthority(@PathVariable Integer id, RedirectAttributes ra) {
         authorityRepository.deleteById(id);
-        ra.addFlashAttribute("success", "Rôle supprimé.");
+        ra.addFlashAttribute("success", "Rôle retiré.");
         return "redirect:/admin?tab=authorities";
     }
 }

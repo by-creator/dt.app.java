@@ -3,6 +3,7 @@ package com.dtapp.controller;
 import com.dtapp.entity.User;
 import com.dtapp.repository.UserRepository;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -11,6 +12,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/parametres")
@@ -27,8 +31,21 @@ public class ParametresController {
 
     @GetMapping
     public String parametres(Model model, Authentication auth) {
+        Set<String> roles = auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority).collect(Collectors.toSet());
         model.addAttribute("loggedUser", loggedUser(auth));
+        model.addAttribute("menuUrl", resolveMenuUrl(roles));
         return "parametres";
+    }
+
+    private String resolveMenuUrl(Set<String> roles) {
+        if (roles.contains("ROLE_ADMIN"))                  return "/menu";
+        if (roles.contains("ROLE_FACTURATION"))            return "/menu/facturation";
+        if (roles.contains("ROLE_DIRECTION_GENERALE"))     return "/menu/direction-generale";
+        if (roles.contains("ROLE_DIRECTION_FINANCIERE"))   return "/menu/direction-financiere";
+        if (roles.contains("ROLE_DIRECTION_EXPLOITATION")) return "/menu/direction-exploitation";
+        if (roles.contains("ROLE_PLANIFICATION"))          return "/menu/planification";
+        return "/menu";
     }
 
     @PostMapping("/profil")
