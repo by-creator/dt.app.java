@@ -155,11 +155,7 @@
                 <label for="uRole" class="form-label">RÔLE INITIAL</label>
                 <select id="uRole" name="role" class="form-input">
                   <option value="">— Aucun —</option>
-                  <option value="ROLE_ADMIN">ROLE_ADMIN</option>
-                  <option value="ROLE_USER">ROLE_USER</option>
-                  <option value="ROLE_DOUANE">ROLE_DOUANE</option>
-                  <option value="ROLE_COMPAGNIE">ROLE_COMPAGNIE</option>
-                  <option value="ROLE_AGENT">ROLE_AGENT</option>
+                  <option th:each="ad : ${authorityDefinitions}" th:value="${ad.name}" th:text="${ad.name}">—</option>
                 </select>
               </div>
             </div>
