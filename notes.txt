@@ -1,8 +1,22 @@
-Je souhaite que tu procèdes par étape si le user connecté a pour authoritie ROLE_FACTURATION :
+Le changement ci-dessous concerne uniquement les users avec l'authority ROLE_FACTURATION
+    Menu
+    ›
+    Menu DT
+    ›
+    Facturation
+    ›
+    Gestion IES
 
-1- Partout où on doit cliquer pour Menu  même si on se trouve 
-dans /parametres sur la sidebar le lien Menu doit rediriger vers /menu/facturation
+    en 
 
-2- Ne pas avoir ← Retour au menu principal
-
-3- Ne pas avoir la card Gfa Admin
+    Facturation
+    ›
+    Gestion IES
+Si c'est ROLE_ADMIN merci de laisser au niveau du breadcrumb
+Menu
+    ›
+    Menu DT
+    ›
+    Facturation
+    ›
+    Gestion IES

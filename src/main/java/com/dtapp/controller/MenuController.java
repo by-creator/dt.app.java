@@ -1,10 +1,17 @@
 package com.dtapp.controller;
 
 import com.dtapp.entity.RattachementBl;
+import com.dtapp.entity.SatisfactionReponse;
 import com.dtapp.entity.User;
+import com.dtapp.repository.GfaGuichetRepository;
 import com.dtapp.repository.RattachementBlRepository;
+import com.dtapp.repository.SatisfactionReponseRepository;
 import com.dtapp.repository.UserRepository;
 import com.dtapp.service.EmailService;
+import jakarta.servlet.http.HttpServletResponse;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Controller;
@@ -15,12 +22,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Controller
@@ -28,13 +35,19 @@ public class MenuController {
 
     private final UserRepository userRepository;
     private final RattachementBlRepository rattachementBlRepository;
+    private final SatisfactionReponseRepository satisfactionReponseRepository;
+    private final GfaGuichetRepository gfaGuichetRepository;
     private final EmailService emailService;
 
     public MenuController(UserRepository userRepository,
                           RattachementBlRepository rattachementBlRepository,
+                          SatisfactionReponseRepository satisfactionReponseRepository,
+                          GfaGuichetRepository gfaGuichetRepository,
                           EmailService emailService) {
         this.userRepository = userRepository;
         this.rattachementBlRepository = rattachementBlRepository;
+        this.satisfactionReponseRepository = satisfactionReponseRepository;
+        this.gfaGuichetRepository = gfaGuichetRepository;
         this.emailService = emailService;
     }
 
@@ -70,6 +83,7 @@ public class MenuController {
     public String facturationGuichetGfa(Model model, Authentication auth) {
         User loggedUser = userRepository.findByEmail(auth.getName()).orElseThrow();
         model.addAttribute("loggedUser", loggedUser);
+        model.addAttribute("guichets", gfaGuichetRepository.findAllByActifTrueOrderByNumeroAsc());
         return "facturation/guichet-gfa";
     }
 
@@ -144,8 +158,11 @@ public class MenuController {
                                        Model model,
                                        Authentication auth) {
         User loggedUser = userRepository.findByEmail(auth.getName()).orElseThrow();
+        Set<String> roles = auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority).collect(Collectors.toSet());
         model.addAttribute("loggedUser", loggedUser);
         model.addAttribute("activeTab", normalizeIesTab(tab));
+        model.addAttribute("isAdmin", roles.contains("ROLE_ADMIN"));
         return "facturation/ies";
     }
 
@@ -232,8 +249,9 @@ public class MenuController {
     @PostMapping("/menu/facturation/ies/lien-acces")
     public String sendIesAccessLink(@RequestParam String email,
                                     RedirectAttributes redirectAttributes) {
+        emailService.sendIesAccessLink(email.trim());
         redirectAttributes.addFlashAttribute("success",
-                "Lien d'acces prepare pour " + email.trim() + ".");
+                "Lien d'acces envoye a " + email.trim() + ".");
         return "redirect:/menu/facturation/ies?tab=lien-acces";
     }
 
@@ -241,8 +259,9 @@ public class MenuController {
     public String createIesAccount(@RequestParam String email,
                                    @RequestParam String password,
                                    RedirectAttributes redirectAttributes) {
+        emailService.sendIesCreationCompte(email.trim(), password);
         redirectAttributes.addFlashAttribute("success",
-                "Creation de compte preparee pour " + email.trim() + ".");
+                "Email de creation de compte envoye a " + email.trim() + ".");
         return "redirect:/menu/facturation/ies?tab=creation-compte";
     }
 
@@ -250,8 +269,9 @@ public class MenuController {
     public String resetIesAccount(@RequestParam String email,
                                   @RequestParam String password,
                                   RedirectAttributes redirectAttributes) {
+        emailService.sendIesReinitialisationCompte(email.trim(), password);
         redirectAttributes.addFlashAttribute("success",
-                "Reinitialisation de compte preparee pour " + email.trim() + ".");
+                "Email de reinitialisation envoye a " + email.trim() + ".");
         return "redirect:/menu/facturation/ies?tab=reinitialisation-compte";
     }
 
@@ -295,6 +315,177 @@ public class MenuController {
         return Math.min(step, 4);
     }
 
+    @GetMapping("/menu/dt/repas")
+    public String repasPage(Model model, Authentication auth) {
+        User loggedUser = userRepository.findByEmail(auth.getName()).orElseThrow();
+        model.addAttribute("loggedUser", loggedUser);
+        return "repas";
+    }
+
+    @PostMapping("/menu/dt/repas")
+    public String sendRepas(@RequestParam String plat1,
+                            @RequestParam String plat2,
+                            RedirectAttributes redirectAttributes) {
+        emailService.sendRepasMenu(plat1.trim(), plat2.trim());
+        redirectAttributes.addFlashAttribute("success", "Menu du jour envoye avec succes.");
+        return "redirect:/menu/dt/repas";
+    }
+
+    @GetMapping("/menu/dt/satisfaction")
+    public String satisfactionDashboard(Model model, Authentication auth) {
+        User loggedUser = userRepository.findByEmail(auth.getName()).orElseThrow();
+        List<SatisfactionReponse> reponses = satisfactionReponseRepository
+                .findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
+        int total = reponses.size();
+
+        model.addAttribute("loggedUser", loggedUser);
+        model.addAttribute("currentDate", formatDate());
+        model.addAttribute("reponses", reponses);
+        model.addAttribute("total", total);
+
+        // ── Général ────────────────────────────────────────────────────────
+        model.addAttribute("distVolume",     dist(reponses, SatisfactionReponse::getVolume));
+        model.addAttribute("distAnciennete", dist(reponses, SatisfactionReponse::getAnciennete));
+
+        // ── Facturation ────────────────────────────────────────────────────
+        model.addAttribute("distDelaisFacturation",         dist(reponses, SatisfactionReponse::getDelaisFacturation));
+        model.addAttribute("distNotifications",             dist(reponses, SatisfactionReponse::getNotifications));
+        model.addAttribute("distReactiviteFacture",         dist(reponses, SatisfactionReponse::getReactiviteFacture));
+        model.addAttribute("distUsagePlateforme",           dist(reponses, SatisfactionReponse::getUsagePlateforme));
+        model.addAttribute("distFacilitePlateforme",        dist(reponses, SatisfactionReponse::getFacilitePlateforme));
+        model.addAttribute("distFonctionnalitesPlateforme", dist(reponses, SatisfactionReponse::getFonctionnalitesPlateforme));
+        model.addAttribute("distBugsPlateforme",            dist(reponses, SatisfactionReponse::getBugsPlateforme));
+        model.addAttribute("distAssistancePlateforme",      dist(reponses, SatisfactionReponse::getAssistancePlateforme));
+
+        // ── BAE ────────────────────────────────────────────────────────────
+        model.addAttribute("distDelaisBae",      dist(reponses, SatisfactionReponse::getDelaisBae));
+        model.addAttribute("distSuggestionsBae", dist(reponses, SatisfactionReponse::getSuggestionsBae));
+
+        // ── Accueil ────────────────────────────────────────────────────────
+        model.addAttribute("distAccueilLocaux",     dist(reponses, SatisfactionReponse::getAccueilLocaux));
+        model.addAttribute("distPersonnelAccueil",  dist(reponses, SatisfactionReponse::getPersonnelAccueil));
+        model.addAttribute("distInfrastructures",   dist(reponses, SatisfactionReponse::getInfrastructures));
+
+        // ── Livraison ──────────────────────────────────────────────────────
+        model.addAttribute("distFluiditeLivraison",     dist(reponses, SatisfactionReponse::getFluiditeLivraison));
+        model.addAttribute("distHorairesLivraison",     dist(reponses, SatisfactionReponse::getHorairesLivraison));
+        model.addAttribute("distRetardsLivraison",      dist(reponses, SatisfactionReponse::getRetardsLivraison));
+        model.addAttribute("distCoordinationLivraison", dist(reponses, SatisfactionReponse::getCoordinationLivraison));
+
+        // ── Communication ──────────────────────────────────────────────────
+        model.addAttribute("distCommunicationProactive", dist(reponses, SatisfactionReponse::getCommunicationProactive));
+        model.addAttribute("distAlertes",                dist(reponses, SatisfactionReponse::getAlertes));
+
+        return "satisfaction-dashboard";
+    }
+
+    @GetMapping("/menu/dt/satisfaction/export")
+    public void satisfactionExport(HttpServletResponse response) throws IOException {
+        List<SatisfactionReponse> reponses = satisfactionReponseRepository
+                .findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setHeader("Content-Disposition", "attachment; filename=\"satisfaction.xlsx\"");
+
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
+            Sheet sheet = wb.createSheet("Réponses");
+
+            // Header style
+            CellStyle headerStyle = wb.createCellStyle();
+            Font headerFont = wb.createFont();
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+            headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+            String[] headers = {
+                "ID","Date","Nom","Téléphone","Email","Volume","Ancienneté",
+                "Délais facturation","Notifications","Réactivité facture",
+                "Usage plateforme","Usage plateforme (détail)","Facilité plateforme",
+                "Fonctionnalités plateforme","Fonctionnalités plateforme (détail)",
+                "Bugs plateforme","Bugs plateforme (détail)","Assistance plateforme",
+                "Suggestions facturation",
+                "Délais BAE","Suggestions BAE","Suggestions BAE (détail)",
+                "Accueil locaux","Personnel accueil","Infrastructures","Infrastructures (détail)",
+                "Fluidité livraison","Horaires livraison","Horaires livraison (détail)",
+                "Retards livraison","Retards livraison (détail)","Coordination livraison",
+                "Améliorations livraison",
+                "Communication proactive","Alertes","Suggestions communication",
+                "Recommandations générales"
+            };
+
+            Row headerRow = sheet.createRow(0);
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+                cell.setCellStyle(headerStyle);
+            }
+
+            int rowIdx = 1;
+            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+            for (SatisfactionReponse r : reponses) {
+                Row row = sheet.createRow(rowIdx++);
+                int c = 0;
+                row.createCell(c++).setCellValue(r.getId() != null ? r.getId() : 0);
+                row.createCell(c++).setCellValue(r.getCreatedAt() != null ? r.getCreatedAt().format(dtf) : "");
+                row.createCell(c++).setCellValue(val(r.getNom()));
+                row.createCell(c++).setCellValue(val(r.getTelephone()));
+                row.createCell(c++).setCellValue(val(r.getEmail()));
+                row.createCell(c++).setCellValue(val(r.getVolume()));
+                row.createCell(c++).setCellValue(val(r.getAnciennete()));
+                row.createCell(c++).setCellValue(val(r.getDelaisFacturation()));
+                row.createCell(c++).setCellValue(val(r.getNotifications()));
+                row.createCell(c++).setCellValue(val(r.getReactiviteFacture()));
+                row.createCell(c++).setCellValue(val(r.getUsagePlateforme()));
+                row.createCell(c++).setCellValue(val(r.getUsagePlateformeDetail()));
+                row.createCell(c++).setCellValue(val(r.getFacilitePlateforme()));
+                row.createCell(c++).setCellValue(val(r.getFonctionnalitesPlateforme()));
+                row.createCell(c++).setCellValue(val(r.getFonctionnalitesPlateformeDetail()));
+                row.createCell(c++).setCellValue(val(r.getBugsPlateforme()));
+                row.createCell(c++).setCellValue(val(r.getBugsPlateformeDetail()));
+                row.createCell(c++).setCellValue(val(r.getAssistancePlateforme()));
+                row.createCell(c++).setCellValue(val(r.getSuggestionsFacturation()));
+                row.createCell(c++).setCellValue(val(r.getDelaisBae()));
+                row.createCell(c++).setCellValue(val(r.getSuggestionsBae()));
+                row.createCell(c++).setCellValue(val(r.getSuggestionsBaeDetail()));
+                row.createCell(c++).setCellValue(val(r.getAccueilLocaux()));
+                row.createCell(c++).setCellValue(val(r.getPersonnelAccueil()));
+                row.createCell(c++).setCellValue(val(r.getInfrastructures()));
+                row.createCell(c++).setCellValue(val(r.getInfrastructuresDetail()));
+                row.createCell(c++).setCellValue(val(r.getFluiditeLivraison()));
+                row.createCell(c++).setCellValue(val(r.getHorairesLivraison()));
+                row.createCell(c++).setCellValue(val(r.getHorairesLivraisonDetail()));
+                row.createCell(c++).setCellValue(val(r.getRetardsLivraison()));
+                row.createCell(c++).setCellValue(val(r.getRetardsLivraisonDetail()));
+                row.createCell(c++).setCellValue(val(r.getCoordinationLivraison()));
+                row.createCell(c++).setCellValue(val(r.getAmeliorationsLivraison()));
+                row.createCell(c++).setCellValue(val(r.getCommunicationProactive()));
+                row.createCell(c++).setCellValue(val(r.getAlertes()));
+                row.createCell(c++).setCellValue(val(r.getSuggestionsCommunication()));
+                row.createCell(c).setCellValue(val(r.getRecommandationsGenerales()));
+            }
+
+            for (int i = 0; i < headers.length; i++) {
+                sheet.autoSizeColumn(i);
+            }
+
+            wb.write(response.getOutputStream());
+        }
+    }
+
+    private Map<String, Long> dist(List<SatisfactionReponse> list,
+                                   Function<SatisfactionReponse, String> getter) {
+        return list.stream()
+                .map(getter)
+                .filter(Objects::nonNull)
+                .filter(v -> !v.isBlank())
+                .collect(Collectors.groupingBy(v -> v, LinkedHashMap::new, Collectors.counting()));
+    }
+
+    private String val(String s) {
+        return s != null ? s : "";
+    }
+
     private String renderModuleDashboard(Model model, Authentication auth,
                                          String moduleTitle, String moduleName,
                                          String moduleSubtitle, String menuPath, String dashboardPath) {
@@ -317,8 +508,15 @@ public class MenuController {
 
     private String renderMenuView(String view, Model model, Authentication auth) {
         User loggedUser = userRepository.findByEmail(auth.getName()).orElseThrow();
+        Set<String> roles = auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toSet());
+        boolean hideMainMenuReturn = roles.contains("ROLE_DIRECTION_GENERALE")
+                || roles.contains("ROLE_DIRECTION_FINANCIERE")
+                || roles.contains("ROLE_DIRECTION_EXPLOITATION");
         model.addAttribute("loggedUser", loggedUser);
         model.addAttribute("menuView", view);
+        model.addAttribute("hideMainMenuReturn", hideMainMenuReturn);
         return "menu";
     }
 

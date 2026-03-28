@@ -819,6 +819,19 @@ body {
   box-shadow: 0 2px 12px rgba(99,102,241,0.06);
 }
 
+.module-dashboard-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 10px;
+}
+
+.module-dashboard-subtitle {
+  color: #64748b;
+  font-size: 14px;
+  margin: 0;
+}
+
 /* ===================== PAGE HEADER CARD ===================== */
 
 .page-header-card {
@@ -1061,10 +1074,12 @@ body {
 [data-theme="dark"] .panel-subtitle,
 [data-theme="dark"] .settings-card-subtitle,
 [data-theme="dark"] .blocage-card-subtitle,
-[data-theme="dark"] .module-desc        { color: #94a3b8; }
+[data-theme="dark"] .module-desc,
+[data-theme="dark"] .module-dashboard-subtitle { color: #94a3b8; }
 
 [data-theme="dark"] .module-card:hover  { box-shadow: 0 8px 28px rgba(0,0,0,0.4); border-color: #4f46e5; }
-[data-theme="dark"] .module-title       { color: #f1f5f9; }
+[data-theme="dark"] .module-title,
+[data-theme="dark"] .module-dashboard-title { color: #f1f5f9; }
 
 [data-theme="dark"] .form-input,
 [data-theme="dark"] .menu-search,

@@ -29,7 +29,7 @@ public class SecurityConfig {
             .authenticationProvider(authenticationProvider())
             .authorizeHttpRequests(authz -> authz
                 .requestMatchers("/login", "/css/**", "/js/**", "/img/**",
-                                 "/gfa/display", "/demat/**",
+                                 "/gfa/display", "/gfa/ticket/**", "/api/gfa/display/state", "/demat/**",
                                  "/images/**", "/actuator/health").permitAll()
                 .anyRequest().authenticated()
             )

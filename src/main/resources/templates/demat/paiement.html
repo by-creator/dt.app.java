@@ -55,7 +55,7 @@
     }
     .operators {
       display: grid;
-      grid-template-columns: repeat(2, minmax(220px, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 20px;
       max-width: 520px;
       margin: 0 auto;
@@ -89,9 +89,12 @@
       font-size: 12px;
     }
     @media (max-width: 700px) {
-      .operators {
-        grid-template-columns: 1fr;
-      }
+      .page { padding: 24px 18px 36px; }
+      .operators { gap: 12px; }
+      .operator { min-height: 120px; padding: 12px; border-radius: 14px; }
+      .operator img { max-width: 120px; max-height: 56px; }
+      h1 { font-size: 24px; }
+      .subtitle { font-size: 15px; }
     }
 
     @media (prefers-color-scheme: dark) {

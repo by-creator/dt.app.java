@@ -89,7 +89,7 @@
         <div class="page-badge"><span class="page-badge-dot"></span> NAVIGATION RAPIDE</div>
         <h1 class="page-title" style="font-size:26px; margin-bottom:4px;">Menu Direction Generale</h1>
         <p class="page-subtitle">Retrouvez les acces du module Direction Generale.</p>
-        <div style="margin-top:14px;">
+        <div th:if="${!hideMainMenuReturn}" style="margin-top:14px;">
           <a th:href="@{/menu/dt}" style="color:#a5b4fc; text-decoration:none; font-weight:600;">&#8592; Retour au menu principal</a>
         </div>
       </div>
@@ -98,7 +98,7 @@
         <div class="page-badge"><span class="page-badge-dot"></span> NAVIGATION RAPIDE</div>
         <h1 class="page-title" style="font-size:26px; margin-bottom:4px;">Menu Direction Financiere</h1>
         <p class="page-subtitle">Retrouvez les acces du module Direction Financiere.</p>
-        <div style="margin-top:14px;">
+        <div th:if="${!hideMainMenuReturn}" style="margin-top:14px;">
           <a th:href="@{/menu/dt}" style="color:#a5b4fc; text-decoration:none; font-weight:600;">&#8592; Retour au menu principal</a>
         </div>
       </div>
@@ -107,7 +107,7 @@
         <div class="page-badge"><span class="page-badge-dot"></span> NAVIGATION RAPIDE</div>
         <h1 class="page-title" style="font-size:26px; margin-bottom:4px;">Menu Direction Exploitation</h1>
         <p class="page-subtitle">Retrouvez les acces du module Direction Exploitation.</p>
-        <div style="margin-top:14px;">
+        <div th:if="${!hideMainMenuReturn}" style="margin-top:14px;">
           <a th:href="@{/menu/dt}" style="color:#a5b4fc; text-decoration:none; font-weight:600;">&#8592; Retour au menu principal</a>
         </div>
       </div>
@@ -241,7 +241,7 @@
         <div class="module-link">Ouvrir <span>&#x2197;</span></div>
       </a>
 
-      <a href="#" class="module-card" data-name="repas">
+      <a th:href="@{/menu/dt/repas}" class="module-card" data-name="repas">
         <div class="module-icon">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M3 11h18"/><path d="M5 11a7 7 0 0 1 14 0"/><path d="M8 15h8"/><path d="M12 15v5"/>
@@ -249,6 +249,17 @@
         </div>
         <div class="module-title">Repas</div>
         <div class="module-desc">Envoyez le menu du jour par email.</div>
+        <div class="module-link">Ouvrir <span>&#x2197;</span></div>
+      </a>
+
+      <a th:href="@{/menu/dt/satisfaction}" class="module-card" data-name="satisfaction">
+        <div class="module-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+        </div>
+        <div class="module-title">Satisfaction</div>
+        <div class="module-desc">Consultez les réponses au questionnaire de satisfaction.</div>
         <div class="module-link">Ouvrir <span>&#x2197;</span></div>
       </a>
     </div>

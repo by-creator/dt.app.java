@@ -77,6 +77,102 @@ public class EmailService {
         }
     }
 
+    // ==================== IES NOTIFICATIONS ====================
+
+    public void sendIesAccessLink(String to) {
+        String dematUrl = baseUrl + "/demat";
+        String html = buildSimpleHtml(
+            "Lien d'acces IES",
+            "Bonjour,<br>Voici votre lien d'acces a la plateforme IES de Dakar Terminal.",
+            null, null,
+            "Acceder a la plateforme", dematUrl);
+        sendSimpleMail(to, "Votre lien d'acces IES - Dakar Terminal", html);
+    }
+
+    public void sendIesCreationCompte(String to, String password) {
+        String dematUrl = baseUrl + "/demat";
+        String html = buildSimpleHtml(
+            "Creation de compte IES",
+            "Bonjour,<br>Votre compte IES a ete cree. Voici vos identifiants de connexion.",
+            new String[]{"Email", "Mot de passe"},
+            new String[]{to, password},
+            "Acceder a la plateforme", dematUrl);
+        sendSimpleMail(to, "Creation de votre compte IES - Dakar Terminal", html);
+    }
+
+    public void sendIesReinitialisationCompte(String to, String password) {
+        String dematUrl = baseUrl + "/demat";
+        String html = buildSimpleHtml(
+            "Reinitialisation de compte IES",
+            "Bonjour,<br>Votre mot de passe IES a ete reinitialise. Voici vos nouveaux identifiants.",
+            new String[]{"Email", "Nouveau mot de passe"},
+            new String[]{to, password},
+            "Acceder a la plateforme", dematUrl);
+        sendSimpleMail(to, "Reinitialisation de votre compte IES - Dakar Terminal", html);
+    }
+
+    public void sendRepasMenu(String plat1, String plat2) {
+        String[] targets = {"noreplysitedt@gmail.com", "iosid242@gmail.com"};
+        String html = buildSimpleHtml(
+            "Menu du jour",
+            "Bonjour,<br>Voici le menu du jour de Dakar Terminal.",
+            new String[]{"Plat 1", "Plat 2"},
+            new String[]{plat1, plat2},
+            null, null);
+        for (String to : targets) {
+            sendSimpleMail(to, "Menu du jour - Dakar Terminal", html);
+        }
+    }
+
+    private void sendSimpleMail(String to, String subject, String html) {
+        if (to == null || to.isBlank()) return;
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setFrom(mailFrom, "DAKAR-TERMINAL");
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(html, true);
+            helper.addInline("dtLogo", new ClassPathResource("static/img/image.png"));
+            mailSender.send(message);
+        } catch (Exception e) {
+            // Silent fail
+        }
+    }
+
+    private String buildSimpleHtml(String titre, String intro,
+                                   String[] labels, String[] values,
+                                   String btnLabel, String btnUrl) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("<!DOCTYPE html><html><body style=\"font-family:Arial,sans-serif;background:#f8fbff;margin:0;padding:20px\">")
+          .append("<div style=\"max-width:600px;margin:0 auto;background:white;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08)\">")
+          .append("  <div style=\"background:#ffffff;padding:28px;text-align:center;border-bottom:1px solid #e2e8f0\">")
+          .append("    <img src=\"cid:dtLogo\" alt=\"Dakar Terminal\" style=\"max-height:50px;max-width:240px\">")
+          .append("  </div>")
+          .append("  <div style=\"padding:36px 40px\">")
+          .append("    <h2 style=\"color:#0f172a;margin:0 0 16px;font-size:20px\">").append(titre).append("</h2>")
+          .append("    <p style=\"color:#334155;font-size:15px;line-height:1.7;margin:0 0 24px\">").append(intro).append("</p>");
+        if (labels != null && values != null) {
+            sb.append("    <table style=\"width:100%;border-collapse:collapse;font-size:14px\">");
+            for (int i = 0; i < labels.length; i++) {
+                String border = (i < labels.length - 1) ? "border-bottom:1px solid #f1f5f9;" : "";
+                sb.append("      <tr style=\"").append(border).append("\">")
+                  .append("<td style=\"padding:10px 0;color:#94a3b8;width:180px\">").append(labels[i]).append("</td>")
+                  .append("<td style=\"padding:10px 0;font-weight:600;color:#0f172a\">").append(safe(values[i])).append("</td></tr>");
+            }
+            sb.append("    </table>");
+        }
+        if (btnLabel != null && btnUrl != null) {
+            sb.append("    <div style=\"margin-top:36px;text-align:center\">")
+              .append("      <a href=\"").append(btnUrl).append("\" style=\"display:inline-block;background:#3367bf;color:white;padding:14px 36px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px\">").append(btnLabel).append("</a>")
+              .append("    </div>");
+        }
+        sb.append("  </div>")
+          .append("  <div style=\"padding:16px;text-align:center;background:#f8fbff;color:#94a3b8;font-size:12px\">&copy; 2026 Dakar Terminal. Tous droits reserves.</div>")
+          .append("</div></body></html>");
+        return sb.toString();
+    }
+
     // ==================== CLIENT NOTIFICATIONS ====================
 
     public void notifyClientValidationValide(RattachementBl bl) {

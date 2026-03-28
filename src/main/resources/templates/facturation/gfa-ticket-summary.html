@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Votre ticket - Dakar Terminal</title>
+  <th:block th:replace="~{fragments/pwa-head :: pwaMeta}"></th:block>
+  <script th:src="@{/js/theme.js}"></script>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+  <style>
+    body{margin:0;font-family:inherit;background:linear-gradient(180deg,#f8fafc 0%,#eef2ff 100%)}.summary-page{min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:42px 20px}.summary-shell{width:min(460px,100%);text-align:center}.summary-card{background:#fff;border-radius:28px;overflow:hidden;box-shadow:0 20px 46px rgba(15,23,42,.1)}
+    .summary-top{background:linear-gradient(135deg,#4f46e5,#8b7cf0);padding:28px 24px;color:#fff}.summary-top small{display:block;letter-spacing:.28em;font-weight:800;opacity:.8;margin-bottom:10px}.summary-number{font-size:86px;line-height:1;font-weight:900}
+    .summary-body{padding:20px 28px;text-align:left}.summary-row{display:flex;justify-content:space-between;gap:16px;padding:14px 0;border-bottom:1px solid #e2e8f0}.summary-row:last-child{border-bottom:none}.summary-label{font-size:12px;font-weight:800;letter-spacing:.18em;color:#94a3b8;text-transform:uppercase}.summary-value{font-size:16px;font-weight:800;color:#0f172a;text-align:right}.summary-foot{padding:16px 24px;background:#f8fafc;color:#64748b;font-size:13px}
+    [data-theme="dark"] body{background:linear-gradient(180deg,#0f172a 0%,#111827 100%)}[data-theme="dark"] .summary-card{background:#1e293b}[data-theme="dark"] .summary-row{border-color:#334155}[data-theme="dark"] .summary-value{color:#f1f5f9}[data-theme="dark"] .summary-foot{background:#0f172a;color:#94a3b8}
+  </style>
+</head>
+<body>
+<div class="summary-page">
+  <div class="summary-shell">
+    <img th:src="@{/img/image.png}" alt="Dakar Terminal" style="max-width:300px;width:100%;margin-bottom:18px;">
+    <div class="summary-card">
+      <div class="summary-top">
+        <small>Votre numero de ticket</small>
+        <div class="summary-number" th:text="${ticket.numero}">V-001</div>
+      </div>
+      <div class="summary-body">
+        <div class="summary-row"><div class="summary-label">Service</div><div class="summary-value" th:text="${ticket.service != null ? #strings.toUpperCase(ticket.service.nom) : '-'}">VALIDATION</div></div>
+        <div class="summary-row"><div class="summary-label">Date</div><div class="summary-value" th:text="${ticket.createdAt != null ? #temporals.format(ticket.createdAt, 'EEEE dd MMMM yyyy', #locale) : '-'}">Samedi 28 mars 2026</div></div>
+        <div class="summary-row"><div class="summary-label">Heure</div><div class="summary-value" th:text="${ticket.createdAt != null ? #temporals.format(ticket.createdAt, 'HH:mm') : '-'}">13:52</div></div>
+        <div class="summary-row"><div class="summary-label">Rang dans la file</div><div class="summary-value" th:text="${'#' + queueRank}">#1</div></div>
+      </div>
+      <div class="summary-foot">Merci de patienter - Dakar Terminal</div>
+    </div>
+  </div>
+</div>
+<script>
+  history.pushState(null, '', location.href);
+  history.replaceState(null, '', location.href);
+  window.addEventListener('popstate', function () {
+    history.pushState(null, '', location.href);
+  });
+  window.addEventListener('pageshow', function (event) {
+    if (event.persisted) {
+      history.pushState(null, '', location.href);
+    }
+  });
+</script>
+</body>
+</html>

@@ -132,9 +132,15 @@
     }
 
     @media (max-width: 420px) {
-      .grid {
-        grid-template-columns: 1fr;
-      }
+      .shell { padding: 12px; }
+      .frame { min-height: calc(100vh - 24px); }
+      .hero { padding: 24px 16px 28px; }
+      .grid-wrap { padding: 12px 10px 28px; }
+      .grid { gap: 10px; }
+      .card { padding: 16px 10px 14px; border-radius: 14px; }
+      .icon-circle { width: 52px; height: 52px; margin-bottom: 12px; }
+      .card h2 { font-size: 12px; margin-bottom: 8px; }
+      .card p { font-size: 10px; }
     }
 
     @media (prefers-color-scheme: dark) {

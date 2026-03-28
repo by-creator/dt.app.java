@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Satisfaction Client - Dakar Terminal</title>
+  <th:block th:replace="~{fragments/pwa-head :: pwaMeta}"></th:block>
+  <script th:src="@{/js/theme.js}"></script>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+  <style>
+    .sat-kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .sat-kpi {
+      background: #fff;
+      border: 1px solid #e8edf5;
+      border-radius: 14px;
+      padding: 22px 20px;
+      text-align: center;
+    }
+    .sat-kpi-value {
+      font-size: 36px;
+      font-weight: 800;
+      color: #3367bf;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .sat-kpi-label {
+      font-size: 12px;
+      color: #64748b;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .sat-section {
+      background: #fff;
+      border: 1px solid #e8edf5;
+      border-radius: 14px;
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .sat-section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 18px 24px;
+      border-bottom: 1px solid #f0f4fb;
+      cursor: pointer;
+      user-select: none;
+    }
+    .sat-section-header:hover { background: #f8fafd; }
+    .sat-section-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #0f172a;
+      flex: 1;
+    }
+    .sat-section-badge {
+      font-size: 12px;
+      background: #eef2ff;
+      color: #3367bf;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+    .sat-section-chevron {
+      color: #94a3b8;
+      transition: transform .2s;
+    }
+    .sat-section-chevron.open { transform: rotate(180deg); }
+    .sat-section-body {
+      padding: 20px 24px 24px;
+      display: none;
+    }
+    .sat-section-body.open { display: block; }
+    .sat-questions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    .sat-question {
+      background: #f8fafd;
+      border-radius: 10px;
+      padding: 16px 18px;
+    }
+    .sat-question-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #334155;
+      margin-bottom: 12px;
+    }
+    .sat-bar-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 7px;
+    }
+    .sat-bar-label {
+      font-size: 12px;
+      color: #475569;
+      width: 120px;
+      flex-shrink: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .sat-bar-track {
+      flex: 1;
+      background: #e8edf5;
+      border-radius: 4px;
+      height: 10px;
+      overflow: hidden;
+    }
+    .sat-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      background: #3367bf;
+      transition: width .4s ease;
+    }
+    .sat-bar-count {
+      font-size: 11px;
+      color: #94a3b8;
+      width: 36px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+    .sat-no-data {
+      font-size: 13px;
+      color: #94a3b8;
+      font-style: italic;
+    }
+    .sat-empty-state {
+      text-align: center;
+      padding: 80px 40px;
+      color: #94a3b8;
+    }
+    .sat-empty-state svg { margin-bottom: 16px; opacity: .4; }
+    .sat-empty-state p { font-size: 15px; }
+    .export-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #16a34a;
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 9px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .export-btn:hover { background: #15803d; }
+    .sat-table-wrap {
+      overflow-x: auto;
+      margin-top: 8px;
+    }
+    .sat-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .sat-table th {
+      background: #f1f5fb;
+      padding: 9px 12px;
+      text-align: left;
+      font-weight: 700;
+      color: #334155;
+      white-space: nowrap;
+    }
+    .sat-table td {
+      padding: 9px 12px;
+      border-bottom: 1px solid #f0f4fb;
+      color: #334155;
+    }
+    .sat-table tr:last-child td { border-bottom: none; }
+    .sat-table tr:hover td { background: #f8fafd; }
+
+    /* ── Dark mode ──────────────────────────────────────────────────────── */
+    [data-theme="dark"] .sat-kpi {
+      background: #1e293b;
+      border-color: #334155;
+    }
+    [data-theme="dark"] .sat-kpi-value { color: #818cf8; }
+    [data-theme="dark"] .sat-kpi-label { color: #94a3b8; }
+
+    [data-theme="dark"] .sat-section {
+      background: #1e293b;
+      border-color: #334155;
+    }
+    [data-theme="dark"] .sat-section-header:hover { background: #273549; }
+    [data-theme="dark"] .sat-section-title { color: #f1f5f9; }
+    [data-theme="dark"] .sat-section-badge {
+      background: #312e81;
+      color: #a5b4fc;
+    }
+    [data-theme="dark"] .sat-section-header { border-color: #334155; }
+    [data-theme="dark"] .sat-section-chevron { color: #64748b; }
+
+    [data-theme="dark"] .sat-question { background: #273549; }
+    [data-theme="dark"] .sat-question-label { color: #cbd5e1; }
+    [data-theme="dark"] .sat-bar-label { color: #94a3b8; }
+    [data-theme="dark"] .sat-bar-track { background: #334155; }
+    [data-theme="dark"] .sat-bar-fill { background: #818cf8; }
+    [data-theme="dark"] .sat-bar-count { color: #64748b; }
+    [data-theme="dark"] .sat-no-data { color: #64748b; }
+
+    [data-theme="dark"] .sat-table th {
+      background: #273549;
+      color: #94a3b8;
+    }
+    [data-theme="dark"] .sat-table td {
+      border-color: #334155;
+      color: #cbd5e1;
+    }
+    [data-theme="dark"] .sat-table tr:hover td { background: #2d3f55; }
+
+    [data-theme="dark"] .sat-empty-state { color: #475569; }
+  </style>
+</head>
+<body>
+
+<div class="app-layout">
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-box">
+        <img th:src="@{/img/image.png}" alt="Dakar Terminal" style="max-height: 40px; width: 150px;">
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a th:href="@{/menu}" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+          <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+        </svg>
+        Dashboard
+      </a>
+      <a th:href="@{/menu/dt}" class="nav-item active">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/>
+          <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+        Menu
+      </a>
+      <a th:href="@{/parametres}" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        Paramètres
+      </a>
+    </nav>
+
+    <div class="sidebar-user">
+      <div class="user-row">
+        <div class="user-avatar-sm"
+             th:text="${#strings.toUpperCase(#strings.substring(loggedUser.username, 0, 1))}">A</div>
+        <span class="user-display-name" th:text="${loggedUser.username}">Admin</span>
+        <form th:action="@{/logout}" method="post" style="margin:0">
+          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+          <button type="submit" class="logout-btn" title="Se déconnecter">&#x2192;</button>
+        </form>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+
+    <div class="page-header-card">
+      <div>
+        <div class="page-badge"><span class="page-badge-dot"></span> SATISFACTION CLIENT</div>
+        <h1 class="page-title" style="font-size:26px; margin-bottom:4px;">Dashboard Satisfaction</h1>
+        <nav style="font-size:13px; color:#64748b; margin-top:6px;">
+          <a th:href="@{/menu}" style="color:#3367bf; text-decoration:none;">Menu</a>
+          <span style="margin:0 6px;">›</span>
+          <a th:href="@{/menu/dt}" style="color:#3367bf; text-decoration:none;">Menu DT</a>
+          <span style="margin:0 6px;">›</span>
+          <span>Satisfaction</span>
+        </nav>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+        <a th:href="@{/menu/dt/satisfaction/export}" class="export-btn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Exporter XLSX
+        </a>
+        <div class="date-chip">
+          <span class="label">AUJOURD'HUI</span>
+          <span class="value" th:text="${currentDate}">—</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="padding: 0 36px 36px;">
+
+      <!-- Empty state -->
+      <div th:if="${total == 0}" class="sat-empty-state">
+        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+        <p>Aucune réponse enregistrée pour le moment.</p>
+      </div>
+
+      <th:block th:if="${total > 0}">
+
+        <!-- ── KPIs ──────────────────────────────────────────────────────── -->
+        <div class="sat-kpi-grid">
+          <div class="sat-kpi">
+            <div class="sat-kpi-value" th:text="${total}">0</div>
+            <div class="sat-kpi-label">Réponses totales</div>
+          </div>
+          <div class="sat-kpi">
+            <div class="sat-kpi-value"
+                 th:text="${distUsagePlateforme.getOrDefault('Oui', 0) + ' / ' + total}">—</div>
+            <div class="sat-kpi-label">Utilisent la plateforme</div>
+          </div>
+          <div class="sat-kpi">
+            <div class="sat-kpi-value"
+                 th:text="${distBugsPlateforme.getOrDefault('Oui', 0)}">—</div>
+            <div class="sat-kpi-label">Bugs signalés</div>
+          </div>
+          <div class="sat-kpi">
+            <div class="sat-kpi-value"
+                 th:text="${distRetardsLivraison.getOrDefault('Oui', 0)}">—</div>
+            <div class="sat-kpi-label">Retards livraison signalés</div>
+          </div>
+        </div>
+
+        <!-- ── Section : Général ─────────────────────────────────────────── -->
+        <div class="sat-section">
+          <div class="sat-section-header" onclick="toggleSection(this)">
+            <div class="sat-section-title">Général</div>
+            <span class="sat-section-badge">2 questions</span>
+            <svg class="sat-section-chevron open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="sat-section-body open">
+            <div class="sat-questions-grid">
+              <div class="sat-question">
+                <div class="sat-question-label">Volume d'activité</div>
+                <th:block th:if="${distVolume.isEmpty()}"><p class="sat-no-data">Aucune réponse</p></th:block>
+                <th:block th:each="entry : ${distVolume}">
+                  <div class="sat-bar-row">
+                    <span class="sat-bar-label" th:text="${entry.key}">—</span>
+                    <div class="sat-bar-track">
+                      <div class="sat-bar-fill" th:style="'width:' + (entry.value * 100 / total) + '%'"></div>
+                    </div>
+                    <span class="sat-bar-count" th:text="${entry.value}">0</span>
+                  </div>
+                </th:block>
+              </div>
+              <div class="sat-question">
+                <div class="sat-question-label">Ancienneté client</div>
+                <th:block th:if="${distAnciennete.isEmpty()}"><p class="sat-no-data">Aucune réponse</p></th:block>
+                <th:block th:each="entry : ${distAnciennete}">
+                  <div class="sat-bar-row">
+                    <span class="sat-bar-label" th:text="${entry.key}">—</span>
+                    <div class="sat-bar-track">
+                      <div class="sat-bar-fill" th:style="'width:' + (entry.value * 100 / total) + '%'"></div>
+                    </div>
+                    <span class="sat-bar-count" th:text="${entry.value}">0</span>
+                  </div>
+                </th:block>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Section : Facturation / Plateforme ───────────────────────── -->
+        <div class="sat-section">
+          <div class="sat-section-header" onclick="toggleSection(this)">
+            <div class="sat-section-title">Facturation &amp; Plateforme</div>
+            <span class="sat-section-badge">8 questions</span>
+            <svg class="sat-section-chevron open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="sat-section-body open">
+            <div class="sat-questions-grid">
+
+              <div class="sat-question">
+                <div class="sat-question-label">Délais de facturation</div>
+                <th:block th:if="${distDelaisFacturation.isEmpty()}"><p class="sat-no-data">Aucune réponse</p></th:block>
+                <th:block th:each="entry : ${distDelaisFacturation}">
+                  <div class="sat-bar-row">
+                    <span class="sat-bar-label" th:text="${entry.key}">—</span>
+                    <div class="sat-bar-track"><div class="sat-bar-fill" th:style="'width:' + (entry.value * 100 / total) + '%'"></div></div>
+                    <span class="sat-bar-count" th:text="${entry.value}">0</span>
+                  </div>
+                </th:block>
+              </div>
+
+              <div class="sat-question">
+                <div class="sat-question-label">Notifications</div>
+                <th:block th:if="${distNotifications.isEmpty()}"><p class="sat-no-data">Aucune réponse</p></th:block>
+                <th:block th:each="entry : ${distNotifications}">
+                  <div class="sat-bar-row">
+                    <span class="sat-bar-label" th:text="${entry.key}">—</span>
+                    <div class="sat-bar-track"><div class="sat-bar-fill" th:style="'width:' + (entry.value * 100 / total) + '%'"></div></div>
+                    <span class="sat-bar-count" th:text="${entry.value}">0</span>
+                  </div>
+                </th:block>
+              </div>
+
+              <div class="sat-question">
+                <div class="sat-question-label">Réactivité sur les factures</div>
+                <th:block th:if="${distReactiviteFacture.isEmpty()}"><p class="sat-no-data">Aucune réponse</p></th:block>
+                <th:block th:each="entry : ${distReactiviteFacture}">
+                  <div class="sat-bar-row">
+                    <span class="sat-bar-label" th:text="${entry.key}">—</span>
+                    <div class="sat-bar-track"><div class="sat-bar-fill" th:style="'width:' + (entry.value * 100 / total) + '%'"></div></div>
+                    <span class="sat-bar-count" th:text="${entry.value}">0</span>
+                  </div>
+                </th:block>
+              </div>
+
+              <div class="sat-question">
+                <div class="sat-question-label">Usage de la plateforme</div>
+                <th:block th:if="${distUsagePlateforme.isEmpty()}"><p class="sat-no-data">Aucune réponse</p></th:block>
+                <th:block th:each="entry : ${distUsagePlateforme}">
+                  <div class="sat-bar-row">
+                    <span class="sat-bar-label" th:text="${entry.key}">—</span>
+                    <div class="sat-bar-track"><div class="sat-bar-fill" th:style="'width:' + (entry.value * 100 / total) + '%'"></div></div>
+                    <span class="sat-bar-count" th:text="${entry.value}">0</span>
+                  </div>
+                </th:block>
+              </div>
+
+              <div class="sat-question">
+                <div class="sat-question-label">Facilité d'utilisation</div>
+                <th:block th:if="${distFacilitePlateforme.isEmpty()}"><p class="sat-no-data">Aucune réponse</p></th:block>
+                <th:block th:each="entry : ${distFacilitePlateforme}">
+                  <div class="sat-bar-row">
+                    <span class="sat-bar-label" th:text="${entry.key}">—</span>
+                    <div class="sat-bar-track"><div class="sat-bar-fill" th:style="'width:' + (entry.value * 100 / total) + '%'"></div></div>
+                    <span class="sat-bar-count" th:text="${entry.value}">0</span>
+                  </div>
+                </th:block>
+              </div>
+
+              <div class="sat-question">
+                <div class="sat-question-label">Fonctionnalités manquantes</div>
+                <th:block th:if="${distFonctionnalitesPlateforme.isEmpty()}"><p class="sat-no-data">Aucune réponse</p></th:block>
+                <th:block th:each="entry : ${distFonctionnalitesPlateforme}">
+                  <div class="sat-bar-row">
+                    <span class="sat-bar-label" th:text="${entry.key}">—</span>
+                    <div class="sat-bar-track"><div class="sat-bar-fill" th:style="'width:' + (entry.value * 100 / total) + '%'"></div></div>
+                    <span class="sat-bar-count" th:text="${entry.value}">0</span>
+                  </div>
+                </th:block>
+              </div>
+
+              <div class="sat-question">
+                <div class="sat-question-label">Bugs rencontrés</div>
+                <th:block th:if="${distBugsPlateforme.isEmpty()}"><p class="sat-no-data">Aucune réponse</p></th:block>
+                <th:block th:each="entry : ${distBugsPlateforme}">
+                  <div class="sat-bar-row">
+                    <span class="sat-bar-label" th:text="${entry.key}">—</span>
+                    <div class="sat-bar-track"><div class="sat-bar-fill" th:style="'width:' + (entry.value * 100 / total) + '%'"></div></div>
+                    <span class="sat-bar-count" th:text="${entry.value}">0</span>
+                  </div>
+                </th:block>
+              </div>
+
+              <div class="sat-question">
+                <div class="sat-question-label">Assistance technique</div>
+                <th:block th:if="${distAssistancePlateforme.isEmpty()}"><p class="sat-no-data">Aucune réponse</p></th:block>
+                <th:block th:each="entry : ${distAssistancePlateforme}">
+                  <div class="sat-bar-row">
+                    <span class="sat-bar-label" th:text="${entry.key}">—</span>
+                    <div class="sat-bar-track"><div class="sat-bar-fill" th:style="'width:' + (entry.value * 100 / total) + '%'"></div></div>
+                    <span class="sat-bar-count" th:text="${entry.value}">0</span>
+                  </div>
+                </th:block>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Section : BAE ─────────────────────────────────────────────── -->
+        <div class="sat-section">
+          <div class="sat-section-header" onclick="toggleSection(this)">
+            <div class="sat-section-title">BAE</div>
+            <span class="sat-section-badge">2 questions</span>
+            <svg class="sat-section-chevron open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="sat-section-body open">
+            <div class="sat-questions-grid">
+              <div class="sat-question">
+                <div class="sat-question-label">Délais BAE</div>
+                <th:block th:if="${distDelaisBae.isEmpty()}"><p class="sat-no-data">Aucune réponse</p></th:block>
+                <th:block th:each="entry : ${distDelaisBae}">
+                  <div class="sat-bar-row">
+                    <span class="sat-bar-label" th:text="${entry.key}">—</span>
+                    <div class="sat-bar-track"><div class="sat-bar-fill" th:style="'width:' + (entry.value * 100 / total) + '%'"></div></div>
+                    <span class="sat-bar-count" th:text="${entry.value}">0</span>
+                  </div>
+                </th:block>
+              </div>
+              <div class="sat-question">
+                <div class="sat-question-label">Suggestions BAE</div>
+                <th:block th:if="${distSuggestionsBae.isEmpty()}"><p class="sat-no-data">Aucune réponse</p></th:block>
+                <th:block th:each="entry : ${distSuggestionsBae}">
+                  <div class="sat-bar-row">
+                    <span class="sat-bar-label" th:text="${entry.key}">—</span>
+                    <div class="sat-bar-track"><div class="sat-bar-fill" th:style="'width:' + (entry.value * 100 / total) + '%'"></div></div>
+                    <span class="sat-bar-count" th:text="${entry.value}">0</span>
+                  </div>
+                </th:block>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Section : Accueil ─────────────────────────────────────────── -->
+        <div class="sat-section">
+          <div class="sat-section-header" onclick="toggleSection(this)">
+            <div class="sat-section-title">Accueil</div>
+            <span class="sat-section-badge">3 questions</span>
+            <svg class="sat-section-chevron open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="sat-section-body open">
+            <div class="sat-questions-grid">
+              <div class="sat-question">
+                <div class="sat-question-label">Locaux d'accueil</div>
+                <th:block th:if="${distAccueilLocaux.isEmpty()}"><p class="sat-no-data">Aucune réponse</p></th:block>
+                <th:block th:each="entry : ${distAccueilLocaux}">
+                  <div class="sat-bar-row">
+                    <span class="sat-bar-label" th:text="${entry.key}">—</span>
+                    <div class="sat-bar-track"><div class="sat-bar-fill" th:style="'width:' + (entry.value * 100 / total) + '%'"></div></div>
+                    <span class="sat-bar-count" th:text="${entry.value}">0</span>
+                  </div>
+                </th:block>
+              </div>
+              <div class="sat-question">
+                <div class="sat-question-label">Personnel d'accueil</div>
+                <th:block th:if="${distPersonnelAccueil.isEmpty()}"><p class="sat-no-data">Aucune réponse</p></th:block>
+                <th:block th:each="entry : ${distPersonnelAccueil}">
+                  <div class="sat-bar-row">
+                    <span class="sat-bar-label" th:text="${entry.key}">—</span>
+                    <div class="sat-bar-track"><div class="sat-bar-fill" th:style="'width:' + (entry.value * 100 / total) + '%'"></div></div>
+                    <span class="sat-bar-count" th:text="${entry.value}">0</span>
+                  </div>
+                </th:block>
+              </div>
+              <div class="sat-question">
+                <div class="sat-question-label">Infrastructures</div>
+                <th:block th:if="${distInfrastructures.isEmpty()}"><p class="sat-no-data">Aucune réponse</p></th:block>
+                <th:block th:each="entry : ${distInfrastructures}">
+                  <div class="sat-bar-row">
+                    <span class="sat-bar-label" th:text="${entry.key}">—</span>
+                    <div class="sat-bar-track"><div class="sat-bar-fill" th:style="'width:' + (entry.value * 100 / total) + '%'"></div></div>
+                    <span class="sat-bar-count" th:text="${entry.value}">0</span>
+                  </div>
+                </th:block>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Section : Livraison ───────────────────────────────────────── -->
+        <div class="sat-section">
+          <div class="sat-section-header" onclick="toggleSection(this)">
+            <div class="sat-section-title">Livraison</div>
+            <span class="sat-section-badge">4 questions</span>
+            <svg class="sat-section-chevron open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="sat-section-body open">
+            <div class="sat-questions-grid">
+              <div class="sat-question">
+                <div class="sat-question-label">Fluidité de livraison</div>
+                <th:block th:if="${distFluiditeLivraison.isEmpty()}"><p class="sat-no-data">Aucune réponse</p></th:block>
+                <th:block th:each="entry : ${distFluiditeLivraison}">
+                  <div class="sat-bar-row">
+                    <span class="sat-bar-label" th:text="${entry.key}">—</span>
+                    <div class="sat-bar-track"><div class="sat-bar-fill" th:style="'width:' + (entry.value * 100 / total) + '%'"></div></div>
+                    <span class="sat-bar-count" th:text="${entry.value}">0</span>
+                  </div>
+                </th:block>
+              </div>
+              <div class="sat-question">
+                <div class="sat-question-label">Horaires de livraison</div>
+                <th:block th:if="${distHorairesLivraison.isEmpty()}"><p class="sat-no-data">Aucune réponse</p></th:block>
+                <th:block th:each="entry : ${distHorairesLivraison}">
+                  <div class="sat-bar-row">
+                    <span class="sat-bar-label" th:text="${entry.key}">—</span>
+                    <div class="sat-bar-track"><div class="sat-bar-fill" th:style="'width:' + (entry.value * 100 / total) + '%'"></div></div>
+                    <span class="sat-bar-count" th:text="${entry.value}">0</span>
+                  </div>
+                </th:block>
+              </div>
+              <div class="sat-question">
+                <div class="sat-question-label">Retards signalés</div>
+                <th:block th:if="${distRetardsLivraison.isEmpty()}"><p class="sat-no-data">Aucune réponse</p></th:block>
+                <th:block th:each="entry : ${distRetardsLivraison}">
+                  <div class="sat-bar-row">
+                    <span class="sat-bar-label" th:text="${entry.key}">—</span>
+                    <div class="sat-bar-track"><div class="sat-bar-fill" th:style="'width:' + (entry.value * 100 / total) + '%'"></div></div>
+                    <span class="sat-bar-count" th:text="${entry.value}">0</span>
+                  </div>
+                </th:block>
+              </div>
+              <div class="sat-question">
+                <div class="sat-question-label">Coordination livraison</div>
+                <th:block th:if="${distCoordinationLivraison.isEmpty()}"><p class="sat-no-data">Aucune réponse</p></th:block>
+                <th:block th:each="entry : ${distCoordinationLivraison}">
+                  <div class="sat-bar-row">
+                    <span class="sat-bar-label" th:text="${entry.key}">—</span>
+                    <div class="sat-bar-track"><div class="sat-bar-fill" th:style="'width:' + (entry.value * 100 / total) + '%'"></div></div>
+                    <span class="sat-bar-count" th:text="${entry.value}">0</span>
+                  </div>
+                </th:block>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Section : Communication ───────────────────────────────────── -->
+        <div class="sat-section">
+          <div class="sat-section-header" onclick="toggleSection(this)">
+            <div class="sat-section-title">Communication</div>
+            <span class="sat-section-badge">2 questions</span>
+            <svg class="sat-section-chevron open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="sat-section-body open">
+            <div class="sat-questions-grid">
+              <div class="sat-question">
+                <div class="sat-question-label">Communication proactive</div>
+                <th:block th:if="${distCommunicationProactive.isEmpty()}"><p class="sat-no-data">Aucune réponse</p></th:block>
+                <th:block th:each="entry : ${distCommunicationProactive}">
+                  <div class="sat-bar-row">
+                    <span class="sat-bar-label" th:text="${entry.key}">—</span>
+                    <div class="sat-bar-track"><div class="sat-bar-fill" th:style="'width:' + (entry.value * 100 / total) + '%'"></div></div>
+                    <span class="sat-bar-count" th:text="${entry.value}">0</span>
+                  </div>
+                </th:block>
+              </div>
+              <div class="sat-question">
+                <div class="sat-question-label">Alertes reçues</div>
+                <th:block th:if="${distAlertes.isEmpty()}"><p class="sat-no-data">Aucune réponse</p></th:block>
+                <th:block th:each="entry : ${distAlertes}">
+                  <div class="sat-bar-row">
+                    <span class="sat-bar-label" th:text="${entry.key}">—</span>
+                    <div class="sat-bar-track"><div class="sat-bar-fill" th:style="'width:' + (entry.value * 100 / total) + '%'"></div></div>
+                    <span class="sat-bar-count" th:text="${entry.value}">0</span>
+                  </div>
+                </th:block>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Tableau des réponses ──────────────────────────────────────── -->
+        <div class="sat-section">
+          <div class="sat-section-header" onclick="toggleSection(this)">
+            <div class="sat-section-title">Toutes les réponses</div>
+            <span class="sat-section-badge" th:text="${total} + ' entrées'">0 entrées</span>
+            <svg class="sat-section-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="sat-section-body">
+            <div class="sat-table-wrap">
+              <table class="sat-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Date</th>
+                    <th>Nom</th>
+                    <th>Email</th>
+                    <th>Volume</th>
+                    <th>Ancienneté</th>
+                    <th>Délais fact.</th>
+                    <th>Plateforme</th>
+                    <th>Facilité</th>
+                    <th>Bugs</th>
+                    <th>Délais BAE</th>
+                    <th>Accueil</th>
+                    <th>Fluidité livr.</th>
+                    <th>Retards</th>
+                    <th>Communication</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr th:each="r : ${reponses}">
+                    <td th:text="${r.id}">—</td>
+                    <td th:text="${r.createdAt != null ? #temporals.format(r.createdAt, 'dd/MM/yyyy') : '—'}">—</td>
+                    <td th:text="${r.nom != null ? r.nom : '—'}">—</td>
+                    <td th:text="${r.email != null ? r.email : '—'}">—</td>
+                    <td th:text="${r.volume != null ? r.volume : '—'}">—</td>
+                    <td th:text="${r.anciennete != null ? r.anciennete : '—'}">—</td>
+                    <td th:text="${r.delaisFacturation != null ? r.delaisFacturation : '—'}">—</td>
+                    <td th:text="${r.usagePlateforme != null ? r.usagePlateforme : '—'}">—</td>
+                    <td th:text="${r.facilitePlateforme != null ? r.facilitePlateforme : '—'}">—</td>
+                    <td th:text="${r.bugsPlateforme != null ? r.bugsPlateforme : '—'}">—</td>
+                    <td th:text="${r.delaisBae != null ? r.delaisBae : '—'}">—</td>
+                    <td th:text="${r.accueilLocaux != null ? r.accueilLocaux : '—'}">—</td>
+                    <td th:text="${r.fluiditeLivraison != null ? r.fluiditeLivraison : '—'}">—</td>
+                    <td th:text="${r.retardsLivraison != null ? r.retardsLivraison : '—'}">—</td>
+                    <td th:text="${r.communicationProactive != null ? r.communicationProactive : '—'}">—</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </th:block>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  function toggleSection(header) {
+    const body = header.nextElementSibling;
+    const chevron = header.querySelector('.sat-section-chevron');
+    const isOpen = body.classList.contains('open');
+    body.classList.toggle('open', !isOpen);
+    chevron.classList.toggle('open', !isOpen);
+  }
+</script>
+
+</body>
+</html>

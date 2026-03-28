@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS tickets (
     guichet_id      BIGINT      NULL,
     statut          VARCHAR(50) NOT NULL DEFAULT 'EN_ATTENTE',
     numero          VARCHAR(20) NOT NULL,
+    token           VARCHAR(100) NOT NULL,
     waiting_time    DATETIME    NULL,
     called_at       DATETIME    NULL,
     closed_at       DATETIME    NULL,
@@ -48,6 +49,7 @@ CREATE TABLE IF NOT EXISTS tickets (
         FOREIGN KEY (agent_id) REFERENCES agents (id) ON DELETE SET NULL,
     CONSTRAINT fk_tickets_guichet
         FOREIGN KEY (guichet_id) REFERENCES guichets (id) ON DELETE SET NULL,
+    CONSTRAINT uq_tickets_token UNIQUE (token),
     INDEX idx_ticket_statut  (statut),
     INDEX idx_ticket_service (service_id),
     INDEX idx_ticket_created (created_at)

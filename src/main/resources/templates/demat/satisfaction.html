@@ -221,6 +221,20 @@
       color: #64748b;
     }
 
+    .alert-success {
+      background: #dcfce7;
+      border: 1px solid #86efac;
+      color: #166534;
+      border-radius: 12px;
+      padding: 14px 18px;
+      margin-bottom: 20px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    @media (prefers-color-scheme: dark) {
+      .alert-success { background: #14532d; border-color: #166534; color: #4ade80; }
+    }
+
     @media (max-width: 900px) {
       .wizard-steps {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -291,22 +305,27 @@
       <button type="button" class="wizard-step" data-step="6" onclick="showSurveyStep(6)">Communication</button>
     </div>
 
-    <form>
+    <div th:if="${param.success}" class="alert-success">
+      &#10003; Vos reponses ont ete enregistrees avec succes. Merci pour votre participation !
+    </div>
+
+    <form th:action="@{/demat/satisfaction}" method="post">
+      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
       <section class="section active" data-panel="0">
         <h2>Informations d'identification</h2>
         <p class="section-desc">Renseignez vos informations avant de commencer le questionnaire.</p>
         <div class="field-grid">
           <div class="field">
             <label for="nom-prenom">Nom et prenom</label>
-            <input id="nom-prenom" type="text" placeholder="Nom et prenom">
+            <input id="nom-prenom" name="nom" type="text" placeholder="Nom et prenom">
           </div>
           <div class="field">
             <label for="telephone">Telephone</label>
-            <input id="telephone" type="text" placeholder="Votre telephone">
+            <input id="telephone" name="telephone" type="text" placeholder="Votre telephone">
           </div>
           <div class="field full">
             <label for="email">Email</label>
-            <input id="email" type="text" placeholder="Votre email">
+            <input id="email" name="email" type="text" placeholder="Votre email">
           </div>
         </div>
       </section>
@@ -368,7 +387,7 @@
             <label class="option"><input type="radio" name="usage-plateforme"> Oui, occasionnellement</label>
             <label class="option"><input type="radio" name="usage-plateforme"> Non (precisez pourquoi)</label>
           </div>
-          <textarea placeholder="Si non, precisez pourquoi"></textarea>
+          <textarea name="usage-plateforme-detail" placeholder="Si non, precisez pourquoi"></textarea>
         </div>
         <div class="question">
           <div class="question-title">La plateforme est-elle facile a utiliser ?</div>
@@ -387,7 +406,7 @@
             <label class="option"><input type="radio" name="fonctionnalites-plateforme"> Partiellement</label>
             <label class="option"><input type="radio" name="fonctionnalites-plateforme"> Non (precisez les fonctionnalites manquantes)</label>
           </div>
-          <textarea placeholder="Fonctionnalites manquantes"></textarea>
+          <textarea name="fonctionnalites-plateforme-detail" placeholder="Fonctionnalites manquantes"></textarea>
         </div>
         <div class="question">
           <div class="question-title">Avez-vous rencontre des problemes techniques ou des bugs sur la plateforme ?</div>
@@ -396,7 +415,7 @@
             <label class="option"><input type="radio" name="bugs-plateforme"> Oui, parfois</label>
             <label class="option"><input type="radio" name="bugs-plateforme"> Non</label>
           </div>
-          <textarea placeholder="Precisez si besoin"></textarea>
+          <textarea name="bugs-plateforme-detail" placeholder="Precisez si besoin"></textarea>
         </div>
         <div class="question">
           <div class="question-title">Recevez-vous une assistance rapide en cas de probleme ou de question concernant l'utilisation de la plateforme ?</div>
@@ -410,7 +429,7 @@
         </div>
         <div class="question">
           <div class="question-title">Quelles ameliorations suggereriez-vous pour rendre la plateforme plus adaptee a vos besoins ?</div>
-          <textarea placeholder="Vos suggestions"></textarea>
+          <textarea name="suggestions-facturation" placeholder="Vos suggestions"></textarea>
         </div>
       </section>
 
@@ -432,7 +451,7 @@
             <label class="option"><input type="radio" name="suggestions-bae"> Oui</label>
             <label class="option"><input type="radio" name="suggestions-bae"> Non</label>
           </div>
-          <textarea placeholder="Si oui, precisez vos suggestions"></textarea>
+          <textarea name="suggestions-bae-detail" placeholder="Si oui, precisez vos suggestions"></textarea>
         </div>
       </section>
 
@@ -465,7 +484,7 @@
             <label class="option"><input type="radio" name="infrastructures"> Partiellement</label>
             <label class="option"><input type="radio" name="infrastructures"> Non (precisez)</label>
           </div>
-          <textarea placeholder="Si non, precisez"></textarea>
+          <textarea name="infrastructures-detail" placeholder="Si non, precisez"></textarea>
         </div>
       </section>
 
@@ -488,7 +507,7 @@
             <label class="option"><input type="radio" name="horaires-livraison"> Oui, mais necessitent des ajustements mineurs</label>
             <label class="option"><input type="radio" name="horaires-livraison"> Non, ils sont souvent contraignants</label>
           </div>
-          <textarea placeholder="Si des ajustements sont necessaires, precisez"></textarea>
+          <textarea name="horaires-livraison-detail" placeholder="Si des ajustements sont necessaires, precisez"></textarea>
         </div>
         <div class="question">
           <div class="question-title">Avez-vous rencontre des obstacles ou des retards lies a l'organisation des livraisons ?</div>
@@ -496,7 +515,7 @@
             <label class="option"><input type="radio" name="retards-livraison"> Oui</label>
             <label class="option"><input type="radio" name="retards-livraison"> Non</label>
           </div>
-          <textarea placeholder="Si oui, precisez"></textarea>
+          <textarea name="retards-livraison-detail" placeholder="Si oui, precisez"></textarea>
         </div>
         <div class="question">
           <div class="question-title">La coordination entre les differentes etapes est-elle efficace ?</div>
@@ -510,7 +529,7 @@
         </div>
         <div class="question">
           <div class="question-title">Quelles ameliorations proposeriez-vous pour rendre le processus de livraison plus fluide ?</div>
-          <textarea placeholder="Vos recommandations"></textarea>
+          <textarea name="ameliorations-livraison" placeholder="Vos recommandations"></textarea>
         </div>
       </section>
 
@@ -536,20 +555,19 @@
         </div>
         <div class="question">
           <div class="question-title">Quelles suggestions avez-vous pour ameliorer nos canaux de communication ?</div>
-          <textarea placeholder="Vos suggestions sur la communication"></textarea>
+          <textarea name="suggestions-communication" placeholder="Vos suggestions sur la communication"></textarea>
         </div>
         <div class="question">
           <div class="question-title">Avez-vous d'autres recommandations pour ameliorer nos services ?</div>
-          <textarea placeholder="Vos recommandations generales"></textarea>
+          <textarea name="recommandations-generales" placeholder="Vos recommandations generales"></textarea>
         </div>
       </section>
 
       <div class="nav">
         <button type="button" class="btn btn-secondary" onclick="moveSurveyStep(-1)">Precedent</button>
         <button type="button" class="btn btn-primary" id="nextSurveyBtn" onclick="moveSurveyStep(1)">Suivant</button>
+        <button type="submit" class="btn btn-primary" id="submitSurveyBtn" style="display:none;">Terminer</button>
       </div>
-
-      <div class="submit-note">Formulaire visuel pret a etre relie a une vraie soumission si tu veux la prochaine etape.</div>
     </form>
     </div>
   </div>
@@ -557,32 +575,42 @@
 
 <script>
   let currentSurveyStep = 0;
-  const surveySteps = document.querySelectorAll('.wizard-step');
+  const surveyForm   = document.querySelector('form[action="/demat/satisfaction"], form');
+  const surveySteps  = document.querySelectorAll('.wizard-step');
   const surveyPanels = document.querySelectorAll('.section');
-  const nextSurveyBtn = document.getElementById('nextSurveyBtn');
+  const nextBtn      = document.getElementById('nextSurveyBtn');
+  const submitBtn    = document.getElementById('submitSurveyBtn');
+
+  function syncOptionValues() {
+    document.querySelectorAll('label.option input[type="radio"], label.option input[type="checkbox"]').forEach((input) => {
+      if (input.hasAttribute('value') && input.getAttribute('value') !== 'on') {
+        return;
+      }
+
+      const optionText = input.parentElement.textContent.replace(/\s+/g, ' ').trim();
+      if (optionText) {
+        input.value = optionText;
+      }
+    });
+  }
 
   function showSurveyStep(index) {
     currentSurveyStep = Math.max(0, Math.min(index, surveyPanels.length - 1));
+    const isLast = currentSurveyStep === surveyPanels.length - 1;
 
-    surveySteps.forEach((step, i) => {
-      step.classList.toggle('active', i === currentSurveyStep);
-    });
+    surveySteps.forEach((step, i) => step.classList.toggle('active', i === currentSurveyStep));
+    surveyPanels.forEach((panel, i) => panel.classList.toggle('active', i === currentSurveyStep));
 
-    surveyPanels.forEach((panel, i) => {
-      panel.classList.toggle('active', i === currentSurveyStep);
-    });
-
-    nextSurveyBtn.textContent = currentSurveyStep === surveyPanels.length - 1 ? 'Terminer' : 'Suivant';
+    nextBtn.style.display   = isLast ? 'none' : '';
+    submitBtn.style.display = isLast ? ''     : 'none';
   }
 
   function moveSurveyStep(direction) {
-    if (direction > 0 && currentSurveyStep === surveyPanels.length - 1) {
-      showSurveyStep(0);
-      return;
-    }
-
     showSurveyStep(currentSurveyStep + direction);
   }
+
+  syncOptionValues();
+  surveyForm?.addEventListener('submit', syncOptionValues);
 </script>
 </body>
 </html>

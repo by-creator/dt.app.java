@@ -3,117 +3,718 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="_csrf" th:content="${_csrf.token}">
+  <meta name="_csrf_header" th:content="${_csrf.headerName}">
   <title>Guichet GFA - Dakar Terminal</title>
   <th:block th:replace="~{fragments/pwa-head :: pwaMeta}"></th:block>
   <script th:src="@{/js/theme.js}"></script>
   <link rel="stylesheet" th:href="@{/css/style.css}">
+  <style>
+    :root {
+      --guichet-bg: #eef2ff;
+      --guichet-card: rgba(255, 255, 255, 0.92);
+      --guichet-border: rgba(99, 102, 241, 0.16);
+      --guichet-text: #172554;
+      --guichet-muted: #64748b;
+      --guichet-primary: #5b54c6;
+      --guichet-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
+    }
+
+    body.dark {
+      --guichet-bg: #0f172a;
+      --guichet-card: rgba(30, 41, 59, 0.92);
+      --guichet-border: rgba(148, 163, 184, 0.18);
+      --guichet-text: #e2e8f0;
+      --guichet-muted: #94a3b8;
+      --guichet-primary: #8b84ff;
+      --guichet-shadow: 0 20px 50px rgba(2, 6, 23, 0.45);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--guichet-bg);
+      color: var(--guichet-text);
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .guichet-shell {
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top right, rgba(186,230,253,0.42), transparent 24%),
+        radial-gradient(circle at top left, rgba(199,210,254,0.48), transparent 28%),
+        linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+    }
+
+    body.dark .guichet-shell {
+      background:
+        radial-gradient(circle at top right, rgba(59,130,246,0.16), transparent 24%),
+        radial-gradient(circle at top left, rgba(99,102,241,0.14), transparent 28%),
+        linear-gradient(180deg, #0f172a 0%, #111827 100%);
+    }
+
+    .guichet-wrap {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 28px 52px;
+    }
+
+    .guichet-back {
+      display: inline-block;
+      margin-bottom: 20px;
+      color: var(--guichet-primary);
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .guichet-title {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .guichet-title h1 {
+      margin: 0;
+      font-size: 36px;
+      font-weight: 800;
+    }
+
+    .panel,
+    .info-card {
+      background: var(--guichet-card);
+      border: 1px solid var(--guichet-border);
+      border-radius: 20px;
+      box-shadow: var(--guichet-shadow);
+    }
+
+    .hero-panel {
+      padding: 28px 34px;
+      margin-bottom: 22px;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(240px, 280px) minmax(280px, 1fr);
+      gap: 24px;
+      align-items: center;
+    }
+
+    .hero-grid select {
+      width: 100%;
+      height: 46px;
+      border-radius: 12px;
+      border: 1px solid var(--guichet-border);
+      background: rgba(255,255,255,0.9);
+      color: #334155;
+      font-size: 15px;
+      padding: 0 16px;
+    }
+
+    body.dark .hero-grid select {
+      background: rgba(15, 23, 42, 0.92);
+      color: #e2e8f0;
+    }
+
+    .status-kicker {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--guichet-primary);
+      margin-bottom: 10px;
+    }
+
+    .current-ticket {
+      font-size: clamp(36px, 6vw, 56px);
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      margin-bottom: 10px;
+    }
+
+    .current-meta {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px 16px;
+      color: var(--guichet-muted);
+      font-size: 15px;
+    }
+
+    .status-line {
+      margin-top: 12px;
+      color: var(--guichet-muted);
+      font-size: 14px;
+    }
+
+    .status-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      display: inline-block;
+      margin-right: 6px;
+      background: #22c55e;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .action-btn {
+      border: 0;
+      border-radius: 12px;
+      padding: 14px 28px;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+      transition: transform 0.15s ease, opacity 0.15s ease;
+    }
+
+    .action-btn:hover:not(:disabled) { transform: translateY(-1px); }
+    .action-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .action-next { background: #a5a3df; color: white; }
+    .action-recall { background: #9ca3af; color: white; }
+    .action-complete { background: #8dd8a7; color: white; }
+    .action-incomplete { background: #fde08a; color: #475569; }
+    .action-absent { background: #f1a8b1; color: white; }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: minmax(340px, 1.25fr) minmax(280px, 0.95fr);
+      gap: 18px;
+    }
+
+    .info-card {
+      padding: 22px 24px;
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 800;
+      margin-bottom: 18px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 14px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.22);
+      margin-bottom: 18px;
+    }
+
+    .gfa-tab {
+      border: 0;
+      background: none;
+      padding: 10px 16px 12px;
+      font-weight: 700;
+      color: var(--guichet-muted);
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+    }
+
+    .gfa-tab.active {
+      color: var(--guichet-primary);
+      border-bottom-color: var(--guichet-primary);
+    }
+
+    .waiting-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .waiting-item {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 14px;
+      align-items: center;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: rgba(99, 102, 241, 0.06);
+      border: 1px solid rgba(99, 102, 241, 0.08);
+    }
+
+    body.dark .waiting-item {
+      background: rgba(79, 70, 229, 0.10);
+      border-color: rgba(129, 140, 248, 0.14);
+    }
+
+    .waiting-badge {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #6d5ef0, #3b82f6);
+      color: white;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+    }
+
+    .waiting-number {
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .waiting-service,
+    .waiting-time {
+      color: var(--guichet-muted);
+      font-size: 13px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 90px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(91, 84, 198, 0.10);
+      color: var(--guichet-primary);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .empty-state {
+      color: var(--guichet-muted);
+      line-height: 1.7;
+    }
+
+    .ticket-link {
+      display: inline-block;
+      margin-top: 14px;
+      border-radius: 10px;
+      padding: 12px 22px;
+      background: #5648b3;
+      color: white;
+      font-weight: 800;
+      font-size: 15px;
+      text-decoration: none;
+    }
+
+    .guide-list {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--guichet-muted);
+      line-height: 1.9;
+    }
+
+    .flash {
+      margin-bottom: 16px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      font-size: 14px;
+      display: none;
+    }
+
+    .flash.show { display: block; }
+    .flash.info { background: rgba(59, 130, 246, 0.10); color: #1d4ed8; }
+    .flash.success { background: rgba(34, 197, 94, 0.12); color: #15803d; }
+    .flash.error { background: rgba(239, 68, 68, 0.12); color: #b91c1c; }
+
+    .report-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .report-box {
+      padding: 14px;
+      border-radius: 14px;
+      background: rgba(148, 163, 184, 0.08);
+      text-align: center;
+    }
+
+    .report-value {
+      font-size: 24px;
+      font-weight: 900;
+      margin-bottom: 4px;
+    }
+
+    .report-label {
+      font-size: 12px;
+      color: var(--guichet-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    @media (max-width: 900px) {
+      .hero-grid,
+      .content-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .guichet-wrap { padding: 20px 16px 36px; }
+      .hero-panel, .info-card { padding: 18px; }
+      .guichet-title h1 { font-size: 30px; }
+      .actions { gap: 10px; }
+      .action-btn { width: calc(50% - 6px); padding: 12px 10px; }
+      .waiting-item { grid-template-columns: 1fr; text-align: center; }
+      .report-grid { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
-<body style="background:#eef2ff;">
+<body>
 
-<div style="min-height:100vh; background:
-  radial-gradient(circle at top right, rgba(186,230,253,0.45), transparent 26%),
-  radial-gradient(circle at top left, rgba(199,210,254,0.5), transparent 28%),
-  linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);">
-  <div style="max-width:1180px; margin:0 auto; padding:28px 28px 52px;">
-    <div style="margin-bottom:20px;">
-      <a th:href="@{/menu/facturation}" style="color:#5b54c6; text-decoration:none; font-weight:700; font-size:14px;">&#8592; Retour a Facturation</a>
-    </div>
+<div class="guichet-shell">
+  <div class="guichet-wrap">
+    <a th:href="@{/menu/facturation}" class="guichet-back">&#8592; Retour a Facturation</a>
 
-    <div style="display:flex; align-items:center; gap:14px; margin-bottom:24px;">
-      <div style="width:56px; height:56px; border-radius:18px; display:grid; place-items:center; color:#5b54c6;">
+    <div class="guichet-title">
+      <div style="width:56px; height:56px; border-radius:18px; display:grid; place-items:center; color:var(--guichet-primary);">
         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
           <rect x="3" y="4" width="18" height="12" rx="2"></rect>
           <line x1="8" y1="20" x2="16" y2="20"></line>
           <line x1="12" y1="16" x2="12" y2="20"></line>
         </svg>
       </div>
-      <h1 style="margin:0; font-size:36px; font-weight:800; color:#172554;">Guichet</h1>
+      <h1>Guichet</h1>
     </div>
 
-    <section style="background:rgba(255,255,255,0.92); border-radius:20px; box-shadow:0 20px 50px rgba(15,23,42,0.08); padding:28px 34px; margin-bottom:22px;">
-      <div style="display:flex; flex-direction:column; align-items:center; gap:18px; text-align:center;">
-        <select style="width:min(100%, 240px); height:42px; border-radius:12px; border:1px solid rgba(99,102,241,0.25); background:white; color:#334155; font-size:15px; padding:0 16px;">
-          <option>-- Selectionner un guichet --</option>
-          <option>Guichet 1</option>
-          <option>Guichet 2</option>
-          <option>Guichet 3</option>
-        </select>
+    <div id="flashMessage" class="flash"></div>
 
+    <section class="panel hero-panel">
+      <div class="hero-grid">
         <div>
-          <div style="font-size:19px; color:#0f172a; font-weight:800;">Client en cours : <span style="color:#334155;">&#8212;</span></div>
-          <div style="margin-top:8px; color:#94a3b8; font-size:14px;">Aucun client en attente</div>
-          <div style="margin-top:8px; color:#ef4444; font-size:13px; display:flex; align-items:center; justify-content:center; gap:6px;">
-            <span style="width:9px; height:9px; background:#ef4444; border-radius:999px; display:inline-block;"></span>
-            Temps reel indisponible
+          <label for="guichetSelect" class="status-kicker">Selection du guichet</label>
+          <select id="guichetSelect">
+            <option value="">-- Selectionner un guichet --</option>
+            <option th:each="guichet : ${guichets}"
+                    th:value="${guichet.id}"
+                    th:text="${guichet.numero + (guichet.service != null ? ' - ' + guichet.service.nom : '')}">
+              Guichet 1
+            </option>
+          </select>
+          <div class="status-line" id="guichetInfoLine">Selectionnez un guichet pour charger automatiquement les tickets du service.</div>
+          <div style="margin-top:14px;">
+            <p class="empty-state" style="margin:0 0 6px; font-size:12px;">Pour les clients qui ne peuvent pas scanner :</p>
+            <a th:href="@{/gfa/ticket}" target="_blank" rel="noopener noreferrer" class="ticket-link">TICKET</a>
+          </div>
+        </div>
+
+        <div style="text-align:center;">
+          <div class="status-kicker">Client en cours</div>
+          <div id="currentTicketNumber" class="current-ticket">&#8212;</div>
+          <div id="currentTicketMeta" class="current-meta">
+            <span>En attente de selection</span>
+          </div>
+          <div class="status-line">
+            <span class="status-dot"></span>
+            <span id="realtimeStatus">Temps reel actif</span>
           </div>
         </div>
       </div>
     </section>
 
-    <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:12px; margin-bottom:16px;">
-      <button type="button" style="border:0; border-radius:12px; padding:14px 28px; background:#a5a3df; color:white; font-weight:700; font-size:15px;">Suivant</button>
-      <button type="button" style="border:0; border-radius:12px; padding:14px 28px; background:#9ca3af; color:white; font-weight:700; font-size:15px;">Rappel</button>
-      <button type="button" style="border:0; border-radius:12px; padding:14px 28px; background:#8dd8a7; color:white; font-weight:700; font-size:15px;">Termine</button>
-      <button type="button" style="border:0; border-radius:12px; padding:14px 28px; background:#fde08a; color:#64748b; font-weight:700; font-size:15px;">Incomplet</button>
-      <button type="button" style="border:0; border-radius:12px; padding:14px 28px; background:#f1a8b1; color:white; font-weight:700; font-size:15px;">Absent</button>
+    <div class="actions">
+      <button type="button" class="action-btn action-next" data-action="next" disabled>Suivant</button>
+      <button type="button" class="action-btn action-recall" data-action="recall" disabled>Rappel</button>
+      <button type="button" class="action-btn action-complete" data-action="complete" disabled>Termine</button>
+      <button type="button" class="action-btn action-incomplete" data-action="incomplete" disabled>Incomplet</button>
+      <button type="button" class="action-btn action-absent" data-action="absent" disabled>Absent</button>
     </div>
 
-    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(340px, 1fr)); gap:18px;">
-      <section style="background:white; border-radius:18px; box-shadow:0 14px 32px rgba(15,23,42,0.08); padding:22px 24px;">
-        <div style="font-size:15px; font-weight:800; color:#0f172a; margin-bottom:18px;">CLIENT(S) EN ATTENTE : 0</div>
+    <div class="content-grid">
+      <section class="info-card">
+        <div class="card-title">CLIENT(S) EN ATTENTE : <span id="waitingCount">0</span></div>
 
-        <div style="display:flex; gap:14px; border-bottom:1px solid #e2e8f0; margin-bottom:18px;">
-          <button type="button" class="gfa-tab active" data-target="client" onclick="switchGfaTab(this)" style="border:0; background:none; padding:10px 16px 12px; font-weight:700; color:#5b54c6; border-bottom:2px solid #5b54c6; cursor:pointer;">Client</button>
-          <button type="button" class="gfa-tab" data-target="personnel" onclick="switchGfaTab(this)" style="border:0; background:none; padding:10px 16px 12px; font-weight:700; color:#64748b; border-bottom:2px solid transparent; cursor:pointer;">Personnel</button>
-          <button type="button" class="gfa-tab" data-target="rapports" onclick="switchGfaTab(this)" style="border:0; background:none; padding:10px 16px 12px; font-weight:700; color:#64748b; border-bottom:2px solid transparent; cursor:pointer;">Rapports</button>
+        <div class="tabs">
+          <button type="button" class="gfa-tab active" data-target="client">Client</button>
+          <button type="button" class="gfa-tab" data-target="personnel">Personnel</button>
+          <button type="button" class="gfa-tab" data-target="rapports">Rapports</button>
         </div>
 
         <div class="gfa-tab-panel" data-panel="client">
-          <p style="margin:0 0 12px; color:#475569;">Aucun client en attente</p>
-          <p style="margin:0 0 16px; color:#475569;">Pour les clients qui ne peuvent pas scanner :</p>
-          <button type="button" style="border:0; border-radius:10px; padding:12px 22px; background:#5648b3; color:white; font-weight:800; font-size:15px;">TICKET</button>
+          <div id="waitingList" class="waiting-list">
+            <p class="empty-state">Selectionnez un guichet pour afficher la file du service.</p>
+          </div>
         </div>
 
         <div class="gfa-tab-panel" data-panel="personnel" style="display:none;">
-          <p style="margin:0; color:#475569;">Aucun personnel connecte au guichet pour le moment.</p>
+          <div id="personnelPanel" class="empty-state">Aucun guichet selectionne.</div>
         </div>
 
         <div class="gfa-tab-panel" data-panel="rapports" style="display:none;">
-          <p style="margin:0; color:#475569;">Aucun rapport n est disponible sur cette maquette.</p>
+          <div id="reportPanel" class="report-grid">
+            <div class="report-box">
+              <div class="report-value">0</div>
+              <div class="report-label">Traites</div>
+            </div>
+            <div class="report-box">
+              <div class="report-value">0</div>
+              <div class="report-label">Absents</div>
+            </div>
+            <div class="report-box">
+              <div class="report-value">0</div>
+              <div class="report-label">Incomplets</div>
+            </div>
+          </div>
         </div>
       </section>
 
-      <section style="background:white; border-radius:18px; box-shadow:0 14px 32px rgba(15,23,42,0.08); padding:22px 24px;">
-        <div style="font-size:15px; font-weight:800; color:#0f172a; margin-bottom:16px;">Guide d'utilisation</div>
-        <ul style="margin:0; padding-left:18px; color:#475569; line-height:1.9;">
-          <li><strong>Suivant</strong> : appeler le prochain client</li>
-          <li><strong>Rappel</strong> : rappeler le client en cours</li>
-          <li><strong>Incomplet</strong> : dossier incomplet</li>
-          <li><strong>Termine</strong> : traitement termine</li>
-          <li><strong>Absent</strong> : client absent</li>
+      <section class="info-card">
+        <div class="card-title">Guide d'utilisation</div>
+        <ul class="guide-list">
+          <li><strong>Suivant</strong> : appelle le prochain ticket du service du guichet.</li>
+          <li><strong>Rappel</strong> : relance le ticket actuellement en cours avec une annonce vocale.</li>
+          <li><strong>Incomplet</strong> : cloture le ticket en dossier incomplet.</li>
+          <li><strong>Termine</strong> : cloture le ticket en traitement termine.</li>
+          <li><strong>Absent</strong> : marque le ticket en absence client.</li>
         </ul>
       </section>
     </div>
   </div>
 </div>
 
-<script>
+<script th:inline="javascript">
+  const csrfToken = document.querySelector('meta[name="_csrf"]')?.content || '';
+  const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
+  const guichetSelect = document.getElementById('guichetSelect');
+  const flashMessage = document.getElementById('flashMessage');
+  const actionButtons = Array.from(document.querySelectorAll('.action-btn'));
+  const waitingList = document.getElementById('waitingList');
+  const waitingCount = document.getElementById('waitingCount');
+  const currentTicketNumber = document.getElementById('currentTicketNumber');
+  const currentTicketMeta = document.getElementById('currentTicketMeta');
+  const guichetInfoLine = document.getElementById('guichetInfoLine');
+  const realtimeStatus = document.getElementById('realtimeStatus');
+  const personnelPanel = document.getElementById('personnelPanel');
+  const reportPanel = document.getElementById('reportPanel');
+  let selectedGuichetId = '';
+  let currentState = null;
+  let pollTimer = null;
+
   function switchGfaTab(button) {
     document.querySelectorAll('.gfa-tab').forEach(tab => {
       tab.classList.remove('active');
-      tab.style.color = '#64748b';
-      tab.style.borderBottomColor = 'transparent';
     });
-
     button.classList.add('active');
-    button.style.color = '#5b54c6';
-    button.style.borderBottomColor = '#5b54c6';
-
     const target = button.dataset.target;
     document.querySelectorAll('.gfa-tab-panel').forEach(panel => {
       panel.style.display = panel.dataset.panel === target ? 'block' : 'none';
     });
   }
+
+  document.querySelectorAll('.gfa-tab').forEach(tab => {
+    tab.addEventListener('click', () => switchGfaTab(tab));
+  });
+
+  function showFlash(message, type) {
+    flashMessage.textContent = message;
+    flashMessage.className = 'flash show ' + type;
+    window.clearTimeout(showFlash.timeoutId);
+    showFlash.timeoutId = window.setTimeout(() => {
+      flashMessage.className = 'flash';
+      flashMessage.textContent = '';
+    }, 5000);
+  }
+
+  function formatDateTime(value) {
+    if (!value) {
+      return '';
+    }
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+      return '';
+    }
+    return parsed.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function renderWaitingTickets(items) {
+    if (!items || items.length === 0) {
+      waitingList.innerHTML = '<p class="empty-state">Aucun client en attente pour ce service.</p>';
+      return;
+    }
+
+    waitingList.innerHTML = items.map((ticket, index) => `
+      <div class="waiting-item">
+        <div class="waiting-badge">${index + 1}</div>
+        <div>
+          <div class="waiting-number">${ticket.numero}</div>
+          <div class="waiting-service">${ticket.service || ''}</div>
+          <div class="waiting-time">Arrive a ${formatDateTime(ticket.createdAt)}</div>
+        </div>
+        <div class="pill">${ticket.statut || 'EN ATTENTE'}</div>
+      </div>
+    `).join('');
+  }
+
+  function renderPersonnel(state) {
+    if (!state) {
+      personnelPanel.innerHTML = 'Aucun guichet selectionne.';
+      return;
+    }
+    personnelPanel.innerHTML = `
+      <div class="empty-state">
+        <p style="margin:0 0 10px;"><strong>Guichet :</strong> ${state.guichetNumero || '-'}</p>
+        <p style="margin:0 0 10px;"><strong>Service :</strong> ${state.serviceNom || '-'}</p>
+        <p style="margin:0;"><strong>Agent :</strong> ${state.agentNom || 'Aucun agent affecte'}</p>
+      </div>
+    `;
+  }
+
+  function renderReports(state) {
+    const reports = state?.reports || { traitesAujourdhui: 0, absentsAujourdhui: 0, incompletsAujourdhui: 0 };
+    reportPanel.innerHTML = `
+      <div class="report-box">
+        <div class="report-value">${reports.traitesAujourdhui ?? 0}</div>
+        <div class="report-label">Traites</div>
+      </div>
+      <div class="report-box">
+        <div class="report-value">${reports.absentsAujourdhui ?? 0}</div>
+        <div class="report-label">Absents</div>
+      </div>
+      <div class="report-box">
+        <div class="report-value">${reports.incompletsAujourdhui ?? 0}</div>
+        <div class="report-label">Incomplets</div>
+      </div>
+    `;
+  }
+
+  function updateButtons(state) {
+    const hasGuichet = Boolean(state?.guichetId);
+    const hasCurrent = Boolean(state?.currentCall);
+    const hasWaiting = (state?.waitingCount || 0) > 0;
+
+    actionButtons.forEach(button => {
+      const action = button.dataset.action;
+      let disabled = !hasGuichet;
+      if (action === 'next') {
+        disabled = disabled || hasCurrent || !hasWaiting;
+      } else {
+        disabled = disabled || !hasCurrent;
+      }
+      button.disabled = disabled;
+    });
+  }
+
+  function renderState(state) {
+    currentState = state;
+    waitingCount.textContent = state?.waitingCount ?? 0;
+
+    if (!state) {
+      currentTicketNumber.innerHTML = '&#8212;';
+      currentTicketMeta.innerHTML = '<span>En attente de selection</span>';
+      guichetInfoLine.textContent = 'Selectionnez un guichet pour charger automatiquement les tickets du service.';
+      renderWaitingTickets([]);
+      renderPersonnel(null);
+      renderReports(null);
+      updateButtons(null);
+      return;
+    }
+
+    guichetInfoLine.textContent = `${state.serviceNom} - ${state.guichetInfos || 'Service rattache au guichet'}`;
+
+    if (state.currentCall) {
+      currentTicketNumber.textContent = state.currentCall.numero;
+      currentTicketMeta.innerHTML = `
+        <span>Service : ${state.currentCall.service || state.serviceNom || '-'}</span>
+        <span>Guichet : ${state.currentCall.guichet || state.guichetNumero || '-'}</span>
+        <span>Agent : ${state.currentCall.agent || state.agentNom || '-'}</span>
+      `;
+    } else {
+      currentTicketNumber.innerHTML = '&#8212;';
+      currentTicketMeta.innerHTML = `
+        <span>Aucun client en cours</span>
+        <span>Service : ${state.serviceNom || '-'}</span>
+      `;
+    }
+
+    renderWaitingTickets(state.waitingTickets || []);
+    renderPersonnel(state);
+    renderReports(state);
+    updateButtons(state);
+  }
+
+  async function fetchJson(url, options = {}) {
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        'Accept': 'application/json',
+        ...(options.method && options.method !== 'GET' ? { [csrfHeader]: csrfToken } : {}),
+        ...(options.headers || {})
+      }
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const message = data.message || 'Une erreur est survenue.';
+      throw new Error(message);
+    }
+    return data;
+  }
+
+  async function loadGuichetState(showInfo = false) {
+    if (!selectedGuichetId) {
+      renderState(null);
+      realtimeStatus.textContent = 'Temps reel actif';
+      return;
+    }
+
+    try {
+      const state = await fetchJson(`/api/gfa/guichets/${selectedGuichetId}/state`);
+      renderState(state);
+      realtimeStatus.textContent = 'Temps reel actif';
+      if (showInfo) {
+        showFlash('La file du guichet a ete chargee.', 'info');
+      }
+    } catch (error) {
+      realtimeStatus.textContent = error.message;
+      showFlash(error.message, 'error');
+    }
+  }
+
+
+  async function handleAction(action) {
+    if (!selectedGuichetId) {
+      showFlash('Veuillez d abord selectionner un guichet.', 'error');
+      return;
+    }
+
+    try {
+      const payload = await fetchJson(`/api/gfa/guichets/${selectedGuichetId}/actions/${action}`, {
+        method: 'POST'
+      });
+      renderState(payload.state || null);
+      realtimeStatus.textContent = 'Temps reel actif';
+      showFlash(payload.message || 'Action executee.', payload.success ? 'success' : 'error');
+    } catch (error) {
+      showFlash(error.message, 'error');
+      realtimeStatus.textContent = error.message;
+    }
+  }
+
+  function startPolling() {
+    if (pollTimer) {
+      window.clearInterval(pollTimer);
+    }
+    pollTimer = window.setInterval(() => {
+      if (selectedGuichetId) {
+        loadGuichetState(false);
+      }
+    }, 4000);
+  }
+
+  guichetSelect.addEventListener('change', () => {
+    selectedGuichetId = guichetSelect.value;
+    loadGuichetState(true);
+    startPolling();
+  });
+
+  actionButtons.forEach(button => {
+    button.addEventListener('click', () => handleAction(button.dataset.action));
+  });
+
+  renderState(null);
 </script>
 
 </body>
