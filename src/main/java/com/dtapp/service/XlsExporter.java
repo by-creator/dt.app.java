@@ -5,6 +5,7 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
@@ -26,8 +27,32 @@ public class XlsExporter {
             "number_of_yard_items", "number_of_packages"
     );
 
+    public byte[] exportToBytes(List<EdiRecord> records, Map<String, String> headers) {
+        try (Workbook workbook = buildWorkbook(records, headers);
+             ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+            workbook.write(bos);
+            log.info("Excel file exported to bytes ({} records)", records.size());
+            return bos.toByteArray();
+        } catch (IOException e) {
+            log.error("Error exporting Excel file to bytes", e);
+            throw new RuntimeException("Failed to export Excel file", e);
+        }
+    }
+
     public void export(List<EdiRecord> records, Map<String, String> headers, String outputPath) {
-        try (Workbook workbook = new XSSFWorkbook()) {
+        try (Workbook workbook = buildWorkbook(records, headers);
+             FileOutputStream fos = new FileOutputStream(outputPath)) {
+            workbook.write(fos);
+            log.info("Excel file exported: {}", outputPath);
+        } catch (IOException e) {
+            log.error("Error exporting Excel file: {}", outputPath, e);
+            throw new RuntimeException("Failed to export Excel file", e);
+        }
+    }
+
+    private Workbook buildWorkbook(List<EdiRecord> records, Map<String, String> headers) throws IOException {
+        Workbook workbook = new XSSFWorkbook();
+        try {
             Sheet sheet = workbook.createSheet("Bl importer");
 
             // ── Ligne 1 : en-têtes ────────────────────────────────────────────
@@ -130,13 +155,10 @@ public class XlsExporter {
                 sheet.autoSizeColumn(i);
             }
 
-            try (FileOutputStream fos = new FileOutputStream(outputPath)) {
-                workbook.write(fos);
-                log.info("Excel file exported: {}", outputPath);
-            }
-        } catch (IOException e) {
-            log.error("Error exporting Excel file: {}", outputPath, e);
-            throw new RuntimeException("Failed to export Excel file", e);
+            return workbook;
+        } catch (Exception e) {
+            workbook.close();
+            throw e;
         }
     }
 

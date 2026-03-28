@@ -152,30 +152,6 @@
       font-size: 13px;
     }
     .export-btn:hover { background: #15803d; }
-    .sat-table-wrap {
-      overflow-x: auto;
-      margin-top: 8px;
-    }
-    .sat-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-    }
-    .sat-table th {
-      background: #f1f5fb;
-      padding: 9px 12px;
-      text-align: left;
-      font-weight: 700;
-      color: #334155;
-      white-space: nowrap;
-    }
-    .sat-table td {
-      padding: 9px 12px;
-      border-bottom: 1px solid #f0f4fb;
-      color: #334155;
-    }
-    .sat-table tr:last-child td { border-bottom: none; }
-    .sat-table tr:hover td { background: #f8fafd; }
 
     /* ── Dark mode ──────────────────────────────────────────────────────── */
     [data-theme="dark"] .sat-kpi {
@@ -206,17 +182,7 @@
     [data-theme="dark"] .sat-bar-count { color: #64748b; }
     [data-theme="dark"] .sat-no-data { color: #64748b; }
 
-    [data-theme="dark"] .sat-table th {
-      background: #273549;
-      color: #94a3b8;
-    }
-    [data-theme="dark"] .sat-table td {
-      border-color: #334155;
-      color: #cbd5e1;
-    }
-    [data-theme="dark"] .sat-table tr:hover td { background: #2d3f55; }
-
-    [data-theme="dark"] .sat-empty-state { color: #475569; }
+[data-theme="dark"] .sat-empty-state { color: #475569; }
   </style>
 </head>
 <body>
@@ -662,8 +628,7 @@
             <svg class="sat-section-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
           <div class="sat-section-body">
-            <div class="sat-table-wrap">
-              <table class="sat-table">
+            <table class="data-table">
                 <thead>
                   <tr>
                     <th>#</th>
@@ -702,8 +667,7 @@
                     <td th:text="${r.communicationProactive != null ? r.communicationProactive : '—'}">—</td>
                   </tr>
                 </tbody>
-              </table>
-            </div>
+            </table>
           </div>
         </div>
 

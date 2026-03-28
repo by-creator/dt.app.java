@@ -14,11 +14,11 @@
     .gfa-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}.gfa-title{margin:0;font-size:18px;font-weight:800;color:#172554}.gfa-form{display:grid;gap:14px}.gfa-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
     .gfa-label{display:block;font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:6px}.gfa-input,.gfa-select{width:100%;height:42px;border:1px solid #d9e2ef;border-radius:10px;padding:0 12px;background:#fff;color:#334155}.gfa-check{display:flex;align-items:center;gap:8px;font-weight:600;color:#334155}
     .gfa-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 16px;border:none;border-radius:10px;background:#5b54c6;color:#fff;font-weight:700;text-decoration:none;cursor:pointer}.gfa-btn.secondary{background:#e2e8f0;color:#334155}
-    .gfa-table{width:100%;border-collapse:collapse}.gfa-table th,.gfa-table td{padding:11px 12px;border-bottom:1px solid #e2e8f0;text-align:left}.gfa-table th{font-size:12px;text-transform:uppercase;color:#94a3b8}.gfa-actions{display:flex;gap:8px}.gfa-icon-btn{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:none;border-radius:8px;text-decoration:none;cursor:pointer}.gfa-icon-btn.edit{background:#ede9fe;color:#5b54c6}.gfa-icon-btn.del{background:#fee2e2;color:#dc2626}
+    .gfa-actions{display:flex;gap:8px}.gfa-icon-btn{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:none;border-radius:8px;text-decoration:none;cursor:pointer}.gfa-icon-btn.edit{background:#ede9fe;color:#5b54c6}.gfa-icon-btn.del{background:#fee2e2;color:#dc2626}
     .gfa-breadcrumb{display:flex;gap:8px;align-items:center;color:#64748b;margin-bottom:18px}.gfa-breadcrumb a{color:#6366f1;text-decoration:none}.gfa-empty{color:#64748b}
     [data-theme="dark"] .wizard-tab{background:#1e293b;color:#94a3b8}[data-theme="dark"] .wizard-tab.active{background:#5b54c6;color:#fff}[data-theme="dark"] .gfa-card,[data-theme="dark"] .gfa-stat{background:#1e293b;border-color:#334155;box-shadow:0 14px 30px rgba(2,6,23,.35)}
     [data-theme="dark"] .gfa-title,[data-theme="dark"] .gfa-stat-value,[data-theme="dark"] .gfa-check{color:#f1f5f9}[data-theme="dark"] .gfa-label,[data-theme="dark"] .gfa-breadcrumb,[data-theme="dark"] .gfa-empty{color:#94a3b8}[data-theme="dark"] .gfa-input,[data-theme="dark"] .gfa-select{background:#0f172a;border-color:#475569;color:#e2e8f0}
-    [data-theme="dark"] .gfa-table th,[data-theme="dark"] .gfa-table td{border-color:#334155}[data-theme="dark"] .gfa-table td{color:#cbd5e1}[data-theme="dark"] .gfa-btn.secondary{background:#334155;color:#e2e8f0}[data-theme="dark"] .gfa-icon-btn.edit{background:#312e81;color:#c7d2fe}[data-theme="dark"] .gfa-icon-btn.del{background:#7f1d1d;color:#fecaca}
+    [data-theme="dark"] .gfa-btn.secondary{background:#334155;color:#e2e8f0}[data-theme="dark"] .gfa-icon-btn.edit{background:#312e81;color:#c7d2fe}[data-theme="dark"] .gfa-icon-btn.del{background:#7f1d1d;color:#fecaca}
   </style>
 </head>
 <body>
@@ -61,9 +61,11 @@
         <div class="gfa-stat"><div class="gfa-stat-label">En attente</div><div class="gfa-stat-value" th:text="${waitingCount}" style="color:#f59e0b;">0</div></div>
         <div class="gfa-stat"><div class="gfa-stat-label">Traites</div><div class="gfa-stat-value" th:text="${closedTodayCount}" style="color:#16a34a;">0</div></div>
       </div>
-      <div class="gfa-card">
-        <div class="gfa-head"><h2 class="gfa-title">Activite en cours</h2></div>
-        <table class="gfa-table">
+      <div class="page-section-card" style="padding:0; overflow:hidden; margin-bottom:20px;">
+        <div class="table-toolbar">
+          <span class="toolbar-title">Activite en cours</span>
+        </div>
+        <table class="data-table">
           <thead><tr><th>Guichet</th><th>Service</th><th>Agent</th><th>Ticket</th><th>Statut</th><th>En attente</th></tr></thead>
           <tbody>
             <tr th:if="${#lists.isEmpty(activityRows)}"><td colspan="6" class="gfa-empty">Aucune activite en cours.</td></tr>
@@ -88,9 +90,11 @@
           <div><button type="submit" class="gfa-btn" th:text="${selectedService != null} ? 'Mettre a jour' : 'Ajouter'">Ajouter</button></div>
         </form>
       </div>
-      <div class="gfa-card">
-        <div class="gfa-head"><h2 class="gfa-title">Liste des services</h2></div>
-        <table class="gfa-table">
+      <div class="page-section-card" style="padding:0; overflow:hidden; margin-bottom:20px;">
+        <div class="table-toolbar">
+          <span class="toolbar-title">Liste des services</span>
+        </div>
+        <table class="data-table">
           <thead><tr><th>ID</th><th>Nom</th><th>Code</th><th>Statut</th><th>Actions</th></tr></thead>
           <tbody>
             <tr th:if="${#lists.isEmpty(services)}"><td colspan="5" class="gfa-empty">Aucun service enregistre.</td></tr>
@@ -117,9 +121,11 @@
           <div><button type="submit" class="gfa-btn" th:text="${selectedGuichet != null} ? 'Mettre a jour' : 'Ajouter'">Ajouter</button></div>
         </form>
       </div>
-      <div class="gfa-card">
-        <div class="gfa-head"><h2 class="gfa-title">Liste des guichets</h2></div>
-        <table class="gfa-table">
+      <div class="page-section-card" style="padding:0; overflow:hidden; margin-bottom:20px;">
+        <div class="table-toolbar">
+          <span class="toolbar-title">Liste des guichets</span>
+        </div>
+        <table class="data-table">
           <thead><tr><th>Numero</th><th>Infos</th><th>Service</th><th>Statut</th><th>Actions</th></tr></thead>
           <tbody>
             <tr th:if="${#lists.isEmpty(guichets)}"><td colspan="5" class="gfa-empty">Aucun guichet enregistre.</td></tr>
@@ -147,9 +153,11 @@
           <div><button type="submit" class="gfa-btn" th:text="${selectedAgent != null} ? 'Mettre a jour' : 'Ajouter'">Ajouter</button></div>
         </form>
       </div>
-      <div class="gfa-card">
-        <div class="gfa-head"><h2 class="gfa-title">Liste des agents</h2></div>
-        <table class="gfa-table">
+      <div class="page-section-card" style="padding:0; overflow:hidden; margin-bottom:20px;">
+        <div class="table-toolbar">
+          <span class="toolbar-title">Liste des agents</span>
+        </div>
+        <table class="data-table">
           <thead><tr><th>Nom</th><th>Prenom</th><th>Service</th><th>Guichet</th><th>Statut</th><th>Actions</th></tr></thead>
           <tbody>
             <tr th:if="${#lists.isEmpty(agents)}"><td colspan="6" class="gfa-empty">Aucun agent enregistre.</td></tr>
@@ -163,9 +171,11 @@
     </section>
 
     <section id="tab-tickets" class="wizard-panel" th:classappend="${activeTab == 'tickets'} ? ' active'">
-      <div class="gfa-card">
-        <div class="gfa-head"><h2 class="gfa-title">Liste des tickets</h2></div>
-        <table class="gfa-table">
+      <div class="page-section-card" style="padding:0; overflow:hidden; margin-bottom:20px;">
+        <div class="table-toolbar">
+          <span class="toolbar-title">Liste des tickets</span>
+        </div>
+        <table class="data-table">
           <thead><tr><th>Numero</th><th>Service</th><th>Guichet</th><th>Agent</th><th>Statut</th><th>Cree le</th><th>Duree</th></tr></thead>
           <tbody>
             <tr th:if="${#lists.isEmpty(tickets)}"><td colspan="7" class="gfa-empty">Aucun ticket enregistre.</td></tr>

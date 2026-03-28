@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -91,6 +92,40 @@ public class EdiExporter {
             log.error("Error exporting IFTMIN file: {}", outputPath, e);
             throw new RuntimeException("Failed to export IFTMIN file", e);
         }
+    }
+
+    public byte[] exportToBytes(List<EdiRecord> records) {
+        this.documentRef = generateDocRef();
+        LocalDateTime now = LocalDateTime.now();
+
+        String dateStr     = now.format(DateTimeFormatter.ofPattern("yyMMdd"));
+        String timeStr     = now.format(DateTimeFormatter.ofPattern("HHmm"));
+        int interchangeRef = new Random().nextInt(900) + 100;
+
+        List<String> lines = new ArrayList<>();
+        lines.add("UNA:+.? '");
+        lines.add("UNB+UNOA:2+" + sender + "+" + recipient + "+" + dateStr + ":" + timeStr
+                  + "+" + interchangeRef + "'");
+
+        int msgNum    = 11394;
+        int blockCount = 0;
+        for (EdiRecord record : records) {
+            Map<String, String> d = record.toArray();
+            List<String> blockSegs = buildBlock(d, msgNum, now);
+            int segCount = blockSegs.size() + 1;
+            lines.addAll(blockSegs);
+            lines.add("UNT+" + segCount + "+" + msgNum + "'");
+            msgNum++;
+            blockCount++;
+        }
+        lines.add("UNZ+" + blockCount + "+" + interchangeRef + "'");
+
+        StringBuilder sb = new StringBuilder();
+        for (String line : lines) {
+            sb.append(line).append("\r\n");
+        }
+        log.info("IFTMIN exported to bytes ({} records)", records.size());
+        return sb.toString().getBytes(StandardCharsets.UTF_8);
     }
 
     private List<String> buildBlock(Map<String, String> d, int msgNum, LocalDateTime now) {

@@ -88,6 +88,11 @@
       </div>
 
       <div class="page-section-card" style="padding:0; overflow:hidden;">
+        <div class="table-toolbar">
+          <span class="toolbar-title">Journal d'audit</span>
+          <span class="pagination-info" th:if="${totalItems > 0}"
+                th:text="${totalItems} + ' enregistrement' + (${totalItems} > 1 ? 's' : '')"></span>
+        </div>
         <table class="data-table">
           <thead>
           <tr>

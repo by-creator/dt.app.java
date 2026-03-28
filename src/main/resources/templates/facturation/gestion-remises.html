@@ -11,14 +11,6 @@
   <!-- SweetAlert2 -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
-    * { box-sizing: border-box; }
-    .inner-card { background: rgba(255,255,255,0.92); border-radius: 20px; box-shadow: 0 20px 50px rgba(15,23,42,0.07); border: 1px solid rgba(148,163,184,0.15); padding: 28px 32px; margin-bottom: 20px; }
-    .tbl-wrap { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; font-size: 14px; }
-    th { text-align: left; padding: 10px 14px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #94a3b8; border-bottom: 1px solid #e2e8f0; white-space: nowrap; }
-    td { padding: 12px 14px; border-bottom: 1px solid #f1f5f9; color: #334155; }
-    tr:last-child td { border-bottom: none; }
-    tr:hover td { background: #f8fafc; }
     .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; }
     .badge-green  { background: #dcfce7; color: #16a34a; }
     .badge-yellow { background: #fef9c3; color: #92400e; }
@@ -29,9 +21,6 @@
     .btn-valider { padding: 6px 14px; border: none; border-radius: 8px; background: #dcfce7; color: #16a34a; font-weight: 700; font-size: 12px; cursor: pointer; }
     .btn-rejeter { padding: 6px 14px; border: none; border-radius: 8px; background: #fee2e2; color: #dc2626; font-weight: 700; font-size: 12px; cursor: pointer; }
     .alert-success { background: #dcfce7; border: 1px solid #86efac; color: #166534; border-radius: 12px; padding: 14px 18px; margin-bottom: 20px; font-weight: 600; font-size: 14px; }
-    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
-    .section-title { font-size: 18px; font-weight: 800; color: #172554; margin: 0; }
-    /* Modal */
     .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.5); z-index: 1000; align-items: center; justify-content: center; }
     .modal-overlay.open { display: flex; }
     .modal-box { background: white; border-radius: 18px; padding: 32px; width: 100%; max-width: 440px; box-shadow: 0 24px 60px rgba(15,23,42,0.18); }
@@ -43,7 +32,6 @@
     .btn-cancel  { padding: 10px 20px; border: none; border-radius: 10px; background: #f1f5f9; color: #334155; font-weight: 700; font-size: 13px; cursor: pointer; }
     .btn-confirm { padding: 10px 20px; border: none; border-radius: 10px; background: #16a34a; color: white; font-weight: 700; font-size: 13px; cursor: pointer; }
     .btn-confirm-red { padding: 10px 20px; border: none; border-radius: 10px; background: #dc2626; color: white; font-weight: 700; font-size: 13px; cursor: pointer; }
-    @media (max-width: 700px) { .inner-card { padding: 16px; } }
   </style>
 </head>
 <body>
@@ -129,67 +117,63 @@
 
       <div th:if="${successMsg}" class="alert-success" th:text="${successMsg}"></div>
 
-      <div class="inner-card">
-        <div class="section-header">
-          <h2 class="section-title">Demandes de remise</h2>
-          <span th:text="${#lists.size(demandes)} + ' demande(s)'" style="font-size:13px;color:#64748b;"></span>
+      <div class="page-section-card" style="padding:0; overflow:hidden;">
+        <div class="table-toolbar">
+          <span class="toolbar-title">Demandes de remise</span>
+          <span class="pagination-info" th:text="${#lists.size(demandes)} + ' demande(s)'"></span>
         </div>
-        <div class="tbl-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Nom</th>
-                <th>Prenom</th>
-                <th>Email</th>
-                <th>N° BL</th>
-                <th>Maison de transit</th>
-                <th>%</th>
-                <th>Statut</th>
-                <th>Date</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr th:if="${#lists.isEmpty(demandes)}">
-                <td colspan="10" style="text-align:center;color:#94a3b8;padding:32px;">Aucune demande pour le moment.</td>
-              </tr>
-              <tr th:each="d : ${demandes}">
-                <td th:text="${d.id}"></td>
-                <td th:text="${d.nom}"></td>
-                <td th:text="${d.prenom}"></td>
-                <td th:text="${d.email}"></td>
-                <td style="font-weight:700;" th:text="${d.bl}"></td>
-                <td th:text="${d.maison}"></td>
-                <td th:text="${d.pourcentage != null ? d.pourcentage + '%' : '-'}"></td>
-                <td>
-                  <span th:if="${d.statut == 'EN_ATTENTE'}" class="badge badge-yellow">EN ATTENTE</span>
-                  <span th:if="${d.statut == 'EN_ATTENTE_DIRECTION'}" class="badge badge-orange">ATT. DIRECTION</span>
-                  <span th:if="${d.statut == 'VALIDE'}" class="badge badge-green">VALIDE</span>
-                  <span th:if="${d.statut == 'REJETE'}" class="badge badge-red">REJETE</span>
-                  <span th:if="${d.statut != 'EN_ATTENTE' and d.statut != 'EN_ATTENTE_DIRECTION' and d.statut != 'VALIDE' and d.statut != 'REJETE'}"
-                        class="badge badge-gray" th:text="${d.statut}"></span>
-                </td>
-                <td th:text="${#temporals.format(d.createdAt, 'dd/MM/yyyy HH:mm')}"></td>
-                <td>
-                  <div th:if="${d.statut == 'EN_ATTENTE' or d.statut == 'EN_ATTENTE_DIRECTION'}" class="row-actions">
-                    <!-- Formulaire valider (facturation → EN_ATTENTE_DIRECTION, direction → VALIDE) -->
-                    <form th:action="@{/facturation/gestion-remises/{id}/valider(id=${d.id})}"
-                          method="post" th:id="'form-valider-' + ${d.id}">
-                      <input type="hidden" name="pourcentage" th:id="'pct-' + ${d.id}" value="">
-                    </form>
-                    <button type="button" class="btn-valider"
-                            th:onclick="'gererValidation(' + ${d.id} + ')'">Valider</button>
-                    <!-- Rejeter -->
-                    <button type="button" class="btn-rejeter"
-                            th:onclick="'ouvrirModalRejet(' + ${d.id} + ')'">Rejeter</button>
-                  </div>
-                  <div th:if="${d.statut == 'REJETE'}" style="font-size:12px;color:#94a3b8;" th:text="${d.motifRejet}"></div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Nom</th>
+              <th>Prenom</th>
+              <th>Email</th>
+              <th>N° BL</th>
+              <th>Maison de transit</th>
+              <th>%</th>
+              <th>Statut</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:if="${#lists.isEmpty(demandes)}">
+              <td colspan="10" style="text-align:center;color:#94a3b8;padding:32px;">Aucune demande pour le moment.</td>
+            </tr>
+            <tr th:each="d : ${demandes}">
+              <td th:text="${d.id}"></td>
+              <td th:text="${d.nom}"></td>
+              <td th:text="${d.prenom}"></td>
+              <td th:text="${d.email}"></td>
+              <td style="font-weight:700;" th:text="${d.bl}"></td>
+              <td th:text="${d.maison}"></td>
+              <td th:text="${d.pourcentage != null ? d.pourcentage + '%' : '-'}"></td>
+              <td>
+                <span th:if="${d.statut == 'EN_ATTENTE'}" class="badge badge-yellow">EN ATTENTE</span>
+                <span th:if="${d.statut == 'EN_ATTENTE_DIRECTION'}" class="badge badge-orange">ATT. DIRECTION</span>
+                <span th:if="${d.statut == 'VALIDE'}" class="badge badge-green">VALIDE</span>
+                <span th:if="${d.statut == 'REJETE'}" class="badge badge-red">REJETE</span>
+                <span th:if="${d.statut != 'EN_ATTENTE' and d.statut != 'EN_ATTENTE_DIRECTION' and d.statut != 'VALIDE' and d.statut != 'REJETE'}"
+                      class="badge badge-gray" th:text="${d.statut}"></span>
+              </td>
+              <td th:text="${#temporals.format(d.createdAt, 'dd/MM/yyyy HH:mm')}"></td>
+              <td>
+                <div th:if="${d.statut == 'EN_ATTENTE' or d.statut == 'EN_ATTENTE_DIRECTION'}" class="row-actions">
+                  <form th:action="@{/facturation/gestion-remises/{id}/valider(id=${d.id})}"
+                        method="post" th:id="'form-valider-' + ${d.id}">
+                    <input type="hidden" name="pourcentage" th:id="'pct-' + ${d.id}" value="">
+                  </form>
+                  <button type="button" class="btn-valider"
+                          th:onclick="'gererValidation(' + ${d.id} + ')'">Valider</button>
+                  <button type="button" class="btn-rejeter"
+                          th:onclick="'ouvrirModalRejet(' + ${d.id} + ')'">Rejeter</button>
+                </div>
+                <div th:if="${d.statut == 'REJETE'}" style="font-size:12px;color:#94a3b8;" th:text="${d.motifRejet}"></div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
     </div>

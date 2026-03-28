@@ -1,8 +1,10 @@
 package com.dtapp.service;
 
 import com.dtapp.entity.Authority;
+import com.dtapp.entity.AuthorityDefinition;
 import com.dtapp.entity.Compagnie;
 import com.dtapp.entity.User;
+import com.dtapp.repository.AuthorityDefinitionRepository;
 import com.dtapp.repository.AuthorityRepository;
 import com.dtapp.repository.CompagnieRepository;
 import com.dtapp.repository.UserRepository;
@@ -13,6 +15,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Component
 @ConditionalOnProperty(name = "app.data-initializer.enabled", havingValue = "true", matchIfMissing = true)
@@ -25,25 +29,55 @@ public class DataInitializer implements CommandLineRunner {
     private static final String ADMIN_PASSWORD     = "DakarTerminal2024!";
     private static final String DEFAULT_COMPAGNIE  = "DAKAR-TERMINAL";
 
+    private static final List<String> DEFAULT_AUTHORITIES = List.of(
+            "ROLE_DIRECTION_GENERALE",
+            "ROLE_DIRECTION_FINANCIERE",
+            "ROLE_DIRECTION_EXPLOITATION",
+            "ROLE_INFORMATIQUE",
+            "ROLE_FACTURATION",
+            "ROLE_CONTROLE_DE_GESTION",
+            "ROLE_COMPTABILITE",
+            "ROLE_SERVICE_GENERAUX",
+            "ROLE_PLANIFICATION",
+            "ROLE_RESSOURCES_HUMAINES",
+            "ROLE_JURIDIQUE",
+            "ROLE_OPERATIONS",
+            "ROLE_QHSE",
+            "ROLE_DOUANE"
+    );
+
     private final UserRepository userRepository;
     private final AuthorityRepository authorityRepository;
+    private final AuthorityDefinitionRepository authorityDefinitionRepository;
     private final CompagnieRepository compagnieRepository;
     private final PasswordEncoder passwordEncoder;
 
     public DataInitializer(UserRepository userRepository,
                            AuthorityRepository authorityRepository,
+                           AuthorityDefinitionRepository authorityDefinitionRepository,
                            CompagnieRepository compagnieRepository,
                            PasswordEncoder passwordEncoder) {
-        this.userRepository      = userRepository;
-        this.authorityRepository = authorityRepository;
-        this.compagnieRepository = compagnieRepository;
-        this.passwordEncoder     = passwordEncoder;
+        this.userRepository                = userRepository;
+        this.authorityRepository           = authorityRepository;
+        this.authorityDefinitionRepository = authorityDefinitionRepository;
+        this.compagnieRepository           = compagnieRepository;
+        this.passwordEncoder               = passwordEncoder;
     }
 
     @Override
     @Transactional
     public void run(String... args) {
-        // 1. Créer la compagnie DAKAR-TERMINAL si elle n'existe pas
+        // 1. Créer les authority definitions manquantes
+        for (String name : DEFAULT_AUTHORITIES) {
+            if (!authorityDefinitionRepository.existsByName(name)) {
+                AuthorityDefinition def = new AuthorityDefinition();
+                def.setName(name);
+                authorityDefinitionRepository.save(def);
+                log.info("AuthorityDefinition créée : {}", name);
+            }
+        }
+
+        // 2. Créer la compagnie DAKAR-TERMINAL si elle n'existe pas
         Compagnie dakarTerminal = compagnieRepository.findByName(DEFAULT_COMPAGNIE)
                 .orElseGet(() -> {
                     Compagnie c = new Compagnie();
@@ -53,7 +87,7 @@ public class DataInitializer implements CommandLineRunner {
                     return saved;
                 });
 
-        // 2. Créer le compte admin s'il n'existe pas, ou rattacher à la compagnie s'il en manque une
+        // 3. Créer le compte admin s'il n'existe pas, ou rattacher à la compagnie s'il en manque une
         userRepository.findByEmail(ADMIN_EMAIL).ifPresentOrElse(
                 admin -> {
                     if (admin.getCompagnie() == null) {

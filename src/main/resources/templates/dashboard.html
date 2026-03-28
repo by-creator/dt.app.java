@@ -134,17 +134,16 @@
     <div class="bottom-grid">
 
       <!-- Recent users table -->
-      <div class="card">
-        <div class="card-header-row">
+      <div class="page-section-card" style="padding:0; overflow:hidden;">
+        <div class="table-toolbar">
           <div>
-            <h3>Derniers utilisateurs</h3>
-            <p>Comptes utilisateurs créés récemment sur la plateforme.</p>
+            <h3 style="margin:0; font-size:16px; font-weight:600;">Derniers utilisateurs</h3>
+            <p style="margin:4px 0 0; font-size:13px; color:#64748b;">Comptes utilisateurs créés récemment sur la plateforme.</p>
           </div>
           <a th:href="@{/dashboard}" class="btn-outline">Voir mon profil</a>
         </div>
 
-        <div>
-          <table class="users-table">
+        <table class="data-table">
             <thead>
               <tr>
                 <th>DATE</th>
@@ -180,7 +179,6 @@
               </tr>
             </tbody>
           </table>
-        </div>
       </div>
 
       <!-- Right panels -->

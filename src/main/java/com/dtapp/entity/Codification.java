@@ -26,14 +26,32 @@ public class Codification {
     @Column(nullable = false)
     private String callNumber;
 
-    @Column(nullable = false, length = 500)
+    /** Original filename of the manifest TXT (used for download Content-Disposition). */
+    @Column(length = 500)
     private String manifest;
 
-    @Column(nullable = false, length = 500)
+    /** Original filename of the generated XLSX (used for download Content-Disposition). */
+    @Column(length = 500)
     private String xls;
 
-    @Column(nullable = false, length = 500)
+    /** Original filename of the generated EDI/IFTMIN (used for download Content-Disposition). */
+    @Column(length = 500)
     private String iftmin;
+
+    /** Binary content of the manifest TXT file. */
+    @Lob
+    @Column(name = "manifest_data", columnDefinition = "LONGBLOB")
+    private byte[] manifestData;
+
+    /** Binary content of the generated XLSX file. */
+    @Lob
+    @Column(name = "xls_data", columnDefinition = "LONGBLOB")
+    private byte[] xlsData;
+
+    /** Binary content of the generated EDI/IFTMIN file. */
+    @Lob
+    @Column(name = "iftmin_data", columnDefinition = "LONGBLOB")
+    private byte[] iftminData;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "compagnie_id")
