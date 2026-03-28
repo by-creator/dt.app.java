@@ -12,7 +12,6 @@ import com.dtapp.repository.GfaServiceRepository;
 import com.dtapp.repository.GfaTicketRepository;
 import com.dtapp.repository.GfaWifiSettingsRepository;
 import com.dtapp.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -44,9 +43,6 @@ import java.util.stream.Collectors;
 
 @Controller
 public class GfaDisplayController {
-
-    @Value("${app.base-url}")
-    private String baseUrl;
 
     private static final List<String> ACTIVE_TABS = List.of(
             "vue-globale", "services", "guichets", "agents", "tickets", "parametres", "ecran"
@@ -84,9 +80,11 @@ public class GfaDisplayController {
         GfaWifiSettings wifiSettings = loadWifiSettings();
         DisplayStateResponse displayState = buildDisplayState(wifiSettings);
         String token = uniqueToken(null);
+        String dynamicBaseUrl = org.springframework.web.servlet.support.ServletUriComponentsBuilder
+                .fromCurrentContextPath().build().toUriString();
         model.addAttribute("wifiSettings", wifiSettings);
         model.addAttribute("wifiQrPayload", buildWifiQrPayload(wifiSettings));
-        model.addAttribute("ticketEntryUrl", baseUrl + "/gfa/ticket?token=" + token);
+        model.addAttribute("ticketEntryUrl", dynamicBaseUrl + "/gfa/ticket?token=" + token);
         model.addAttribute("displayState", displayState);
         return "facturation/gfa-display";
     }
