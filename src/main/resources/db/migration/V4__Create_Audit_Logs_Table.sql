@@ -1,25 +1,24 @@
 CREATE TABLE IF NOT EXISTS audit_logs (
-    id BIGSERIAL PRIMARY KEY,
-    user_id BIGINT,
-    user_name VARCHAR(255),
-    user_email VARCHAR(255),
-    user_role VARCHAR(100),
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NULL,
+    user_name VARCHAR(255) NULL,
+    user_email VARCHAR(255) NULL,
+    user_role VARCHAR(100) NULL,
     method VARCHAR(10) NOT NULL,
     url VARCHAR(1000) NOT NULL,
-    route_name VARCHAR(255),
-    controller_action VARCHAR(255),
-    ip_address VARCHAR(45),
-    user_agent TEXT,
-    payload JSON,
-    query_params JSON,
-    session_id VARCHAR(255),
-    response_status SMALLINT CHECK (response_status >= 0),
-    duration_ms INT CHECK (duration_ms >= 0),
+    route_name VARCHAR(255) NULL,
+    controller_action VARCHAR(255) NULL,
+    ip_address VARCHAR(45) NULL,
+    user_agent TEXT NULL,
+    payload JSON NULL,
+    query_params JSON NULL,
+    session_id VARCHAR(255) NULL,
+    response_status SMALLINT UNSIGNED NULL,
+    duration_ms INT UNSIGNED NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at);
-CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs(user_id);
-CREATE INDEX IF NOT EXISTS idx_audit_logs_method ON audit_logs(method);
-CREATE INDEX IF NOT EXISTS idx_audit_logs_response_status ON audit_logs(response_status);
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_audit_logs_created_at (created_at),
+    INDEX idx_audit_logs_user_id (user_id),
+    INDEX idx_audit_logs_method (method),
+    INDEX idx_audit_logs_response_status (response_status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
