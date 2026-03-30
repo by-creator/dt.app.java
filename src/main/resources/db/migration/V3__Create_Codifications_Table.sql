@@ -1,19 +1,20 @@
 -- V3__Create_Codifications_Table.sql
 
 CREATE TABLE IF NOT EXISTS codifications (
-    id            INT AUTO_INCREMENT PRIMARY KEY,
+    id            SERIAL PRIMARY KEY,
     call_number   VARCHAR(255) NOT NULL,
-    manifest      VARCHAR(500) NULL,
-    xls           VARCHAR(500) NULL,
-    iftmin        VARCHAR(500) NULL,
-    manifest_data LONGBLOB     NULL,
-    xls_data      LONGBLOB     NULL,
-    iftmin_data   LONGBLOB     NULL,
+    manifest      VARCHAR(500),
+    xls           VARCHAR(500),
+    iftmin        VARCHAR(500),
+    manifest_data BYTEA,
+    xls_data      BYTEA,
+    iftmin_data   BYTEA,
     compagnie_id  INT,
     created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (compagnie_id) REFERENCES compagnies(id) ON DELETE SET NULL,
-    INDEX idx_call_number   (call_number),
-    INDEX idx_created_at    (created_at),
-    INDEX idx_compagnie_id  (compagnie_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (compagnie_id) REFERENCES compagnies(id) ON DELETE SET NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_call_number   ON codifications(call_number);
+CREATE INDEX IF NOT EXISTS idx_created_at    ON codifications(created_at);
+CREATE INDEX IF NOT EXISTS idx_compagnie_id  ON codifications(compagnie_id);

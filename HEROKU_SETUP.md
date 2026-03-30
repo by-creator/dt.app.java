@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-This Java application requires a MySQL database to run. Follow these steps to deploy on Heroku:
+This Java application requires a PostgreSQL database to run. Follow these steps to deploy on Heroku:
 
 ### 1. Create Heroku App (if not already created)
 
@@ -10,49 +10,42 @@ This Java application requires a MySQL database to run. Follow these steps to de
 heroku create site-dt-production
 ```
 
-### 2. Add MySQL Database Add-on
+### 2. Add PostgreSQL Database Add-on
 
-You need to add a MySQL database. Choose one of these options:
-
-#### Option A: ClearDB MySQL (Recommended for small apps)
+Add Heroku PostgreSQL (the standard PostgreSQL add-on for Heroku):
 
 ```bash
-heroku addons:create cleardb:ignite -a site-dt-production
+heroku addons:create heroku-postgresql:mini -a site-dt-production
 ```
 
-#### Option B: JawsDB MySQL
-
-```bash
-heroku addons:create jawsdb:kitefin -a site-dt-production
-```
+This automatically creates a `DATABASE_URL` environment variable.
 
 ### 3. Configure Heroku Environment Variables
 
-The database add-on will create a `DATABASE_URL` variable, but we need to parse it into separate variables:
+Extract the PostgreSQL connection details from the `DATABASE_URL`:
 
 ```bash
-# For ClearDB, the DATABASE_URL is in format: mysql://user:pass@host/db?reconnect=true
-# We need to extract these values and set them as separate env vars
-
-# Get the DATABASE_URL
+# Get the DATABASE_URL (format: postgresql://user:password@host:port/dbname)
 heroku config:get DATABASE_URL -a site-dt-production
 
-# Set individual database configuration variables
-# Replace the values from your DATABASE_URL
-heroku config:set MYSQL_HOST=<host> -a site-dt-production
-heroku config:set MYSQL_PORT=<port> -a site-dt-production
-heroku config:set MYSQL_DB=<database> -a site-dt-production
-heroku config:set MYSQL_USER=<username> -a site-dt-production
-heroku config:set MYSQL_PASSWORD=<password> -a site-dt-production
+# Parse and set individual PostgreSQL configuration variables
+# Example: postgresql://user123:pass456@ec2-1-2-3-4.compute.amazonaws.com:5432/mydb
+heroku config:set \
+  PG_HOST=<host> \
+  PG_PORT=<port> \
+  PG_DB=<database> \
+  PG_USER=<username> \
+  PG_PASSWORD=<password> \
+  -a site-dt-production
 ```
 
 ### 4. Enable Database Initialization on First Deploy
 
 ```bash
-# Enable Flyway migrations
+# Enable Flyway migrations (runs SQL migration files)
 heroku config:set FLYWAY_ENABLED=true -a site-dt-production
 
-# Enable data initialization (creates admin user, etc.)
+# Enable data initialization (creates admin user, authorities, etc.)
 heroku config:set DATA_INIT_ENABLED=true -a site-dt-production
 
 # Set your app's base URL
@@ -61,7 +54,17 @@ heroku config:set APP_BASE_URL=https://site-dt-production-98050a853413.herokuapp
 
 ### 5. Configure Email (Optional but recommended)
 
-The app sends notifications via email. Update the SMTP configuration in `application-heroku.properties` or set environment variables.
+The app sends notifications via email. Update environment variables if needed:
+
+```bash
+# Optional: Custom SMTP settings
+heroku config:set \
+  MAIL_HOST=smtp.gmail.com \
+  MAIL_PORT=587 \
+  MAIL_USERNAME=your-email@gmail.com \
+  MAIL_PASSWORD=your-app-password \
+  -a site-dt-production
+```
 
 ### 6. Deploy
 
@@ -87,12 +90,34 @@ heroku logs --tail -a site-dt-production
 curl https://site-dt-production-98050a853413.herokuapp.com/actuator/health
 ```
 
+Expected response (200 OK):
+```json
+{
+  "status": "UP"
+}
+```
+
 ## Database Schema
 
-The first deployment will:
-1. Run Flyway migrations to create the database schema
-2. Initialize default admin user (admin@dakar-terminal.com / DakarTerminal2024!)
-3. Create necessary authority definitions
+During first deployment:
+1. Flyway migrations create the PostgreSQL database schema (V1-V8)
+2. Data initializer creates:
+   - Default admin user: `admin@dakar-terminal.com` / `DakarTerminal2024!`
+   - Required authority definitions (roles)
+   - Default company: DAKAR-TERMINAL
+   - Default WiFi settings for GFA module
+
+## PostgreSQL vs MySQL Changes
+
+The application has been converted from MySQL to PostgreSQL:
+- **Driver**: `postgresql` instead of `mysql-connector-j`
+- **Dialect**: `PostgreSQLDialect` instead of `MySQL8Dialect`
+- **SQL Syntax**:
+  - `SERIAL`/`BIGSERIAL` instead of `AUTO_INCREMENT`
+  - `BOOLEAN` instead of `TINYINT(1)`
+  - `BYTEA` instead of `LONGBLOB`
+  - `ON CONFLICT DO UPDATE` instead of `ON DUPLICATE KEY UPDATE`
+  - Removed MySQL-specific clauses (`ENGINE=InnoDB`, `CHARSET`, `COLLATE`)
 
 ## Troubleshooting
 
@@ -104,21 +129,51 @@ heroku logs --tail -a site-dt-production
 ```
 
 Common issues:
-- **No database**: Ensure MySQL add-on is installed and MYSQL_* variables are set
-- **Flyway issues**: If migrations fail, check database permissions and compatibility
-- **Port binding**: Heroku automatically sets PORT variable - ensure it's used (already configured)
+- **No database**: Ensure Heroku PostgreSQL add-on is installed
+- **Wrong credentials**: Verify `PG_HOST`, `PG_USER`, `PG_PASSWORD` match DATABASE_URL
+- **Flyway issues**: If migrations fail, check:
+  - Database exists and is accessible
+  - Migrations are syntactically correct for PostgreSQL
+  - Run: `heroku pg:psql -a site-dt-production` to inspect database
+
+### View database status
+
+```bash
+# View add-ons
+heroku addons -a site-dt-production
+
+# Connect to PostgreSQL console
+heroku pg:psql -a site-dt-production
+
+# List tables
+\dt
+
+# Check migrations
+SELECT * FROM flyway_schema_history;
+```
 
 ### Database connection fails
 
-Verify MySQL variables are correctly set:
+Verify PostgreSQL variables:
 ```bash
-heroku config -a site-dt-production
+heroku config -a site-dt-production | grep PG_
+```
+
+Reset database (⚠️ **DESTRUCTIVE** - clears all data):
+```bash
+heroku pg:reset -a site-dt-production
+heroku restart -a site-dt-production
 ```
 
 ### Can't access app
 
-Ensure `/actuator/health` endpoint returns success:
+Ensure health endpoint responds:
 ```bash
 curl https://site-dt-production-98050a853413.herokuapp.com/actuator/health
+```
+
+Check application logs for Spring Boot startup errors:
+```bash
+heroku logs --tail -a site-dt-production | grep -E "ERROR|Exception"
 ```
 
