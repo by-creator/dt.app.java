@@ -21,6 +21,9 @@ public class EmailService {
     @Value("${app.mail.to}")
     private String mailTo;
 
+    @Value("${app.mail.to.remise}")
+    private String mailToRemise;
+
     @Value("${app.base-url}")
     private String baseUrl;
 
@@ -52,7 +55,7 @@ public class EmailService {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
             helper.setFrom(mailFrom, "DAKAR-TERMINAL");
-            helper.setTo(mailTo);
+            helper.setTo(mailToRemise);
             helper.setSubject("Nouvelle demande de remise - BL " + bl.getBl());
             helper.setText(buildEmailHtml(bl, "remise"), true);
             helper.addInline("dtLogo", new ClassPathResource("static/img/image.png"));

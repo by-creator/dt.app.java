@@ -26,11 +26,12 @@
         .guichet-alert { display:none; background:#fff3cd; border:1px solid #ffc107; border-radius:8px; padding:10px 18px; font-size:13px; color:#856404; text-align:center; margin-bottom:14px; }
         .guichet-alert.show { display:block; }
         .action-buttons { display:flex; flex-wrap:wrap; justify-content:center; gap:12px; margin-bottom:14px; }
-        .btn-action { display:flex; align-items:center; gap:8px; padding:10px 24px; border:none; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; color:#fff; transition:opacity .2s, transform .1s; }
-        .btn-action:disabled { opacity:.45; cursor:not-allowed; transform:none !important; }
-        .btn-action:not(:disabled):hover { opacity:.88; transform:translateY(-1px); }
-        .btn-suivant { background:var(--primary); } .btn-rappel { background:#6c757d; } .btn-termine { background:#28a745; }
-        .btn-incomplet { background:#ffc107; color:#212529 !important; } .btn-absent { background:#dc3545; }
+        .btn-action { display:flex; align-items:center; gap:8px; padding:10px 24px; border:none; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; color:#fff; transition:opacity .2s, transform .1s, box-shadow .2s; }
+        .btn-action:disabled { opacity:.35; cursor:not-allowed; transform:none !important; box-shadow:none !important; }
+        .btn-action:not(:disabled) { box-shadow:0 4px 14px rgba(0,0,0,.22); }
+        .btn-action:not(:disabled):hover { opacity:.88; transform:translateY(-2px); box-shadow:0 6px 18px rgba(0,0,0,.28); }
+        .btn-suivant { background:#4340c4; } .btn-rappel { background:#3d4a56; } .btn-termine { background:#1a9e3f; }
+        .btn-incomplet { background:#d48f00; color:#fff !important; } .btn-absent { background:#c82333; }
         .guichet-bottom { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
         .queue-card, .guide-card { background:#fff; border-radius:12px; box-shadow:var(--shadow); padding:24px; }
         .queue-title { font-size:14px; font-weight:700; margin-bottom:14px; }
