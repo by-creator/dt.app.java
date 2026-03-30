@@ -62,26 +62,26 @@
     }
 
     .wizard-steps {
-      display: grid;
-      grid-template-columns: repeat(7, minmax(0, 1fr));
-      gap: 10px;
+      display: flex;
       margin-bottom: 24px;
     }
 
     .wizard-step {
+      display: none;
       border: 1px solid #d9e2ef;
       background: #f8fbff;
       border-radius: 12px;
-      padding: 12px 10px;
+      padding: 12px 24px;
       text-align: center;
       font-size: 12px;
       font-weight: 700;
       color: #64748b;
-      cursor: pointer;
-      transition: all .18s ease;
+      cursor: default;
+      pointer-events: none;
     }
 
     .wizard-step.active {
+      display: block;
       background: #5447b0;
       color: white;
       border-color: #5447b0;
@@ -283,7 +283,7 @@
       body { background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%); color: #e2e8f0; color-scheme: dark; }
       .frame { background: rgba(15, 23, 42, 0.97); border-color: rgba(148,163,184,0.12); }
       .intro { color: #94a3b8; }
-      .wizard-step { background: #1e293b; border-color: rgba(148,163,184,0.2); color: #94a3b8; }
+      .wizard-step.active { background: #3d32a0; border-color: #3d32a0; }
       .section { background: #1e293b; border-color: rgba(148,163,184,0.15); }
       .section h2 { color: #e2e8f0; }
       .section p.section-desc { color: #94a3b8; }
