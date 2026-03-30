@@ -303,6 +303,8 @@ body {
   flex: 1;
   padding: 32px 36px;
   min-height: 100vh;
+  overflow-x: hidden;
+  min-width: 0;
 }
 
 /* ===================== PAGE HEADER ===================== */
@@ -890,6 +892,49 @@ body {
 }
 
 .btn-actualiser:hover { background: #4f46e5; }
+
+/* ===================== TABLE WRAPPER (scroll global) ===================== */
+
+.table-wrapper {
+  overflow: auto;
+  max-height: 520px;
+  width: 100%;
+  border-radius: 8px;
+}
+
+/* Scrollbar — piste */
+.table-wrapper::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.table-wrapper::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 8px;
+}
+/* Scrollbar — curseur */
+.table-wrapper::-webkit-scrollbar-thumb {
+  background: #c7d2e8;
+  border-radius: 8px;
+  border: 2px solid #f1f5f9;
+}
+.table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+/* Coin de jonction horizontal/vertical */
+.table-wrapper::-webkit-scrollbar-corner {
+  background: #f1f5f9;
+}
+
+/* Dark mode */
+[data-theme="dark"] .table-wrapper::-webkit-scrollbar-track,
+[data-theme="dark"] .table-wrapper::-webkit-scrollbar-corner { background: #1e293b; }
+[data-theme="dark"] .table-wrapper::-webkit-scrollbar-thumb { background: #334155; border-color: #1e293b; }
+[data-theme="dark"] .table-wrapper::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+/* En-têtes collants dans un wrapper */
+.table-wrapper .data-table thead th { position: sticky; top: 0; z-index: 2; }
+
+/* ================================================================= */
 
 .data-table {
   width: 100%;

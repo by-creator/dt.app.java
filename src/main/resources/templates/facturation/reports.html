@@ -87,7 +87,8 @@
         <div class="table-toolbar">
           <span class="toolbar-title">Suivi vides</span>
         </div>
-        <table class="data-table">
+                <div class="table-wrapper">
+<table class="data-table">
           <thead>
           <tr>
             <th>Terminal</th>
@@ -108,13 +109,15 @@
           </tr>
           </tbody>
         </table>
+        </div>
       </div>
 
       <div class="page-section-card" th:if="${activeTab == 'suivi-stationnement'}" style="padding:0; overflow:hidden;">
         <div class="table-toolbar">
           <span class="toolbar-title">Suivi stationnement</span>
         </div>
-        <table class="data-table">
+                <div class="table-wrapper">
+<table class="data-table">
           <thead>
           <tr>
             <th>Terminal</th>
@@ -137,6 +140,7 @@
           </tr>
           </tbody>
         </table>
+        </div>
       </div>
 
       <div class="page-section-card" th:if="${activeTab == 'admin'}" style="max-width:760px;">

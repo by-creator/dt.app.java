@@ -176,13 +176,12 @@
 
         <!-- Fenêtre de 10 lignes avec scroll interne — en-tête collant -->
         <div th:if="${!xlsHeaders.isEmpty()}"
-             style="overflow: auto; max-height: 484px;">
+             class="table-wrapper">
           <table class="data-table" id="xlsTable"
                  style="border-collapse: separate; border-spacing: 0;">
             <thead>
               <tr>
-                <th th:each="h : ${xlsHeaders}" th:text="${h}"
-                    style="position: sticky; top: 0; z-index: 2;">Colonne</th>
+                <th th:each="h : ${xlsHeaders}" th:text="${h}">Colonne</th>
               </tr>
             </thead>
             <tbody>

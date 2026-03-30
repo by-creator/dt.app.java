@@ -73,9 +73,13 @@ public class MenuController {
         Set<String> roles = auth.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority).collect(Collectors.toSet());
         boolean isFacturation = !roles.contains("ROLE_ADMIN") && roles.contains("ROLE_FACTURATION");
+        boolean showRemises = roles.contains("ROLE_ADMIN")
+                || "aliounebadara.sy@dakar-terminal.com".equals(loggedUser.getEmail())
+                || "charles.sarr@dakar-terminal.com".equals(loggedUser.getEmail());
         model.addAttribute("loggedUser", loggedUser);
         model.addAttribute("menuView", "facturation");
         model.addAttribute("isFacturation", isFacturation);
+        model.addAttribute("showRemises", showRemises);
         return "menu";
     }
 

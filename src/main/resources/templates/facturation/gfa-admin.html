@@ -65,7 +65,8 @@
         <div class="table-toolbar">
           <span class="toolbar-title">Activite en cours</span>
         </div>
-        <table class="data-table">
+                <div class="table-wrapper">
+<table class="data-table">
           <thead><tr><th>Guichet</th><th>Service</th><th>Agent</th><th>Ticket</th><th>Statut</th><th>En attente</th></tr></thead>
           <tbody>
             <tr th:if="${#lists.isEmpty(activityRows)}"><td colspan="6" class="gfa-empty">Aucune activite en cours.</td></tr>
@@ -74,6 +75,7 @@
             </tr>
           </tbody>
         </table>
+        </div>
       </div>
     </section>
 
@@ -94,7 +96,8 @@
         <div class="table-toolbar">
           <span class="toolbar-title">Liste des services</span>
         </div>
-        <table class="data-table">
+                <div class="table-wrapper">
+<table class="data-table">
           <thead><tr><th>ID</th><th>Nom</th><th>Code</th><th>Statut</th><th>Actions</th></tr></thead>
           <tbody>
             <tr th:if="${#lists.isEmpty(services)}"><td colspan="5" class="gfa-empty">Aucun service enregistre.</td></tr>
@@ -104,6 +107,7 @@
             </tr>
           </tbody>
         </table>
+        </div>
       </div>
     </section>
 
@@ -125,7 +129,8 @@
         <div class="table-toolbar">
           <span class="toolbar-title">Liste des guichets</span>
         </div>
-        <table class="data-table">
+                <div class="table-wrapper">
+<table class="data-table">
           <thead><tr><th>Numero</th><th>Infos</th><th>Service</th><th>Statut</th><th>Actions</th></tr></thead>
           <tbody>
             <tr th:if="${#lists.isEmpty(guichets)}"><td colspan="5" class="gfa-empty">Aucun guichet enregistre.</td></tr>
@@ -135,6 +140,7 @@
             </tr>
           </tbody>
         </table>
+        </div>
       </div>
     </section>
 
@@ -157,7 +163,8 @@
         <div class="table-toolbar">
           <span class="toolbar-title">Liste des agents</span>
         </div>
-        <table class="data-table">
+                <div class="table-wrapper">
+<table class="data-table">
           <thead><tr><th>Nom</th><th>Prenom</th><th>Service</th><th>Guichet</th><th>Statut</th><th>Actions</th></tr></thead>
           <tbody>
             <tr th:if="${#lists.isEmpty(agents)}"><td colspan="6" class="gfa-empty">Aucun agent enregistre.</td></tr>
@@ -167,6 +174,7 @@
             </tr>
           </tbody>
         </table>
+        </div>
       </div>
     </section>
 
@@ -175,7 +183,8 @@
         <div class="table-toolbar">
           <span class="toolbar-title">Liste des tickets</span>
         </div>
-        <table class="data-table">
+                <div class="table-wrapper">
+<table class="data-table">
           <thead><tr><th>Numero</th><th>Service</th><th>Guichet</th><th>Agent</th><th>Statut</th><th>Cree le</th><th>Duree</th></tr></thead>
           <tbody>
             <tr th:if="${#lists.isEmpty(tickets)}"><td colspan="7" class="gfa-empty">Aucun ticket enregistre.</td></tr>
@@ -184,6 +193,7 @@
             </tr>
           </tbody>
         </table>
+        </div>
       </div>
     </section>
 

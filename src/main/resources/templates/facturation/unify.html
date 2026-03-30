@@ -201,7 +201,8 @@
           <div style="font-weight:600; font-size:14px;">Liste des tiers</div>
           <input id="tiersSearch" type="search" class="table-search-input" placeholder="Rechercher un tiers..." oninput="filterSimpleRows('tiersTable', this.value)">
         </div>
-        <table class="data-table" id="tiersTable">
+                <div class="table-wrapper">
+<table class="data-table" id="tiersTable">
           <thead>
           <tr>
             <th>Compte Ipaki</th>
@@ -223,6 +224,7 @@
           </tr>
           </tbody>
         </table>
+        </div>
       </div>
 
       <div class="page-section-card" th:if="${activeTab == 'tutoriel'}" style="padding:24px;">
@@ -297,7 +299,8 @@
           <input id="adminSearch" type="search" class="table-search-input" placeholder="Rechercher..." oninput="filterSimpleRows('unifyAdminTable', this.value)">
         </div>
 
-        <table class="data-table" id="unifyAdminTable">
+                <div class="table-wrapper">
+<table class="data-table" id="unifyAdminTable">
           <thead>
           <tr>
             <th>Raison sociale</th>
@@ -331,6 +334,7 @@
           </tr>
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   </main>

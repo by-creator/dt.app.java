@@ -1,1 +1,6 @@
 Notes
+
+Au niveau de la route /menu/facturation la card Gestion des remises doit s'afficher selon les conditions suivntes : 
+
+1- Le user a l'authoritie ROLE_ADMIN
+2 - Le user connecté a pour adresse mail aliounebadara.sy@dakar-terminal.com ou charles.sarr@dakar-terminal.com 

@@ -93,7 +93,8 @@
           <span class="pagination-info" th:if="${totalItems > 0}"
                 th:text="${totalItems} + ' enregistrement' + (${totalItems} > 1 ? 's' : '')"></span>
         </div>
-        <table class="data-table">
+                <div class="table-wrapper">
+<table class="data-table">
           <thead>
           <tr>
             <th>DATE</th>
@@ -134,6 +135,7 @@
           </tr>
           </tbody>
         </table>
+        </div>
 
         <div class="pagination-bar" th:if="${totalPages > 0}">
           <span class="pagination-info"
