@@ -33,7 +33,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(authz -> authz
                 .requestMatchers("/login", "/css/**", "/js/**", "/img/**",
                                  "/gfa/display", "/gfa/ticket/**", "/api/gfa/display/state", "/demat/**",
-                                 "/images/**", "/actuator/health").permitAll()
+                                 "/images/**", "/actuator/health", "/actuator/health/**",
+                                 "/api/health/**").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterAfter(auditLogFilter, org.springframework.security.web.context.SecurityContextHolderFilter.class)
