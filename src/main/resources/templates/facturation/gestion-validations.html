@@ -26,7 +26,9 @@
     .modal-title { font-size: 17px; font-weight: 800; color: #0f172a; margin: 0 0 6px; }
     .modal-desc { font-size: 13px; color: #64748b; margin: 0 0 20px; }
     .modal-box label { display: block; font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 6px; }
-    .modal-box select { width: 100%; height: 44px; border-radius: 10px; border: 1px solid #d9e2ef; padding: 0 14px; font-size: 14px; margin-bottom: 20px; }
+    .modal-box select { width: 100%; height: 44px; border-radius: 10px; border: 1px solid #d9e2ef; padding: 0 14px; font-size: 14px; margin-bottom: 16px; }
+    .modal-box textarea { width: 100%; border-radius: 10px; border: 1px solid #d9e2ef; padding: 10px 14px; font-size: 14px; box-sizing: border-box; resize: vertical; min-height: 90px; margin-bottom: 20px; font-family: inherit; }
+    #zoneAutre { display: none; }
     .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
     .btn-cancel { padding: 10px 20px; border: none; border-radius: 10px; background: #f1f5f9; color: #334155; font-weight: 700; font-size: 13px; cursor: pointer; }
     .btn-confirm { padding: 10px 20px; border: none; border-radius: 10px; background: #dc2626; color: white; font-weight: 700; font-size: 13px; cursor: pointer; }
@@ -176,13 +178,18 @@
     <p class="modal-desc">Selectionnez le motif de rejet pour cette demande.</p>
     <form id="formRejet" method="post">
       <label>Motif</label>
-      <select name="motif" required>
+      <select name="motif" id="selectMotif" required onchange="toggleAutre(this)">
         <option value="">-- Choisir un motif --</option>
         <option value="Dossier deja valide">Dossier deja valide</option>
         <option value="Dossier en cours de validation">Dossier en cours de validation</option>
         <option value="Debarquement pas encore effectif">Debarquement pas encore effectif</option>
         <option value="Merci de mentionner le bon nom de la maison de transit ou le bon numero de compte">Merci de mentionner le bon nom de la maison de transit ou le bon numero de compte</option>
+        <option value="Autre">Autre</option>
       </select>
+      <div id="zoneAutre">
+        <label>Preciser le motif</label>
+        <textarea id="texteAutre" placeholder="Saisissez le motif de rejet..."></textarea>
+      </div>
       <div class="modal-actions">
         <button type="button" class="btn-cancel" onclick="fermerModal()">Annuler</button>
         <button type="submit" class="btn-confirm">Confirmer le rejet</button>
@@ -209,15 +216,40 @@
     });
   }
 
+  function toggleAutre(select) {
+    const zone = document.getElementById('zoneAutre');
+    const textarea = document.getElementById('texteAutre');
+    if (select.value === 'Autre') {
+      zone.style.display = 'block';
+      textarea.required = true;
+    } else {
+      zone.style.display = 'none';
+      textarea.required = false;
+    }
+  }
+
   function ouvrirModalRejet(id) {
     const baseUrl = /*[[@{/facturation/gestion-validations}]]*/ '/facturation/gestion-validations';
     document.getElementById('formRejet').action = baseUrl + '/' + id + '/rejeter';
+    document.getElementById('selectMotif').value = '';
+    document.getElementById('zoneAutre').style.display = 'none';
+    document.getElementById('texteAutre').value = '';
+    document.getElementById('texteAutre').required = false;
     document.getElementById('modalRejet').classList.add('open');
   }
 
   function fermerModal() {
     document.getElementById('modalRejet').classList.remove('open');
   }
+
+  document.getElementById('formRejet').addEventListener('submit', function(e) {
+    const select = document.getElementById('selectMotif');
+    if (select.value === 'Autre') {
+      const texte = document.getElementById('texteAutre').value.trim();
+      if (!texte) { e.preventDefault(); return; }
+      select.value = texte;
+    }
+  });
 
   document.getElementById('modalRejet').addEventListener('click', function(e) {
     if (e.target === this) fermerModal();
