@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS satisfaction_reponses (
-    id                                  BIGSERIAL PRIMARY KEY,
+    id                                  BIGINT        NOT NULL AUTO_INCREMENT,
 
     -- Infos
     nom                                 VARCHAR(255),
@@ -50,5 +50,7 @@ CREATE TABLE IF NOT EXISTS satisfaction_reponses (
     suggestions_communication           TEXT,
     recommandations_generales           TEXT,
 
-    created_at                          TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+    created_at                          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -18,16 +18,16 @@ public class DataSourceConfig {
 
     private static final Logger log = LoggerFactory.getLogger(DataSourceConfig.class);
 
-    @Value("${spring.datasource.url:jdbc:postgresql://localhost:5432/dummy}")
+    @Value("${spring.datasource.url:jdbc:mysql://localhost:3306/dummy}")
     private String url;
 
-    @Value("${spring.datasource.username:postgres}")
+    @Value("${spring.datasource.username:root}")
     private String username;
 
     @Value("${spring.datasource.password:}")
     private String password;
 
-    @Value("${spring.datasource.driver-class-name:org.postgresql.Driver}")
+    @Value("${spring.datasource.driver-class-name:com.mysql.cj.jdbc.Driver}")
     private String driverClassName;
 
     @Primary
@@ -57,10 +57,10 @@ public class DataSourceConfig {
             log.warn("Failed to create DataSource: {}. Application will continue without database access.", e.getMessage());
             // Return a dummy datasource that won't crash the app
             return DataSourceBuilder.create()
-                    .url("jdbc:postgresql://localhost:5432/dummy")
+                    .url("jdbc:mysql://localhost:3306/dummy")
                     .username("dummy")
                     .password("dummy")
-                    .driverClassName("org.postgresql.Driver")
+                    .driverClassName("com.mysql.cj.jdbc.Driver")
                     .build();
         }
     }
