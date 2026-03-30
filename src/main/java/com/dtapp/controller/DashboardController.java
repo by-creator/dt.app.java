@@ -70,7 +70,7 @@ public class DashboardController {
     private String formatDate() {
         String raw = LocalDate.now()
                 .format(DateTimeFormatter.ofPattern("EEEE d MMMM yyyy",
-                        new Locale("fr", "FR")));
+                        Locale.of("fr", "FR")));
         return raw.substring(0, 1).toUpperCase() + raw.substring(1);
     }
 }

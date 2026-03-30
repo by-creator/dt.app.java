@@ -111,58 +111,55 @@ public class MenuPlanificationController {
             return "redirect:/menu/planification/upload-manifest";
         }
 
-        Path tempFile = null;
         try {
-            // Write to system temp for parser (needs a file path)
-            tempFile = Files.createTempFile("manifest_", ".txt");
-            file.transferTo(tempFile);
+            Path tempFile = java.util.Objects.requireNonNull(Files.createTempFile("manifest_", ".txt"));
+            try {
+                file.transferTo(tempFile);
 
-            List<EdiRecord> records = parser.parse(tempFile.toString());
-            if (records.isEmpty()) {
-                redirectAttributes.addFlashAttribute("error", "Aucun enregistrement valide trouve dans le fichier.");
-                return "redirect:/menu/planification/upload-manifest";
+                List<EdiRecord> records = parser.parse(tempFile.toString());
+                if (records.isEmpty()) {
+                    redirectAttributes.addFlashAttribute("error", "Aucun enregistrement valide trouve dans le fichier.");
+                    return "redirect:/menu/planification/upload-manifest";
+                }
+
+                String callNumber = records.get(0).data.getOrDefault("call_number", "").trim();
+                String baseName   = sanitizeFileName(file.getOriginalFilename());
+                String timestamp  = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+
+                String manifestName = timestamp + "_" + file.getOriginalFilename();
+                String xlsName      = timestamp + "_" + baseName + ".xlsx";
+                String iftminName   = timestamp + "_" + baseName + ".edi";
+
+                byte[] manifestBytes = file.getBytes();
+                byte[] xlsBytes      = xlsExporter.exportToBytes(records, parser.getHeaders());
+                byte[] iftminBytes   = exporter.exportToBytes(records);
+
+                Codification codification = codificationRepository.save(java.util.Objects.requireNonNull(Codification.builder()
+                        .callNumber(callNumber)
+                        .manifest(manifestName)
+                        .xls(xlsName)
+                        .iftmin(iftminName)
+                        .manifestData(manifestBytes)
+                        .xlsData(xlsBytes)
+                        .iftminData(iftminBytes)
+                        .compagnie(compagnie)
+                        .build()));
+
+                redirectAttributes.addFlashAttribute("success", "Manifeste traite avec succes. Call Number : " + callNumber);
+                redirectAttributes.addFlashAttribute("codification_id", codification.getId());
+
+            } finally {
+                try { Files.deleteIfExists(tempFile); } catch (IOException ignored) {}
             }
-
-            String callNumber = records.get(0).data.getOrDefault("call_number", "").trim();
-            String baseName   = sanitizeFileName(file.getOriginalFilename());
-            String timestamp  = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
-
-            String manifestName = timestamp + "_" + file.getOriginalFilename();
-            String xlsName      = timestamp + "_" + baseName + ".xlsx";
-            String iftminName   = timestamp + "_" + baseName + ".edi";
-
-            byte[] manifestBytes = file.getBytes();
-            byte[] xlsBytes      = xlsExporter.exportToBytes(records, parser.getHeaders());
-            byte[] iftminBytes   = exporter.exportToBytes(records);
-
-            Codification codification = Codification.builder()
-                    .callNumber(callNumber)
-                    .manifest(manifestName)
-                    .xls(xlsName)
-                    .iftmin(iftminName)
-                    .manifestData(manifestBytes)
-                    .xlsData(xlsBytes)
-                    .iftminData(iftminBytes)
-                    .compagnie(compagnie)
-                    .build();
-            codificationRepository.save(codification);
-
-            redirectAttributes.addFlashAttribute("success", "Manifeste traite avec succes. Call Number : " + callNumber);
-            redirectAttributes.addFlashAttribute("codification_id", codification.getId());
-
         } catch (IOException e) {
             log.error("Error processing planification manifest file", e);
             redirectAttributes.addFlashAttribute("error", "Erreur lors du traitement du fichier.");
-        } finally {
-            if (tempFile != null) {
-                try { Files.deleteIfExists(tempFile); } catch (IOException ignored) {}
-            }
         }
         return "redirect:/menu/planification/upload-manifest";
     }
 
     @GetMapping("/{id}/preview")
-    public String preview(@PathVariable Integer id, Model model, Authentication auth) {
+    public String preview(@PathVariable int id, Model model, Authentication auth) {
         model.addAttribute("loggedUser", userRepository.findByEmail(auth.getName()).orElseThrow());
         Optional<Codification> codification = codificationRepository.findById(id);
         if (codification.isEmpty()) {
@@ -212,15 +209,15 @@ public class MenuPlanificationController {
     }
 
     @GetMapping("/{id}/download-xls")
-    public ResponseEntity<Resource> downloadXls(@PathVariable Integer id) { return downloadFile(id, "xls"); }
+    public ResponseEntity<Resource> downloadXls(@PathVariable int id) { return downloadFile(id, "xls"); }
 
     @GetMapping("/{id}/download-iftmin")
-    public ResponseEntity<Resource> downloadIftmin(@PathVariable Integer id) { return downloadFile(id, "iftmin"); }
+    public ResponseEntity<Resource> downloadIftmin(@PathVariable int id) { return downloadFile(id, "iftmin"); }
 
     @GetMapping("/{id}/download-manifest")
-    public ResponseEntity<Resource> downloadManifest(@PathVariable Integer id) { return downloadFile(id, "manifest"); }
+    public ResponseEntity<Resource> downloadManifest(@PathVariable int id) { return downloadFile(id, "manifest"); }
 
-    private ResponseEntity<Resource> downloadFile(Integer id, String fileType) {
+    private ResponseEntity<Resource> downloadFile(int id, String fileType) {
         Optional<Codification> codification = codificationRepository.findById(id);
         if (codification.isEmpty()) return ResponseEntity.notFound().build();
 

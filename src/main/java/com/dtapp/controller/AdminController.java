@@ -76,7 +76,7 @@ public class AdminController {
     }
 
     @PostMapping("/compagnies/{id}/update")
-    public String updateCompagnie(@PathVariable Integer id,
+    public String updateCompagnie(@PathVariable int id,
                                    @RequestParam String name, RedirectAttributes ra) {
         final String trimmedName = name.trim();
         if (trimmedName.isEmpty()) {
@@ -93,7 +93,7 @@ public class AdminController {
 
     @PostMapping("/compagnies/{id}/delete")
     @Transactional
-    public String deleteCompagnie(@PathVariable Integer id, RedirectAttributes ra) {
+    public String deleteCompagnie(@PathVariable int id, RedirectAttributes ra) {
         userRepository.unlinkFromCompagnie(id);
         compagnieRepository.deleteById(id);
         ra.addFlashAttribute("success", "Compagnie supprimée.");
@@ -136,7 +136,7 @@ public class AdminController {
     }
 
     @PostMapping("/users/{id}/update")
-    public String updateUser(@PathVariable Integer id,
+    public String updateUser(@PathVariable int id,
                              @RequestParam String username,
                              @RequestParam String email,
                              @RequestParam(required = false) String password,
@@ -162,7 +162,7 @@ public class AdminController {
     }
 
     @PostMapping("/users/{id}/delete")
-    public String deleteUser(@PathVariable Integer id, Authentication auth, RedirectAttributes ra) {
+    public String deleteUser(@PathVariable int id, Authentication auth, RedirectAttributes ra) {
         var current = userRepository.findByEmail(auth.getName()).orElseThrow();
         if (current.getId().equals(id)) {
             ra.addFlashAttribute("error", "Vous ne pouvez pas supprimer votre propre compte.");
@@ -194,7 +194,7 @@ public class AdminController {
     }
 
     @PostMapping("/authority-definitions/{id}/delete")
-    public String deleteAuthorityDefinition(@PathVariable Integer id, RedirectAttributes ra) {
+    public String deleteAuthorityDefinition(@PathVariable int id, RedirectAttributes ra) {
         authorityDefinitionRepository.deleteById(id);
         ra.addFlashAttribute("success", "Authority supprimée.");
         return "redirect:/admin?tab=authorities";
@@ -203,7 +203,7 @@ public class AdminController {
     // ===== AUTHORITIES =====
 
     @PostMapping("/authorities/create")
-    public String createAuthority(@RequestParam Integer userId,
+    public String createAuthority(@RequestParam int userId,
                                   @RequestParam String authority,
                                   RedirectAttributes ra) {
         final String trimmedAuthority = authority.trim();
@@ -226,7 +226,7 @@ public class AdminController {
     }
 
     @PostMapping("/authorities/{id}/delete")
-    public String deleteAuthority(@PathVariable Integer id, RedirectAttributes ra) {
+    public String deleteAuthority(@PathVariable int id, RedirectAttributes ra) {
         authorityRepository.deleteById(id);
         ra.addFlashAttribute("success", "Rôle retiré.");
         return "redirect:/admin?tab=authorities";

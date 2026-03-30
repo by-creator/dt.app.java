@@ -12,6 +12,7 @@ import com.dtapp.repository.GfaServiceRepository;
 import com.dtapp.repository.GfaTicketRepository;
 import com.dtapp.repository.GfaWifiSettingsRepository;
 import com.dtapp.repository.UserRepository;
+import com.dtapp.service.PusherService;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -60,19 +61,22 @@ public class GfaDisplayController {
     private final GfaAgentRepository gfaAgentRepository;
     private final GfaTicketRepository gfaTicketRepository;
     private final GfaWifiSettingsRepository gfaWifiSettingsRepository;
+    private final PusherService pusherService;
 
     public GfaDisplayController(UserRepository userRepository,
                                 GfaServiceRepository gfaServiceRepository,
                                 GfaGuichetRepository gfaGuichetRepository,
                                 GfaAgentRepository gfaAgentRepository,
                                 GfaTicketRepository gfaTicketRepository,
-                                GfaWifiSettingsRepository gfaWifiSettingsRepository) {
+                                GfaWifiSettingsRepository gfaWifiSettingsRepository,
+                                PusherService pusherService) {
         this.userRepository = userRepository;
         this.gfaServiceRepository = gfaServiceRepository;
         this.gfaGuichetRepository = gfaGuichetRepository;
         this.gfaAgentRepository = gfaAgentRepository;
         this.gfaTicketRepository = gfaTicketRepository;
         this.gfaWifiSettingsRepository = gfaWifiSettingsRepository;
+        this.pusherService = pusherService;
     }
 
     @GetMapping("/gfa/display")
@@ -86,6 +90,8 @@ public class GfaDisplayController {
         model.addAttribute("wifiQrPayload", buildWifiQrPayload(wifiSettings));
         model.addAttribute("ticketEntryUrl", dynamicBaseUrl + "/gfa/ticket?token=" + token);
         model.addAttribute("displayState", displayState);
+        model.addAttribute("pusherKey", pusherService.getKey());
+        model.addAttribute("pusherCluster", pusherService.getCluster());
         return "facturation/gfa-display";
     }
 
@@ -128,7 +134,7 @@ public class GfaDisplayController {
     }
 
     @GetMapping("/gfa/ticket/{id}")
-    public Object publicTicketSummary(@PathVariable Long id,
+    public Object publicTicketSummary(@PathVariable long id,
                                       @RequestParam String token,
                                       Model model) {
         Optional<GfaTicket> ticketOpt = gfaTicketRepository.findByIdAndToken(id, token);
@@ -181,7 +187,7 @@ public class GfaDisplayController {
 
     @GetMapping("/api/gfa/guichets/{id}/state")
     @ResponseBody
-    public ResponseEntity<?> guichetState(@PathVariable Long id) {
+    public ResponseEntity<?> guichetState(@PathVariable long id) {
         try {
             return ResponseEntity.ok(buildGuichetState(loadGuichet(id)));
         } catch (NoSuchElementException ex) {
@@ -191,7 +197,7 @@ public class GfaDisplayController {
 
     @PostMapping("/api/gfa/guichets/{id}/actions/{action}")
     @ResponseBody
-    public ResponseEntity<ActionResponse> guichetAction(@PathVariable Long id,
+    public ResponseEntity<ActionResponse> guichetAction(@PathVariable long id,
                                                         @PathVariable String action) {
         try {
             GfaGuichet guichet = loadGuichet(id);
@@ -232,7 +238,7 @@ public class GfaDisplayController {
     }
 
     @PostMapping("/menu/facturation/gfa/admin/services/{id}")
-    public String updateService(@PathVariable Long id,
+    public String updateService(@PathVariable long id,
                                 @RequestParam String nom,
                                 @RequestParam(required = false) String code,
                                 @RequestParam(defaultValue = "false") boolean actif,
@@ -254,7 +260,7 @@ public class GfaDisplayController {
     }
 
     @PostMapping("/menu/facturation/gfa/admin/services/{id}/delete")
-    public String deleteService(@PathVariable Long id, RedirectAttributes ra) {
+    public String deleteService(@PathVariable long id, RedirectAttributes ra) {
         try {
             gfaServiceRepository.deleteById(id);
             ra.addFlashAttribute("successMsg", "Service supprime avec succes.");
@@ -286,7 +292,7 @@ public class GfaDisplayController {
     }
 
     @PostMapping("/menu/facturation/gfa/admin/guichets/{id}")
-    public String updateGuichet(@PathVariable Long id,
+    public String updateGuichet(@PathVariable long id,
                                 @RequestParam String numero,
                                 @RequestParam String infos,
                                 @RequestParam(required = false) Long serviceId,
@@ -310,7 +316,7 @@ public class GfaDisplayController {
     }
 
     @PostMapping("/menu/facturation/gfa/admin/guichets/{id}/delete")
-    public String deleteGuichet(@PathVariable Long id, RedirectAttributes ra) {
+    public String deleteGuichet(@PathVariable long id, RedirectAttributes ra) {
         try {
             gfaGuichetRepository.deleteById(id);
             ra.addFlashAttribute("successMsg", "Guichet supprime avec succes.");
@@ -344,7 +350,7 @@ public class GfaDisplayController {
     }
 
     @PostMapping("/menu/facturation/gfa/admin/agents/{id}")
-    public String updateAgent(@PathVariable Long id,
+    public String updateAgent(@PathVariable long id,
                               @RequestParam String nom,
                               @RequestParam(required = false) String prenom,
                               @RequestParam(required = false) Long serviceId,
@@ -370,7 +376,7 @@ public class GfaDisplayController {
     }
 
     @PostMapping("/menu/facturation/gfa/admin/agents/{id}/delete")
-    public String deleteAgent(@PathVariable Long id, RedirectAttributes ra) {
+    public String deleteAgent(@PathVariable long id, RedirectAttributes ra) {
         try {
             gfaAgentRepository.deleteById(id);
             ra.addFlashAttribute("successMsg", "Agent supprime avec succes.");
@@ -419,7 +425,9 @@ public class GfaDisplayController {
         nextTicket.setCalledAt(now);
         nextTicket.setUpdatedAt(now);
         gfaTicketRepository.save(nextTicket);
-        return new ActionResponse(true, "Ticket appele avec succes.", buildGuichetState(guichet), buildDisplayState(loadWifiSettings()));
+        DisplayStateResponse displayState = buildDisplayState(loadWifiSettings());
+        pusherService.triggerDisplayUpdate(displayState);
+        return new ActionResponse(true, "Ticket appele avec succes.", buildGuichetState(guichet), displayState);
     }
 
     private ActionResponse recallCurrentTicket(GfaGuichet guichet) {
@@ -431,7 +439,9 @@ public class GfaDisplayController {
         currentTicket.setUpdatedAt(now);
         currentTicket.setAgent(resolveAgentForGuichet(guichet.getId()).orElse(currentTicket.getAgent()));
         gfaTicketRepository.save(currentTicket);
-        return new ActionResponse(true, "Le client en cours a ete rappele.", buildGuichetState(guichet), buildDisplayState(loadWifiSettings()));
+        DisplayStateResponse displayState = buildDisplayState(loadWifiSettings());
+        pusherService.triggerDisplayUpdate(displayState);
+        return new ActionResponse(true, "Le client en cours a ete rappele.", buildGuichetState(guichet), displayState);
     }
 
     private ActionResponse closeCurrentTicket(GfaGuichet guichet, String finalStatus, String successMessage) {
@@ -446,7 +456,9 @@ public class GfaDisplayController {
             currentTicket.setProcessingTime(Duration.between(currentTicket.getCalledAt(), now).getSeconds());
         }
         gfaTicketRepository.save(currentTicket);
-        return new ActionResponse(true, successMessage, buildGuichetState(guichet), buildDisplayState(loadWifiSettings()));
+        DisplayStateResponse displayState = buildDisplayState(loadWifiSettings());
+        pusherService.triggerDisplayUpdate(displayState);
+        return new ActionResponse(true, successMessage, buildGuichetState(guichet), displayState);
     }
 
     private GuichetStateResponse buildGuichetState(GfaGuichet guichet) {

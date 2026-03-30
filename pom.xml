@@ -8,7 +8,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.0</version>
+        <version>3.5.13</version>
         <relativePath/>
     </parent>
 
@@ -85,6 +85,13 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- Configuration metadata processor (suppresses IDE unknown-property warnings) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
+        </dependency>
+
         <!-- Apache POI for Excel export -->
         <dependency>
             <groupId>org.apache.poi</groupId>
@@ -116,6 +123,13 @@
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- H2 In-Memory Database for tests -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
             <scope>test</scope>
         </dependency>
 

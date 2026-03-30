@@ -1,8 +1,2 @@
-E-mail
-Site
-Type de compte
-Prénom
-Nom
-Nom de la société
-Téléphone
-Statut
+Notes
+

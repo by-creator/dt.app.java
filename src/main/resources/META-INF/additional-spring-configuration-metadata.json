@@ -1,0 +1,57 @@
+{
+  "properties": [
+    {
+      "name": "app.upload.dir",
+      "type": "java.lang.String",
+      "description": "Directory for uploaded files."
+    },
+    {
+      "name": "app.base-url",
+      "type": "java.lang.String",
+      "description": "Public base URL of the application."
+    },
+    {
+      "name": "app.mail.to",
+      "type": "java.lang.String",
+      "description": "Primary email recipient for validation notifications."
+    },
+    {
+      "name": "app.mail.to.remise",
+      "type": "java.lang.String",
+      "description": "Email recipient for remise notifications."
+    },
+    {
+      "name": "app.data-initializer.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable or disable the data initializer on startup.",
+      "defaultValue": true
+    },
+    {
+      "name": "pusher.app-id",
+      "type": "java.lang.String",
+      "description": "Pusher application ID."
+    },
+    {
+      "name": "pusher.key",
+      "type": "java.lang.String",
+      "description": "Pusher application key."
+    },
+    {
+      "name": "pusher.secret",
+      "type": "java.lang.String",
+      "description": "Pusher application secret."
+    },
+    {
+      "name": "pusher.cluster",
+      "type": "java.lang.String",
+      "description": "Pusher cluster region (e.g. mt1).",
+      "defaultValue": "mt1"
+    },
+    {
+      "name": "pusher.scheme",
+      "type": "java.lang.String",
+      "description": "Pusher connection scheme (https or http).",
+      "defaultValue": "https"
+    }
+  ]
+}

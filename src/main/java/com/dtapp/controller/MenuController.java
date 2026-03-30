@@ -198,7 +198,7 @@ public class MenuController {
     }
 
     @PostMapping("/menu/facturation/gestion-validations/{id}/valider")
-    public String validerValidation(@PathVariable Long id, Authentication auth, RedirectAttributes ra) {
+    public String validerValidation(@PathVariable long id, Authentication auth, RedirectAttributes ra) {
         RattachementBl bl = rattachementBlRepository.findById(id).orElseThrow();
         User operator = userRepository.findByEmail(auth.getName()).orElseThrow();
         bl.setStatut("VALIDE");
@@ -210,7 +210,7 @@ public class MenuController {
     }
 
     @PostMapping("/menu/facturation/gestion-validations/{id}/rejeter")
-    public String rejeterValidation(@PathVariable Long id, @RequestParam String motif,
+    public String rejeterValidation(@PathVariable long id, @RequestParam String motif,
                                     Authentication auth, RedirectAttributes ra) {
         RattachementBl bl = rattachementBlRepository.findById(id).orElseThrow();
         User operator = userRepository.findByEmail(auth.getName()).orElseThrow();
@@ -327,7 +327,7 @@ public class MenuController {
     }
 
     @PostMapping("/menu/facturation/unify/admin/modifier/{id}")
-    public String adminModifierTiers(@PathVariable Long id,
+    public String adminModifierTiers(@PathVariable long id,
                                      @RequestParam(required = false) String raisonSociale,
                                      @RequestParam(required = false) String compteIpaki,
                                      @RequestParam(required = false) String compteNeptune,
@@ -343,7 +343,7 @@ public class MenuController {
     }
 
     @PostMapping("/menu/facturation/unify/admin/supprimer/{id}")
-    public String adminSupprimerTiers(@PathVariable Long id, RedirectAttributes ra) {
+    public String adminSupprimerTiers(@PathVariable long id, RedirectAttributes ra) {
         tiersUnifyRepository.deleteById(id);
         ra.addFlashAttribute("successMsg", "Tiers supprime.");
         return "redirect:/menu/facturation/unify?tab=admin";
@@ -685,7 +685,7 @@ public class MenuController {
 
     private String formatDate() {
         String raw = LocalDate.now()
-                .format(DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", new Locale("fr", "FR")));
+                .format(DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", Locale.of("fr", "FR")));
         return raw.substring(0, 1).toUpperCase() + raw.substring(1);
     }
 
@@ -704,7 +704,7 @@ public class MenuController {
     }
 
     @PostMapping("/menu/gestion-remises/{id}/valider")
-    public String validerRemise(@PathVariable Long id,
+    public String validerRemise(@PathVariable long id,
                                 @RequestParam(required = false) BigDecimal pourcentage,
                                 @RequestParam String returnTo,
                                 Authentication auth, RedirectAttributes ra) {
@@ -728,7 +728,7 @@ public class MenuController {
     }
 
     @PostMapping("/menu/gestion-remises/{id}/rejeter")
-    public String rejeterRemise(@PathVariable Long id,
+    public String rejeterRemise(@PathVariable long id,
                                 @RequestParam String motif,
                                 @RequestParam String returnTo,
                                 Authentication auth, RedirectAttributes ra) {

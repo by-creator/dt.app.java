@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,8 +21,12 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
     List<User> findTop5ByOrderByCreatedAtDesc();
 
-    @Query("SELECT COUNT(u) FROM User u WHERE DATE(u.createdAt) = CURRENT_DATE")
-    long countCreatedToday();
+    long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+
+    default long countCreatedToday() {
+        LocalDate today = LocalDate.now();
+        return countByCreatedAtBetween(today.atStartOfDay(), today.plusDays(1).atStartOfDay());
+    }
 
     List<User> findAllByOrderByCreatedAtDesc();
 

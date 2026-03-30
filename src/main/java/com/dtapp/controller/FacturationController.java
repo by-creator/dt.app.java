@@ -65,7 +65,7 @@ public class FacturationController {
     }
 
     @PostMapping("/facturation/gestion-validations/{id}/valider")
-    public String validerValidation(@PathVariable Long id,
+    public String validerValidation(@PathVariable long id,
                                     Authentication auth,
                                     RedirectAttributes ra) {
         RattachementBl bl = rattachementBlRepository.findById(id).orElseThrow();
@@ -79,7 +79,7 @@ public class FacturationController {
     }
 
     @PostMapping("/facturation/gestion-validations/{id}/rejeter")
-    public String rejeterValidation(@PathVariable Long id,
+    public String rejeterValidation(@PathVariable long id,
                                     @RequestParam String motif,
                                     Authentication auth,
                                     RedirectAttributes ra) {
@@ -111,7 +111,7 @@ public class FacturationController {
     }
 
     @PostMapping("/facturation/gestion-remises/{id}/valider")
-    public String validerRemise(@PathVariable Long id,
+    public String validerRemise(@PathVariable long id,
                                 @RequestParam(required = false) BigDecimal pourcentage,
                                 Authentication auth,
                                 RedirectAttributes ra) {
@@ -139,7 +139,7 @@ public class FacturationController {
     }
 
     @PostMapping("/facturation/gestion-remises/{id}/rejeter")
-    public String rejeterRemise(@PathVariable Long id,
+    public String rejeterRemise(@PathVariable long id,
                                 @RequestParam String motif,
                                 Authentication auth,
                                 RedirectAttributes ra) {
@@ -156,7 +156,7 @@ public class FacturationController {
 
     private String formatDate() {
         String raw = LocalDate.now()
-                .format(DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", new Locale("fr", "FR")));
+                .format(DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", Locale.of("fr", "FR")));
         return raw.substring(0, 1).toUpperCase() + raw.substring(1);
     }
 

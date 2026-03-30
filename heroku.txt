@@ -1,0 +1,6 @@
+Variable	Pourquoi obligatoire
+MYSQL_HOST	Adresse du serveur DB — unique par déploiement
+MYSQL_PORT	Port DB
+MYSQL_DB	Nom de la base
+MYSQL_USER	Utilisateur DB
+MYSQL_PASSWORD	Mot de passe DB

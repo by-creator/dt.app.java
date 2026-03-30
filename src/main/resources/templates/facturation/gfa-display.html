@@ -596,26 +596,6 @@
     document.getElementById('wifiSsidCaption').textContent = `SSID : ${state?.wifiSsid || ''}`;
   }
 
-  async function pollDisplayState() {
-    try {
-      const response = await fetch('/api/gfa/display/state', {
-        headers: { 'Accept': 'application/json' }
-      });
-      if (!response.ok) {
-        return;
-      }
-      const state = await response.json();
-      renderDisplayState(state);
-
-      if (state.announcementKey && state.announcementKey !== lastAnnouncementKey) {
-        lastAnnouncementKey = state.announcementKey;
-        announceCall(state.currentCall);
-      }
-    } catch (error) {
-      console.warn('Polling display indisponible', error);
-    }
-  }
-
   if ('speechSynthesis' in window) {
     window.speechSynthesis.onvoiceschanged = () => {
       voicesCache = window.speechSynthesis.getVoices();
@@ -624,7 +604,29 @@
 
   updateDisplayClock();
   setInterval(updateDisplayClock, 1000);
-  setInterval(pollDisplayState, 4000);
+</script>
+<script src="https://js.pusher.com/8.4.0/pusher.min.js"></script>
+<script th:inline="javascript">
+  /*<![CDATA[*/
+  (function () {
+    var pusherKey = /*[[${pusherKey}]]*/ '';
+    var pusherCluster = /*[[${pusherCluster}]]*/ 'mt1';
+
+    var pusher = new Pusher(pusherKey, {
+      cluster: pusherCluster,
+      forceTLS: true
+    });
+
+    var channel = pusher.subscribe('gfa-display');
+    channel.bind('display-update', function (state) {
+      renderDisplayState(state);
+      if (state.announcementKey && state.announcementKey !== lastAnnouncementKey) {
+        lastAnnouncementKey = state.announcementKey;
+        announceCall(state.currentCall);
+      }
+    });
+  })();
+  /*]]>*/
 </script>
 </body>
 </html>

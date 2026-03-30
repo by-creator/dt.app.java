@@ -5,6 +5,7 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.lang.NonNull;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -19,16 +20,20 @@ public class EmailService {
     private final JavaMailSender mailSender;
 
     @Value("${app.mail.to}")
-    private String mailTo;
+    @NonNull
+    private String mailTo = "";
 
     @Value("${app.mail.to.remise}")
-    private String mailToRemise;
+    @NonNull
+    private String mailToRemise = "";
 
     @Value("${app.base-url}")
-    private String baseUrl;
+    @NonNull
+    private String baseUrl = "";
 
     @Value("${spring.mail.username}")
-    private String mailFrom;
+    @NonNull
+    private String mailFrom = "";
 
     public EmailService(JavaMailSender mailSender) {
         this.mailSender = mailSender;
@@ -71,7 +76,8 @@ public class EmailService {
         for (MultipartFile file : files) {
             if (file != null && !file.isEmpty()) {
                 try {
-                    String filename = file.getOriginalFilename() != null ? file.getOriginalFilename() : "piece-jointe";
+                    String originalName = file.getOriginalFilename();
+                    String filename = originalName != null ? originalName : "piece-jointe";
                     byte[] bytes = file.getBytes();
                     helper.addAttachment(filename, new ByteArrayResource(bytes));
                 } catch (Exception ignored) {
@@ -178,7 +184,7 @@ public class EmailService {
         }
     }
 
-    private void sendSimpleMail(String to, String subject, String html) {
+    private void sendSimpleMail(String to, @NonNull String subject, @NonNull String html) {
         if (to == null || to.isBlank()) return;
         try {
             MimeMessage message = mailSender.createMimeMessage();
@@ -194,6 +200,7 @@ public class EmailService {
         }
     }
 
+    @NonNull
     private String buildSimpleHtml(String titre, String intro,
                                    String[] labels, String[] values,
                                    String btnLabel, String btnUrl) {
@@ -224,7 +231,7 @@ public class EmailService {
         sb.append("  </div>")
           .append("  <div style=\"padding:16px;text-align:center;background:#f8fbff;color:#94a3b8;font-size:12px\">&copy; 2026 Dakar Terminal. Tous droits reserves.</div>")
           .append("</div></body></html>");
-        return sb.toString();
+        return java.util.Objects.requireNonNull(sb.toString());
     }
 
     // ==================== CLIENT NOTIFICATIONS ====================
@@ -270,7 +277,7 @@ public class EmailService {
                         "Motif de rejet", safe(bl.getMotifRejet())));
     }
 
-    private void sendClientMail(RattachementBl bl, String to, String subject, String htmlBody) {
+    private void sendClientMail(RattachementBl bl, String to, @NonNull String subject, @NonNull String htmlBody) {
         if (to == null || to.isBlank()) return;
         try {
             MimeMessage message = mailSender.createMimeMessage();
@@ -286,6 +293,7 @@ public class EmailService {
         }
     }
 
+    @NonNull
     private String buildClientStatusHtml(RattachementBl bl, String accentColor,
                                          String statusLabel, String message,
                                          String extraLabel, String extraValue) {
@@ -319,9 +327,10 @@ public class EmailService {
           .append("  </div>")
           .append("  <div style=\"padding:16px;text-align:center;background:#f8fbff;color:#94a3b8;font-size:12px\">&copy; 2026 Dakar Terminal. Tous droits reserves.</div>")
           .append("</div></body></html>");
-        return sb.toString();
+        return java.util.Objects.requireNonNull(sb.toString());
     }
 
+    @NonNull
     private String buildEmailHtml(RattachementBl bl, String type) {
         String titre = "validation".equals(type)
                 ? "Nouvelle demande de validation"

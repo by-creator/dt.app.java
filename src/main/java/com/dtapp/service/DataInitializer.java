@@ -95,10 +95,10 @@ public class DataInitializer implements CommandLineRunner {
                         userRepository.save(admin);
                         log.info("Compagnie '{}' rattachée au compte admin existant.", DEFAULT_COMPAGNIE);
                     } else {
-                        Integer compagnieId = admin.getCompagnie().getId();
-                        String compagnieName = dakarTerminal.getId().equals(compagnieId)
+                        Integer adminCompagnieId = admin.getCompagnie().getId();
+                        String compagnieName = java.util.Objects.equals(dakarTerminal.getId(), adminCompagnieId)
                                 ? dakarTerminal.getName()
-                                : compagnieRepository.findById(compagnieId)
+                                : compagnieRepository.findById(java.util.Objects.requireNonNull(adminCompagnieId))
                                         .map(Compagnie::getName)
                                         .orElse("compagnie inconnue");
                         log.info("Compte admin déjà présent et rattaché à '{}'.", compagnieName);

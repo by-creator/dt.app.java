@@ -102,7 +102,7 @@ public class DouaneController {
     }
 
     @PostMapping("/blocage/action")
-    public String tableAction(@RequestParam Integer id,
+    public String tableAction(@RequestParam int id,
                               @RequestParam String action,
                               @RequestParam(defaultValue = "0") int page,
                               @RequestParam(required = false) String search,

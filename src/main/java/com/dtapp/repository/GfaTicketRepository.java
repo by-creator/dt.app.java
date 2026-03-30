@@ -30,7 +30,7 @@ public interface GfaTicketRepository extends JpaRepository<GfaTicket, Long> {
 
     Optional<GfaTicket> findTopByGuichetIdAndStatutIgnoreCaseOrderByCalledAtDescIdDesc(Long guichetId, String statut);
 
-    @Query("SELECT COUNT(t) FROM GfaTicket t WHERE t.closedAt IS NOT NULL AND DATE(t.closedAt) = CURRENT_DATE")
+    @Query("SELECT COUNT(t) FROM GfaTicket t WHERE t.closedAt IS NOT NULL AND cast(t.closedAt as LocalDate) = local date")
     long countClosedToday();
 
     Optional<GfaTicket> findTopByGuichetIdAndStatutInOrderByCreatedAtDesc(Long guichetId, List<String> statuts);

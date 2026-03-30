@@ -22,7 +22,6 @@ import java.util.Locale;
 public class EdiExporter {
 
     private static final Map<String, String> PORT_NAMES;
-    private static final Map<String, String> TRANSPORT_MODES;
 
     static {
         Map<String, String> p = new LinkedHashMap<>();
@@ -39,13 +38,6 @@ public class EdiExporter {
         p.put("AOLAD", "LUANDA");           p.put("GCGRAD", "GRANDE ABIDJAN");
         p.put("LRMLW", "MONROVIA");         p.put("BJOOO", "COTONOU");
         PORT_NAMES = Collections.unmodifiableMap(p);
-
-        Map<String, String> m = new LinkedHashMap<>();
-        m.put("R", "Roro");
-        m.put("C", "Container");
-        m.put("B", "Bulk");
-        m.put("M", "Mafi");
-        TRANSPORT_MODES = Collections.unmodifiableMap(m);
     }
 
     private String sender      = "GRIMALDI";
@@ -155,7 +147,6 @@ public class EdiExporter {
         String shipperName = d.getOrDefault("shipper_name", "").trim();
         String consignee  = d.getOrDefault("manifest", "").trim();
         String addr2      = d.getOrDefault("adresse_2", "").trim();
-        String addr3      = d.getOrDefault("adresse_3", "").trim();
         String addr4      = d.getOrDefault("adresse_4", "").trim();
         String addr5      = d.getOrDefault("adresse_5", "").trim();
         String notify1    = d.getOrDefault("notify1", "").trim();
