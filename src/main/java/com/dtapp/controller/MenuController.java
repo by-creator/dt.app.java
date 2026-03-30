@@ -2,10 +2,12 @@ package com.dtapp.controller;
 
 import com.dtapp.entity.RattachementBl;
 import com.dtapp.entity.SatisfactionReponse;
+import com.dtapp.entity.TiersUnify;
 import com.dtapp.entity.User;
 import com.dtapp.repository.GfaGuichetRepository;
 import com.dtapp.repository.RattachementBlRepository;
 import com.dtapp.repository.SatisfactionReponseRepository;
+import com.dtapp.repository.TiersUnifyRepository;
 import com.dtapp.repository.UserRepository;
 import com.dtapp.service.EmailService;
 import jakarta.servlet.http.HttpServletResponse;
@@ -37,17 +39,20 @@ public class MenuController {
     private final RattachementBlRepository rattachementBlRepository;
     private final SatisfactionReponseRepository satisfactionReponseRepository;
     private final GfaGuichetRepository gfaGuichetRepository;
+    private final TiersUnifyRepository tiersUnifyRepository;
     private final EmailService emailService;
 
     public MenuController(UserRepository userRepository,
                           RattachementBlRepository rattachementBlRepository,
                           SatisfactionReponseRepository satisfactionReponseRepository,
                           GfaGuichetRepository gfaGuichetRepository,
+                          TiersUnifyRepository tiersUnifyRepository,
                           EmailService emailService) {
         this.userRepository = userRepository;
         this.rattachementBlRepository = rattachementBlRepository;
         this.satisfactionReponseRepository = satisfactionReponseRepository;
         this.gfaGuichetRepository = gfaGuichetRepository;
+        this.tiersUnifyRepository = tiersUnifyRepository;
         this.emailService = emailService;
     }
 
@@ -223,8 +228,11 @@ public class MenuController {
                                            Model model,
                                            Authentication auth) {
         User loggedUser = userRepository.findByEmail(auth.getName()).orElseThrow();
+        boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
         model.addAttribute("loggedUser", loggedUser);
         model.addAttribute("activeTab", normalizeReportsTab(tab));
+        model.addAttribute("isAdmin", isAdmin);
         return "facturation/reports";
     }
 
@@ -234,10 +242,181 @@ public class MenuController {
                                          Model model,
                                          Authentication auth) {
         User loggedUser = userRepository.findByEmail(auth.getName()).orElseThrow();
+        boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
         model.addAttribute("loggedUser", loggedUser);
         model.addAttribute("activeTab", normalizeUnifyTab(tab));
         model.addAttribute("activeStep", normalizeUnifyStep(step));
+        model.addAttribute("isAdmin", isAdmin);
+        model.addAttribute("tiers", tiersUnifyRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt")));
         return "facturation/unify";
+    }
+
+    @PostMapping("/menu/facturation/unify/sauvegarder")
+    public String sauvegarderTiersUnify(@RequestParam(required = false) String compteIpaki,
+                                        @RequestParam(required = false) String compteNeptune,
+                                        @RequestParam(required = false) String raisonSociale,
+                                        RedirectAttributes ra) {
+        TiersUnify t = new TiersUnify();
+        t.setCompteIpaki(compteIpaki);
+        t.setCompteNeptune(compteNeptune);
+        t.setRaisonSociale(raisonSociale);
+        tiersUnifyRepository.save(t);
+        ra.addFlashAttribute("successMsg", "Tiers enregistre avec succes.");
+        return "redirect:/menu/facturation/unify?tab=liste-tiers";
+    }
+
+    @GetMapping("/menu/facturation/unify/imprimer-fiche")
+    public String imprimerFiche(@RequestParam(required = false) String date,
+                                @RequestParam(required = false) String typePersonne,
+                                @RequestParam(required = false) String compteIpaki,
+                                @RequestParam(required = false) String compteNeptune,
+                                @RequestParam(required = false) String raisonSociale,
+                                @RequestParam(required = false) String telephone,
+                                @RequestParam(required = false) String email,
+                                @RequestParam(required = false) String adresse,
+                                @RequestParam(required = false) String dg,
+                                @RequestParam(required = false) String telephoneDg,
+                                @RequestParam(required = false) String df,
+                                @RequestParam(required = false) String telephoneDf,
+                                @RequestParam(required = false) String ninea,
+                                @RequestParam(required = false) String registre,
+                                Model model) {
+        model.addAttribute("date", date);
+        model.addAttribute("typePersonne", typePersonne);
+        model.addAttribute("compteIpaki", compteIpaki);
+        model.addAttribute("compteNeptune", compteNeptune);
+        model.addAttribute("raisonSociale", raisonSociale);
+        model.addAttribute("telephone", telephone);
+        model.addAttribute("email", email);
+        model.addAttribute("adresse", adresse);
+        model.addAttribute("dg", dg);
+        model.addAttribute("telephoneDg", telephoneDg);
+        model.addAttribute("df", df);
+        model.addAttribute("telephoneDf", telephoneDf);
+        model.addAttribute("ninea", ninea);
+        model.addAttribute("registre", registre);
+        return "facturation/unify-fiche";
+    }
+
+    @GetMapping("/menu/facturation/unify/imprimer-attestation")
+    public String imprimerAttestation(@RequestParam(required = false) String compteIpaki,
+                                      @RequestParam(required = false) String raisonSociale,
+                                      @RequestParam(required = false) String ninea,
+                                      @RequestParam(required = false) String registre,
+                                      Model model) {
+        model.addAttribute("compteIpaki", compteIpaki);
+        model.addAttribute("raisonSociale", raisonSociale);
+        model.addAttribute("ninea", ninea);
+        model.addAttribute("registre", registre);
+        return "facturation/unify-attestation";
+    }
+
+    @PostMapping("/menu/facturation/unify/admin/ajouter")
+    public String adminAjouterTiers(@RequestParam(required = false) String raisonSociale,
+                                    @RequestParam(required = false) String compteIpaki,
+                                    @RequestParam(required = false) String compteNeptune,
+                                    RedirectAttributes ra) {
+        TiersUnify t = new TiersUnify();
+        t.setRaisonSociale(raisonSociale);
+        t.setCompteIpaki(compteIpaki);
+        t.setCompteNeptune(compteNeptune);
+        tiersUnifyRepository.save(t);
+        ra.addFlashAttribute("successMsg", "Tiers ajoute avec succes.");
+        return "redirect:/menu/facturation/unify?tab=admin";
+    }
+
+    @PostMapping("/menu/facturation/unify/admin/modifier/{id}")
+    public String adminModifierTiers(@PathVariable Long id,
+                                     @RequestParam(required = false) String raisonSociale,
+                                     @RequestParam(required = false) String compteIpaki,
+                                     @RequestParam(required = false) String compteNeptune,
+                                     RedirectAttributes ra) {
+        tiersUnifyRepository.findById(id).ifPresent(t -> {
+            t.setRaisonSociale(raisonSociale);
+            t.setCompteIpaki(compteIpaki);
+            t.setCompteNeptune(compteNeptune);
+            tiersUnifyRepository.save(t);
+        });
+        ra.addFlashAttribute("successMsg", "Tiers modifie avec succes.");
+        return "redirect:/menu/facturation/unify?tab=admin";
+    }
+
+    @PostMapping("/menu/facturation/unify/admin/supprimer/{id}")
+    public String adminSupprimerTiers(@PathVariable Long id, RedirectAttributes ra) {
+        tiersUnifyRepository.deleteById(id);
+        ra.addFlashAttribute("successMsg", "Tiers supprime.");
+        return "redirect:/menu/facturation/unify?tab=admin";
+    }
+
+    @GetMapping("/menu/facturation/unify/admin/export")
+    public void exportTiersUnify(HttpServletResponse response) throws IOException {
+        List<TiersUnify> tiers = tiersUnifyRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setHeader("Content-Disposition", "attachment; filename=\"tiers-unify.xlsx\"");
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
+            Sheet sheet = wb.createSheet("Tiers Unify");
+            CellStyle headerStyle = wb.createCellStyle();
+            Font headerFont = wb.createFont();
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+            headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            String[] headers = {"ID", "Raison sociale", "Compte Ipaki", "Compte Neptune", "Date creation"};
+            Row headerRow = sheet.createRow(0);
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+                cell.setCellStyle(headerStyle);
+            }
+            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+            int rowIdx = 1;
+            for (TiersUnify t : tiers) {
+                Row row = sheet.createRow(rowIdx++);
+                row.createCell(0).setCellValue(t.getId() != null ? t.getId() : 0);
+                row.createCell(1).setCellValue(val(t.getRaisonSociale()));
+                row.createCell(2).setCellValue(val(t.getCompteIpaki()));
+                row.createCell(3).setCellValue(val(t.getCompteNeptune()));
+                row.createCell(4).setCellValue(t.getCreatedAt() != null ? t.getCreatedAt().format(dtf) : "");
+            }
+            for (int i = 0; i < headers.length; i++) sheet.autoSizeColumn(i);
+            wb.write(response.getOutputStream());
+        }
+    }
+
+    @PostMapping("/menu/facturation/unify/admin/import")
+    public String importTiersUnify(@RequestParam("file") org.springframework.web.multipart.MultipartFile file,
+                                   RedirectAttributes ra) throws IOException {
+        if (file == null || file.isEmpty()) {
+            ra.addFlashAttribute("successMsg", "Aucun fichier selectionne.");
+            return "redirect:/menu/facturation/unify?tab=admin";
+        }
+        int imported = 0;
+        try (org.apache.poi.ss.usermodel.Workbook wb = new XSSFWorkbook(file.getInputStream())) {
+            Sheet sheet = wb.getSheetAt(0);
+            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+                Row row = sheet.getRow(i);
+                if (row == null) continue;
+                TiersUnify t = new TiersUnify();
+                t.setRaisonSociale(getCellString(row, 0));
+                t.setCompteIpaki(getCellString(row, 1));
+                t.setCompteNeptune(getCellString(row, 2));
+                tiersUnifyRepository.save(t);
+                imported++;
+            }
+        } catch (Exception e) {
+            ra.addFlashAttribute("successMsg", "Erreur lors de l'import : " + e.getMessage());
+            return "redirect:/menu/facturation/unify?tab=admin";
+        }
+        ra.addFlashAttribute("successMsg", imported + " tiers importe(s) avec succes.");
+        return "redirect:/menu/facturation/unify?tab=admin";
+    }
+
+    private String getCellString(Row row, int col) {
+        Cell cell = row.getCell(col, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
+        if (cell == null) return null;
+        String v = new org.apache.poi.ss.usermodel.DataFormatter().formatCellValue(cell);
+        return (v != null && !v.isBlank()) ? v.trim() : null;
     }
 
     @PostMapping("/menu/facturation/gestion-rapports/admin")

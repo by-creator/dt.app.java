@@ -64,7 +64,7 @@
          th:classappend="${activeTab == 'suivi-vides'} ? ' active' : ''">Suivi vides</a>
       <a th:href="@{/menu/facturation/gestion-rapports(tab='suivi-stationnement')}" class="subpage-tab"
          th:classappend="${activeTab == 'suivi-stationnement'} ? ' active' : ''">Suivi stationnement</a>
-      <a th:href="@{/menu/facturation/gestion-rapports(tab='admin')}" class="subpage-tab"
+      <a th:if="${isAdmin}" th:href="@{/menu/facturation/gestion-rapports(tab='admin')}" class="subpage-tab"
          th:classappend="${activeTab == 'admin'} ? ' active' : ''">Admin</a>
     </div>
 

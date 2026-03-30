@@ -7,6 +7,10 @@
   <th:block th:replace="~{fragments/pwa-head :: pwaMeta}"></th:block>
   <script th:src="@{/js/theme.js}"></script>
   <link rel="stylesheet" th:href="@{/css/style.css}">
+  <style>
+    .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px; }
+    @media (max-width: 640px) { .form-grid-2 { grid-template-columns: 1fr; } }
+  </style>
 </head>
 <body>
 
@@ -66,7 +70,7 @@
          th:classappend="${activeTab == 'liste-tiers'} ? ' active' : ''">Liste des tiers</a>
       <a th:href="@{/menu/facturation/unify(tab='tutoriel')}" class="subpage-tab"
          th:classappend="${activeTab == 'tutoriel'} ? ' active' : ''">Tutoriel</a>
-      <a th:href="@{/menu/facturation/unify(tab='admin')}" class="subpage-tab"
+      <a th:if="${isAdmin}" th:href="@{/menu/facturation/unify(tab='admin')}" class="subpage-tab"
          th:classappend="${activeTab == 'admin'} ? ' active' : ''">Admin</a>
     </div>
 
@@ -74,13 +78,12 @@
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:24px; font-size:13px; color:#64748b;">
         <a th:href="@{/menu}" style="color:#6366f1; text-decoration:none; font-weight:500;">Menu</a>
         <span>&#8250;</span>
-        <a th:href="@{/menu/dt}" style="color:#6366f1; text-decoration:none; font-weight:500;">Menu DT</a>
-        <span>&#8250;</span>
         <a th:href="@{/menu/facturation}" style="color:#6366f1; text-decoration:none; font-weight:500;">Facturation</a>
         <span>&#8250;</span>
         <span class="topbar-title">Gestion Unify</span>
       </div>
 
+      <!-- ── Formulaire de creation ──────────────────────────────────────── -->
       <div class="page-section-card" th:if="${activeTab == 'formulaire-creation'}" style="max-width:980px;">
         <div class="menu-header-row" style="margin-bottom:20px;">
           <div>
@@ -89,6 +92,8 @@
             <p class="page-subtitle">Suivez les etapes pour preparer la fiche Unify.</p>
           </div>
         </div>
+
+        <div th:if="${successMsg}" class="alert-success" th:text="${successMsg}"></div>
 
         <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:12px; margin-bottom:24px;">
           <a th:href="@{/menu/facturation/unify(tab='formulaire-creation', step=1)}" class="module-card"
@@ -113,120 +118,136 @@
           </a>
         </div>
 
-        <form>
-          <div th:if="${activeStep == 1}">
-            <div class="form-group" style="margin-bottom:18px;">
+        <div th:if="${activeStep == 1}">
+          <div class="form-grid-2">
+            <div class="form-group">
               <label class="form-label" for="unify-date">Date</label>
-              <input id="unify-date" type="date" class="form-input">
+              <input id="unify-date" name="date" type="date" class="form-input" oninput="saveField('date', this.value)">
             </div>
-            <div class="form-group" style="margin-bottom:18px;">
+            <div class="form-group">
               <label class="form-label" for="type-personne">Type de personne</label>
-              <input id="type-personne" type="text" class="form-input" value="MORALE">
+              <input id="type-personne" name="typePersonne" type="text" class="form-input" value="MORALE" oninput="saveField('typePersonne', this.value)">
             </div>
-            <div class="form-group" style="margin-bottom:18px;">
+            <div class="form-group">
               <label class="form-label" for="compte-ipaki">Compte Ipaki</label>
-              <input id="compte-ipaki" type="text" class="form-input">
+              <input id="compte-ipaki" name="compteIpaki" type="text" class="form-input" oninput="saveField('compteIpaki', this.value)">
             </div>
-            <div class="form-group" style="margin-bottom:24px;">
+            <div class="form-group">
               <label class="form-label" for="compte-neptune">Compte Neptune</label>
-              <input id="compte-neptune" type="text" class="form-input">
+              <input id="compte-neptune" name="compteNeptune" type="text" class="form-input" oninput="saveField('compteNeptune', this.value)">
             </div>
           </div>
+        </div>
 
-          <div th:if="${activeStep == 2}">
-            <div class="form-group" style="margin-bottom:18px;">
+        <div th:if="${activeStep == 2}">
+          <div class="form-grid-2">
+            <div class="form-group">
               <label class="form-label" for="raison-sociale">Raison sociale</label>
-              <input id="raison-sociale" type="text" class="form-input">
+              <input id="raison-sociale" name="raisonSociale" type="text" class="form-input" oninput="saveField('raisonSociale', this.value)">
             </div>
-            <div class="form-group" style="margin-bottom:18px;">
+            <div class="form-group">
               <label class="form-label" for="telephone">Telephone</label>
-              <input id="telephone" type="text" class="form-input">
+              <input id="telephone" name="telephone" type="text" class="form-input" oninput="saveField('telephone', this.value)">
             </div>
-            <div class="form-group" style="margin-bottom:18px;">
+            <div class="form-group">
               <label class="form-label" for="email">Email</label>
-              <input id="email" type="email" class="form-input">
+              <input id="email" name="email" type="email" class="form-input" oninput="saveField('email', this.value)">
             </div>
-            <div class="form-group" style="margin-bottom:24px;">
+            <div class="form-group">
               <label class="form-label" for="adresse">Adresse</label>
-              <input id="adresse" type="text" class="form-input">
+              <input id="adresse" name="adresse" type="text" class="form-input" oninput="saveField('adresse', this.value)">
             </div>
           </div>
+        </div>
 
-          <div th:if="${activeStep == 3}">
-            <div class="form-group" style="margin-bottom:18px;">
+        <div th:if="${activeStep == 3}">
+          <div class="form-grid-2">
+            <div class="form-group">
               <label class="form-label" for="dg">Directeur General</label>
-              <input id="dg" type="text" class="form-input">
+              <input id="dg" name="dg" type="text" class="form-input" oninput="saveField('dg', this.value)">
             </div>
-            <div class="form-group" style="margin-bottom:18px;">
+            <div class="form-group">
               <label class="form-label" for="telephone-dg">Telephone DG</label>
-              <input id="telephone-dg" type="text" class="form-input">
+              <input id="telephone-dg" name="telephoneDg" type="text" class="form-input" oninput="saveField('telephoneDg', this.value)">
             </div>
-            <div class="form-group" style="margin-bottom:18px;">
+            <div class="form-group">
               <label class="form-label" for="df">Directeur Financier</label>
-              <input id="df" type="text" class="form-input">
+              <input id="df" name="df" type="text" class="form-input" oninput="saveField('df', this.value)">
             </div>
-            <div class="form-group" style="margin-bottom:24px;">
+            <div class="form-group">
               <label class="form-label" for="telephone-df">Telephone DF</label>
-              <input id="telephone-df" type="text" class="form-input">
+              <input id="telephone-df" name="telephoneDf" type="text" class="form-input" oninput="saveField('telephoneDf', this.value)">
             </div>
           </div>
+        </div>
 
-          <div th:if="${activeStep == 4}">
-            <div class="form-group" style="margin-bottom:18px;">
+        <div th:if="${activeStep == 4}">
+          <div class="form-grid-2">
+            <div class="form-group">
               <label class="form-label" for="ninea">NINEA</label>
-              <input id="ninea" type="text" class="form-input">
+              <input id="ninea" name="ninea" type="text" class="form-input" oninput="saveField('ninea', this.value)">
             </div>
-            <div class="form-group" style="margin-bottom:24px;">
+            <div class="form-group">
               <label class="form-label" for="registre">Registre de commerce</label>
-              <input id="registre" type="text" class="form-input">
-            </div>
-            <div class="blocage-actions">
-              <button type="button" class="btn-actualiser">Imprimer fiche</button>
-              <button type="button" class="btn-actualiser">Imprimer attestation</button>
-              <button type="button" class="btn-debloquer">Terminer</button>
+              <input id="registre" name="registre" type="text" class="form-input" oninput="saveField('registre', this.value)">
             </div>
           </div>
+          <div class="blocage-actions">
+            <button type="button" class="btn-actualiser" onclick="imprimerFiche()">Imprimer fiche</button>
+            <button type="button" class="btn-actualiser" onclick="imprimerAttestation()">Imprimer attestation</button>
+            <button type="button" class="btn-debloquer" onclick="terminer()">Terminer</button>
+          </div>
+          <!-- Formulaire caché pour soumission -->
+          <form id="formTerminer" th:action="@{/menu/facturation/unify/sauvegarder}" method="post" style="display:none;">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <input type="hidden" name="compteIpaki" id="h-compteIpaki">
+            <input type="hidden" name="compteNeptune" id="h-compteNeptune">
+            <input type="hidden" name="raisonSociale" id="h-raisonSociale">
+          </form>
+        </div>
 
-          <div class="blocage-actions" th:if="${activeStep < 4}" style="justify-content:space-between; margin-top:16px;">
-            <a th:href="${activeStep > 1} ? @{/menu/facturation/unify(tab='formulaire-creation', step=${activeStep - 1})} : '#'"
-               class="btn-actualiser" style="text-decoration:none;" th:classappend="${activeStep == 1} ? ' disabled' : ''">Precedent</a>
-            <a th:href="@{/menu/facturation/unify(tab='formulaire-creation', step=${activeStep + 1})}"
-               class="btn-debloquer" style="text-decoration:none;">Suivant</a>
-          </div>
-        </form>
+        <div class="blocage-actions" th:if="${activeStep < 4}" style="justify-content:space-between; margin-top:16px;">
+          <a th:href="${activeStep > 1} ? @{/menu/facturation/unify(tab='formulaire-creation', step=${activeStep - 1})} : '#'"
+             class="btn-actualiser" style="text-decoration:none;" th:classappend="${activeStep == 1} ? ' disabled' : ''">Precedent</a>
+          <a th:href="@{/menu/facturation/unify(tab='formulaire-creation', step=${activeStep + 1})}"
+             class="btn-debloquer" style="text-decoration:none;">Suivant</a>
+        </div>
       </div>
 
+      <!-- ── Liste des tiers ────────────────────────────────────────────── -->
       <div class="page-section-card" th:if="${activeTab == 'liste-tiers'}" style="padding:0; overflow:hidden;">
         <div class="table-toolbar">
           <div style="font-weight:600; font-size:14px;">Liste des tiers</div>
           <input id="tiersSearch" type="search" class="table-search-input" placeholder="Rechercher un tiers..." oninput="filterSimpleRows('tiersTable', this.value)">
         </div>
-                <div class="table-wrapper">
-<table class="data-table" id="tiersTable">
-          <thead>
-          <tr>
-            <th>Compte Ipaki</th>
-            <th>Raison sociale</th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr>
-            <td>IPK-0001</td>
-            <td>Transit Senegal Services</td>
-          </tr>
-          <tr>
-            <td>IPK-0002</td>
-            <td>Logistique Atlantique</td>
-          </tr>
-          <tr>
-            <td>IPK-0003</td>
-            <td>Dakar Freight Hub</td>
-          </tr>
-          </tbody>
-        </table>
+        <div class="table-wrapper">
+          <table class="data-table" id="tiersTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Compte Ipaki</th>
+                <th>Compte Neptune</th>
+                <th>Raison sociale</th>
+                <th>Date creation</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:if="${#lists.isEmpty(tiers)}">
+                <td colspan="5" style="text-align:center; color:#94a3b8; font-style:italic;">Aucun tiers enregistre.</td>
+              </tr>
+              <tr th:each="t : ${tiers}">
+                <td th:text="${t.id}">—</td>
+                <td th:text="${t.compteIpaki != null ? t.compteIpaki : '—'}">—</td>
+                <td th:text="${t.compteNeptune != null ? t.compteNeptune : '—'}">—</td>
+                <td th:text="${t.raisonSociale != null ? t.raisonSociale : '—'}">—</td>
+                <td th:text="${t.createdAt != null ? #temporals.format(t.createdAt, 'dd/MM/yyyy') : '—'}">—</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
+      <!-- ── Tutoriel ───────────────────────────────────────────────────── -->
       <div class="page-section-card" th:if="${activeTab == 'tutoriel'}" style="padding:24px;">
         <div class="menu-header-row" style="margin-bottom:20px;">
           <div>
@@ -241,7 +262,8 @@
         </div>
       </div>
 
-      <div class="page-section-card" th:if="${activeTab == 'admin'}" style="padding:24px;">
+      <!-- ── Admin ──────────────────────────────────────────────────────── -->
+      <div class="page-section-card" th:if="${activeTab == 'admin' and isAdmin}" style="padding:24px;">
         <div class="menu-header-row" style="margin-bottom:20px;">
           <div>
             <div class="page-badge"><span class="page-badge-dot"></span> ADMIN UNIFY</div>
@@ -250,47 +272,51 @@
           </div>
         </div>
 
-        <div style="display:grid; grid-template-columns:minmax(280px, 360px) 1fr; gap:24px; margin-bottom:24px; align-items:start;">
-          <div class="page-section-card" style="margin:0;">
-            <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px;">
-              <div>
-                <div style="font-size:17px; font-weight:700; color:#e2e8f0;">Import / Export</div>
-                <p style="margin:6px 0 0; color:#94a3b8; font-size:14px;">Selectionnez un fichier puis lancez l'import depuis cette zone dediee.</p>
-              </div>
-            </div>
+        <div th:if="${successMsg}" class="alert-success" th:text="${successMsg}"></div>
 
-            <form onsubmit="return submitUnifyImport(event)">
+        <div style="display:grid; grid-template-columns:minmax(280px, 360px) 1fr; gap:24px; margin-bottom:24px; align-items:start;">
+          <!-- Import / Export -->
+          <div class="page-section-card" style="margin:0;">
+            <div style="font-size:17px; font-weight:700; color:#e2e8f0; margin-bottom:6px;">Import / Export</div>
+            <p style="margin:0 0 16px; color:#94a3b8; font-size:14px;">Selectionnez un fichier puis lancez l'import.</p>
+            <form th:action="@{/menu/facturation/unify/admin/import}" method="post" enctype="multipart/form-data">
+              <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
               <div class="form-group" style="margin-bottom:18px;">
                 <label class="form-label" for="unify-import-file">Fichier a importer</label>
-                <input id="unify-import-file" type="file" class="form-input" accept=".xlsx,.xls,.csv" onchange="updateUnifyFileName(this)">
+                <input id="unify-import-file" type="file" name="file" class="form-input" accept=".xlsx,.xls,.csv" onchange="updateUnifyFileName(this)">
                 <div id="unifyImportFileName" style="margin-top:10px; color:#94a3b8; font-size:13px;">Aucun fichier selectionne.</div>
               </div>
               <div class="blocage-actions" style="justify-content:flex-start;">
                 <button type="submit" class="btn-debloquer">Importer</button>
-                <button type="button" class="btn-actualiser" onclick="triggerUnifyExport()">Exporter</button>
+                <a th:href="@{/menu/facturation/unify/admin/export}" class="btn-actualiser" style="text-decoration:none;">Exporter</a>
               </div>
             </form>
-
-            <div id="unifyImportFeedback" style="display:none; margin-top:16px; padding:12px 14px; border-radius:12px; background:rgba(99,102,241,0.12); color:#c7d2fe; font-size:13px;"></div>
           </div>
 
-          <div class="page-section-card" style="margin:0;">
-          <div class="form-group" style="margin-bottom:18px;">
-            <label class="form-label" for="admin-raison">Raison sociale</label>
-            <input id="admin-raison" type="text" class="form-input" placeholder="Raison sociale">
-          </div>
-          <div class="form-group" style="margin-bottom:18px;">
-            <label class="form-label" for="admin-ipaki">Compte Ipaki</label>
-            <input id="admin-ipaki" type="text" class="form-input" placeholder="Compte Ipaki">
-          </div>
-          <div class="form-group" style="margin-bottom:24px;">
-            <label class="form-label" for="admin-neptune">Compte Neptune</label>
-            <input id="admin-neptune" type="text" class="form-input" placeholder="Compte Neptune">
-          </div>
-          <div class="blocage-actions">
-            <button type="button" class="btn-debloquer">Ajouter</button>
-            <button type="button" class="btn-actualiser">Reinitialiser</button>
-          </div>
+          <!-- Formulaire ajout/modification -->
+          <div class="page-section-card" style="margin:0;" id="adminForm">
+            <div style="font-size:17px; font-weight:700; color:#e2e8f0; margin-bottom:16px;" id="adminFormTitle">Ajouter un tiers</div>
+            <form id="formAdminAjout" th:action="@{/menu/facturation/unify/admin/ajouter}" method="post">
+              <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+              <div class="form-grid-2">
+                <div class="form-group">
+                  <label class="form-label" for="admin-raison">Raison sociale</label>
+                  <input id="admin-raison" name="raisonSociale" type="text" class="form-input" placeholder="Raison sociale">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="admin-ipaki">Compte Ipaki</label>
+                  <input id="admin-ipaki" name="compteIpaki" type="text" class="form-input" placeholder="Compte Ipaki">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="admin-neptune">Compte Neptune</label>
+                  <input id="admin-neptune" name="compteNeptune" type="text" class="form-input" placeholder="Compte Neptune">
+                </div>
+              </div>
+              <div class="blocage-actions">
+                <button type="submit" class="btn-debloquer">Ajouter</button>
+                <button type="button" class="btn-actualiser" onclick="resetAdminForm()">Reinitialiser</button>
+              </div>
+            </form>
           </div>
         </div>
 
@@ -298,49 +324,176 @@
           <div style="font-weight:600; font-size:14px;">Liste admin</div>
           <input id="adminSearch" type="search" class="table-search-input" placeholder="Rechercher..." oninput="filterSimpleRows('unifyAdminTable', this.value)">
         </div>
+        <div class="table-wrapper">
+          <table class="data-table" id="unifyAdminTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Raison sociale</th>
+                <th>Compte Ipaki</th>
+                <th>Compte Neptune</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:if="${#lists.isEmpty(tiers)}">
+                <td colspan="6" style="text-align:center; color:#94a3b8; font-style:italic;">Aucun tiers enregistre.</td>
+              </tr>
+              <tr th:each="t : ${tiers}">
+                <td th:text="${t.id}">—</td>
+                <td th:text="${t.raisonSociale != null ? t.raisonSociale : '—'}">—</td>
+                <td th:text="${t.compteIpaki != null ? t.compteIpaki : '—'}">—</td>
+                <td th:text="${t.compteNeptune != null ? t.compteNeptune : '—'}">—</td>
+                <td th:text="${t.createdAt != null ? #temporals.format(t.createdAt, 'dd/MM/yyyy') : '—'}">—</td>
+                <td>
+                  <div style="display:flex; gap:10px;">
+                    <button type="button" class="btn-table-action debloque"
+                            th:onclick="'prefillModifier(' + ${t.id} + ', \'' + ${t.raisonSociale} + '\', \'' + ${t.compteIpaki} + '\', \'' + ${t.compteNeptune} + '\')'">Modifier</button>
+                    <form th:action="@{'/menu/facturation/unify/admin/supprimer/' + ${t.id}}" method="post" style="display:inline;">
+                      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                      <button type="submit" class="btn-table-action bloquer"
+                              onclick="return confirm('Confirmer la suppression ?')">Supprimer</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-                <div class="table-wrapper">
-<table class="data-table" id="unifyAdminTable">
-          <thead>
-          <tr>
-            <th>Raison sociale</th>
-            <th>Compte Ipaki</th>
-            <th>Compte Neptune</th>
-            <th>Actions</th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr>
-            <td>Transit Senegal Services</td>
-            <td>IPK-0001</td>
-            <td>NEP-0001</td>
-            <td>
-              <div style="display:flex; gap:10px;">
-                <button type="button" class="btn-table-action debloque">Modifier</button>
-                <button type="button" class="btn-table-action bloquer">Supprimer</button>
+        <!-- Formulaire modification (caché, affiché par JS) -->
+        <div id="modalModifier" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:999; display:none; align-items:center; justify-content:center;">
+          <div style="background:#1e293b; border-radius:16px; padding:28px; width:100%; max-width:480px;">
+            <p style="font-size:17px; font-weight:700; color:#e2e8f0; margin:0 0 20px;">Modifier le tiers</p>
+            <form id="formModifier" method="post">
+              <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+              <div class="form-group" style="margin-bottom:14px;">
+                <label class="form-label">Raison sociale</label>
+                <input id="mod-raison" name="raisonSociale" type="text" class="form-input">
               </div>
-            </td>
-          </tr>
-          <tr>
-            <td>Logistique Atlantique</td>
-            <td>IPK-0002</td>
-            <td>NEP-0002</td>
-            <td>
-              <div style="display:flex; gap:10px;">
-                <button type="button" class="btn-table-action debloque">Modifier</button>
-                <button type="button" class="btn-table-action bloquer">Supprimer</button>
+              <div class="form-grid-2">
+                <div class="form-group">
+                  <label class="form-label">Compte Ipaki</label>
+                  <input id="mod-ipaki" name="compteIpaki" type="text" class="form-input">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Compte Neptune</label>
+                  <input id="mod-neptune" name="compteNeptune" type="text" class="form-input">
+                </div>
               </div>
-            </td>
-          </tr>
-          </tbody>
-        </table>
+              <div class="blocage-actions" style="margin-top:16px;">
+                <button type="submit" class="btn-debloquer">Enregistrer</button>
+                <button type="button" class="btn-actualiser" onclick="fermerModalModifier()">Annuler</button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
     </div>
   </main>
 </div>
 
-<script>
+<script th:inline="javascript">
+  const CSRF_PARAM = /*[[${_csrf.parameterName}]]*/ '_csrf';
+  const CSRF_TOKEN = /*[[${_csrf.token}]]*/ '';
+  const BASE_URL   = /*[[@{/menu/facturation/unify}]]*/ '/menu/facturation/unify';
+
+  // ── LocalStorage persistence ──────────────────────────────────────────
+  const LS_KEY = 'unify_form';
+
+  function saveField(key, value) {
+    const data = getFormData();
+    data[key] = value;
+    localStorage.setItem(LS_KEY, JSON.stringify(data));
+  }
+
+  function getFormData() {
+    try { return JSON.parse(localStorage.getItem(LS_KEY) || '{}'); } catch(e) { return {}; }
+  }
+
+  function restoreFields() {
+    const data = getFormData();
+    Object.keys(data).forEach(key => {
+      const el = document.querySelector('[name="' + key + '"], #' + key.replace(/([A-Z])/g, '-$1').toLowerCase());
+      if (el) el.value = data[key];
+    });
+    // Also try by id mapping
+    const map = {
+      date: 'unify-date', typePersonne: 'type-personne',
+      compteIpaki: 'compte-ipaki', compteNeptune: 'compte-neptune',
+      raisonSociale: 'raison-sociale', telephone: 'telephone',
+      email: 'email', adresse: 'adresse',
+      dg: 'dg', telephoneDg: 'telephone-dg',
+      df: 'df', telephoneDf: 'telephone-df',
+      ninea: 'ninea', registre: 'registre'
+    };
+    Object.entries(map).forEach(([key, id]) => {
+      const el = document.getElementById(id);
+      if (el && data[key] !== undefined) el.value = data[key];
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', restoreFields);
+
+  // ── Imprimer fiche ─────────────────────────────────────────────────────
+  function imprimerFiche() {
+    const d = getFormData();
+    const p = new URLSearchParams({
+      date: d.date || '', typePersonne: d.typePersonne || '',
+      compteIpaki: d.compteIpaki || '', compteNeptune: d.compteNeptune || '',
+      raisonSociale: d.raisonSociale || '', telephone: d.telephone || '',
+      email: d.email || '', adresse: d.adresse || '',
+      dg: d.dg || '', telephoneDg: d.telephoneDg || '',
+      df: d.df || '', telephoneDf: d.telephoneDf || '',
+      ninea: d.ninea || '', registre: d.registre || ''
+    });
+    window.open('/menu/facturation/unify/imprimer-fiche?' + p.toString(), '_blank');
+  }
+
+  // ── Imprimer attestation ───────────────────────────────────────────────
+  function imprimerAttestation() {
+    const d = getFormData();
+    const p = new URLSearchParams({
+      compteIpaki: d.compteIpaki || '',
+      raisonSociale: d.raisonSociale || '',
+      ninea: d.ninea || '',
+      registre: d.registre || ''
+    });
+    window.open('/menu/facturation/unify/imprimer-attestation?' + p.toString(), '_blank');
+  }
+
+  // ── Terminer ───────────────────────────────────────────────────────────
+  function terminer() {
+    const d = getFormData();
+    const form = document.getElementById('formTerminer');
+    if (!form) return;
+    document.getElementById('h-compteIpaki').value   = d.compteIpaki   || '';
+    document.getElementById('h-compteNeptune').value = d.compteNeptune || '';
+    document.getElementById('h-raisonSociale').value = d.raisonSociale || '';
+    form.style.display = 'block';
+    form.submit();
+    localStorage.removeItem(LS_KEY);
+  }
+
+  // ── Admin modifier ─────────────────────────────────────────────────────
+  function prefillModifier(id, raison, ipaki, neptune) {
+    const modal = document.getElementById('modalModifier');
+    const form  = document.getElementById('formModifier');
+    if (!modal || !form) return;
+    form.action = BASE_URL + '/admin/modifier/' + id;
+    document.getElementById('mod-raison').value  = raison  !== 'null' ? raison  : '';
+    document.getElementById('mod-ipaki').value   = ipaki   !== 'null' ? ipaki   : '';
+    document.getElementById('mod-neptune').value = neptune !== 'null' ? neptune : '';
+    modal.style.display = 'flex';
+  }
+
+  function fermerModalModifier() {
+    const modal = document.getElementById('modalModifier');
+    if (modal) modal.style.display = 'none';
+  }
+
+  // ── Filtrage table ──────────────────────────────────────────────────────
   function filterSimpleRows(tableId, query) {
     const q = (query || '').toLowerCase().trim();
     document.querySelectorAll('#' + tableId + ' tbody tr').forEach(row => {
@@ -350,46 +503,16 @@
 
   function updateUnifyFileName(input) {
     const target = document.getElementById('unifyImportFileName');
-    if (!target) {
-      return;
-    }
-
-    if (input.files && input.files.length > 0) {
-      target.textContent = 'Fichier selectionne : ' + input.files[0].name;
-      return;
-    }
-
-    target.textContent = 'Aucun fichier selectionne.';
+    if (target) target.textContent = input.files.length > 0
+      ? 'Fichier selectionne : ' + input.files[0].name
+      : 'Aucun fichier selectionne.';
   }
 
-  function submitUnifyImport(event) {
-    event.preventDefault();
-    const input = document.getElementById('unify-import-file');
-    const feedback = document.getElementById('unifyImportFeedback');
-
-    if (!input || !feedback) {
-      return false;
-    }
-
-    if (!input.files || input.files.length === 0) {
-      feedback.style.display = 'block';
-      feedback.textContent = 'Veuillez selectionner un fichier avant de lancer l import.';
-      return false;
-    }
-
-    feedback.style.display = 'block';
-    feedback.textContent = 'Import prepare pour le fichier : ' + input.files[0].name;
-    return false;
-  }
-
-  function triggerUnifyExport() {
-    const feedback = document.getElementById('unifyImportFeedback');
-    if (!feedback) {
-      return;
-    }
-
-    feedback.style.display = 'block';
-    feedback.textContent = 'Export pret a etre branche sur la source de donnees Unify.';
+  function resetAdminForm() {
+    ['admin-raison', 'admin-ipaki', 'admin-neptune'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
   }
 </script>
 

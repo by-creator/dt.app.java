@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Attestation Tiers - Dakar Terminal</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-size: 13px;
+      color: #1e293b;
+      background: #fff;
+      padding: 48px 64px;
+    }
+
+    .att-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .att-header img {
+      max-height: 56px;
+      margin-bottom: 16px;
+    }
+    .att-header .doc-ref {
+      font-size: 11px;
+      color: #94a3b8;
+      letter-spacing: 0.5px;
+      margin-bottom: 24px;
+    }
+    .att-header h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #1e293b;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      border-bottom: 3px solid #6366f1;
+      display: inline-block;
+      padding-bottom: 8px;
+    }
+
+    .att-body {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .att-intro {
+      font-size: 14px;
+      color: #475569;
+      line-height: 1.8;
+      margin-bottom: 32px;
+      text-align: justify;
+    }
+
+    .att-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 36px;
+    }
+    .att-table tr {
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .att-table tr:last-child {
+      border-bottom: none;
+    }
+    .att-table td {
+      padding: 12px 16px;
+      font-size: 14px;
+    }
+    .att-table td:first-child {
+      width: 42%;
+      font-weight: 600;
+      color: #475569;
+      background: #f8fafc;
+    }
+    .att-table td:last-child {
+      color: #0f172a;
+      font-weight: 500;
+    }
+
+    .att-stamp {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-top: 56px;
+      gap: 32px;
+    }
+    .att-stamp-box {
+      flex: 1;
+      border: 1px dashed #cbd5e1;
+      border-radius: 6px;
+      padding: 20px;
+      text-align: center;
+      min-height: 90px;
+    }
+    .att-stamp-box .stamp-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+    .att-stamp-box .stamp-sub {
+      font-size: 11px;
+      color: #94a3b8;
+    }
+
+    .att-footer {
+      margin-top: 48px;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 14px;
+      text-align: center;
+      font-size: 11px;
+      color: #94a3b8;
+    }
+
+    @media print {
+      body { padding: 24px 48px; }
+    }
+  </style>
+</head>
+<body onload="window.print()">
+
+  <div class="att-header">
+    <img src="/img/image.png" alt="Dakar Terminal" onerror="this.style.display='none'">
+    <div class="doc-ref">DAKAR TERMINAL &mdash; Direction Financiere</div>
+    <h1>Attestation d'enregistrement Tiers</h1>
+  </div>
+
+  <div class="att-body">
+
+    <p class="att-intro">
+      Dakar Terminal certifie que le tiers dont les informations sont mentionnees ci-dessous
+      a ete enregistre dans le systeme de gestion et est reconnu comme partenaire officiel
+      dans le cadre des operations portuaires.
+    </p>
+
+    <table class="att-table">
+      <tr>
+        <td>Compte IPAKI</td>
+        <td th:text="${compteIpaki}"></td>
+      </tr>
+      <tr>
+        <td>Raison sociale</td>
+        <td th:text="${raisonSociale}"></td>
+      </tr>
+      <tr>
+        <td>NINEA</td>
+        <td th:text="${ninea}"></td>
+      </tr>
+      <tr>
+        <td>Registre de commerce</td>
+        <td th:text="${registre}"></td>
+      </tr>
+    </table>
+
+    <div class="att-stamp">
+      <div class="att-stamp-box">
+        <div class="stamp-label">Pour le Tiers</div>
+        <div class="stamp-sub">(Signature et cachet)</div>
+      </div>
+      <div class="att-stamp-box">
+        <div class="stamp-label">Dakar Terminal</div>
+        <div class="stamp-sub">(Responsable habilite)</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="att-footer">
+    Dakar Terminal &mdash; Document officiel genere automatiquement &mdash; Non valable sans cachet
+  </div>
+
+</body>
+</html>

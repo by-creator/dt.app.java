@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fiche Tiers - Dakar Terminal</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-size: 13px;
+      color: #1e293b;
+      background: #fff;
+      padding: 32px;
+    }
+
+    .fiche-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid #6366f1;
+      padding-bottom: 16px;
+      margin-bottom: 28px;
+    }
+    .fiche-header .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .fiche-header .logo-area img {
+      max-height: 48px;
+    }
+    .fiche-header .doc-title {
+      text-align: right;
+    }
+    .fiche-header .doc-title h1 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #6366f1;
+      letter-spacing: 0.5px;
+    }
+    .fiche-header .doc-title .doc-date {
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 4px;
+    }
+
+    .section-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #6366f1;
+      background: #eef2ff;
+      padding: 7px 14px;
+      border-radius: 4px;
+      margin-bottom: 14px;
+      margin-top: 22px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px 32px;
+    }
+
+    .field-row {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .field-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .field-value {
+      font-size: 14px;
+      color: #0f172a;
+      padding: 6px 0;
+      border-bottom: 1px solid #e2e8f0;
+      min-height: 30px;
+    }
+
+    .fiche-footer {
+      margin-top: 48px;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: #94a3b8;
+    }
+
+    .signature-area {
+      margin-top: 48px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+    }
+    .signature-box {
+      border: 1px dashed #cbd5e1;
+      border-radius: 6px;
+      padding: 16px;
+      text-align: center;
+      min-height: 80px;
+    }
+    .signature-box .sig-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 6px;
+    }
+    .signature-box .sig-sub {
+      font-size: 11px;
+      color: #94a3b8;
+    }
+
+    @media print {
+      body { padding: 16px; }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body onload="window.print()">
+
+  <div class="fiche-header">
+    <div class="logo-area">
+      <img src="/img/image.png" alt="Dakar Terminal" onerror="this.style.display='none'">
+    </div>
+    <div class="doc-title">
+      <h1>Fiche Tiers Unify</h1>
+      <div class="doc-date">Date : <span th:text="${date != null and !#strings.isEmpty(date)} ? ${date} : ''"></span></div>
+    </div>
+  </div>
+
+  <!-- Identification -->
+  <div class="section-title">Identification</div>
+  <div class="grid-2">
+    <div class="field-row">
+      <span class="field-label">Type de personne</span>
+      <span class="field-value" th:text="${typePersonne}"></span>
+    </div>
+    <div class="field-row">
+      <span class="field-label">Raison sociale</span>
+      <span class="field-value" th:text="${raisonSociale}"></span>
+    </div>
+    <div class="field-row">
+      <span class="field-label">Compte IPAKI</span>
+      <span class="field-value" th:text="${compteIpaki}"></span>
+    </div>
+    <div class="field-row">
+      <span class="field-label">Compte Neptune</span>
+      <span class="field-value" th:text="${compteNeptune}"></span>
+    </div>
+    <div class="field-row">
+      <span class="field-label">NINEA</span>
+      <span class="field-value" th:text="${ninea}"></span>
+    </div>
+    <div class="field-row">
+      <span class="field-label">Registre de commerce</span>
+      <span class="field-value" th:text="${registre}"></span>
+    </div>
+  </div>
+
+  <!-- Coordonnees -->
+  <div class="section-title">Coordonnees</div>
+  <div class="grid-2">
+    <div class="field-row">
+      <span class="field-label">Telephone</span>
+      <span class="field-value" th:text="${telephone}"></span>
+    </div>
+    <div class="field-row">
+      <span class="field-label">Email</span>
+      <span class="field-value" th:text="${email}"></span>
+    </div>
+    <div class="field-row" style="grid-column: span 2;">
+      <span class="field-label">Adresse</span>
+      <span class="field-value" th:text="${adresse}"></span>
+    </div>
+  </div>
+
+  <!-- Direction Generale -->
+  <div class="section-title">Direction Generale</div>
+  <div class="grid-2">
+    <div class="field-row">
+      <span class="field-label">Directeur General</span>
+      <span class="field-value" th:text="${dg}"></span>
+    </div>
+    <div class="field-row">
+      <span class="field-label">Telephone DG</span>
+      <span class="field-value" th:text="${telephoneDg}"></span>
+    </div>
+    <div class="field-row">
+      <span class="field-label">Directeur Financier</span>
+      <span class="field-value" th:text="${df}"></span>
+    </div>
+    <div class="field-row">
+      <span class="field-label">Telephone DF</span>
+      <span class="field-value" th:text="${telephoneDf}"></span>
+    </div>
+  </div>
+
+  <!-- Signatures -->
+  <div class="signature-area">
+    <div class="signature-box">
+      <div class="sig-label">Signature Tiers</div>
+      <div class="sig-sub">(Cachet et signature)</div>
+    </div>
+    <div class="signature-box">
+      <div class="sig-label">Visa Dakar Terminal</div>
+      <div class="sig-sub">(Responsable habilite)</div>
+    </div>
+  </div>
+
+  <div class="fiche-footer">
+    <span>Dakar Terminal &mdash; Document genere automatiquement</span>
+    <span th:text="${date != null and !#strings.isEmpty(date)} ? ${date} : ''"></span>
+  </div>
+
+</body>
+</html>
