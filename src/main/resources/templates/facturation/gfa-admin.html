@@ -19,6 +19,15 @@
     [data-theme="dark"] .wizard-tab{background:#1e293b;color:#94a3b8}[data-theme="dark"] .wizard-tab.active{background:#5b54c6;color:#fff}[data-theme="dark"] .gfa-card,[data-theme="dark"] .gfa-stat{background:#1e293b;border-color:#334155;box-shadow:0 14px 30px rgba(2,6,23,.35)}
     [data-theme="dark"] .gfa-title,[data-theme="dark"] .gfa-stat-value,[data-theme="dark"] .gfa-check{color:#f1f5f9}[data-theme="dark"] .gfa-label,[data-theme="dark"] .gfa-breadcrumb,[data-theme="dark"] .gfa-empty{color:#94a3b8}[data-theme="dark"] .gfa-input,[data-theme="dark"] .gfa-select{background:#0f172a;border-color:#475569;color:#e2e8f0}
     [data-theme="dark"] .gfa-btn.secondary{background:#334155;color:#e2e8f0}[data-theme="dark"] .gfa-icon-btn.edit{background:#312e81;color:#c7d2fe}[data-theme="dark"] .gfa-icon-btn.del{background:#7f1d1d;color:#fecaca}
+    /* Statistiques Temps Reel */
+    .rt-header{display:flex;align-items:center;gap:10px;margin-bottom:24px}.rt-title{font-size:20px;font-weight:800;color:#172554;margin:0}
+    .rt-section{margin-bottom:28px}.rt-section-label{font-size:11px;font-weight:800;letter-spacing:.08em;color:#5b54c6;text-transform:uppercase;border-left:3px solid #5b54c6;padding-left:10px;margin-bottom:12px}
+    .rt-cards{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+    .rt-card{background:rgba(255,255,255,.92);border:1px solid rgba(148,163,184,.15);border-radius:14px;padding:18px 14px;text-align:center;box-shadow:0 4px 16px rgba(15,23,42,.06)}
+    .rt-card-label{font-size:11px;color:#94a3b8;text-transform:uppercase;font-weight:700;margin-bottom:8px}
+    .rt-card-value{font-size:32px;font-weight:800;color:#172554}
+    [data-theme="dark"] .rt-title{color:#f1f5f9}[data-theme="dark"] .rt-card{background:#1e293b;border-color:#334155;box-shadow:0 4px 14px rgba(2,6,23,.3)}[data-theme="dark"] .rt-card-value{color:#f1f5f9}
+    @media(max-width:700px){.rt-cards{grid-template-columns:repeat(3,1fr)}}@media(max-width:440px){.rt-cards{grid-template-columns:repeat(2,1fr)}}
   </style>
 </head>
 <body>
@@ -79,27 +88,19 @@
     <div th:if="${errorMsg}" class="alert-error" th:text="${errorMsg}" style="margin:18px 0;"></div>
 
     <section th:if="${activeTab == 'vue-globale'}">
-      <div class="gfa-stats">
-        <div class="gfa-stat"><div class="gfa-stat-label">Services</div><div class="gfa-stat-value" th:text="${serviceCount}">0</div></div>
-        <div class="gfa-stat"><div class="gfa-stat-label">Guichets</div><div class="gfa-stat-value" th:text="${guichetCount}">0</div></div>
-        <div class="gfa-stat"><div class="gfa-stat-label">Agents</div><div class="gfa-stat-value" th:text="${agentCount}">0</div></div>
-        <div class="gfa-stat"><div class="gfa-stat-label">En attente</div><div class="gfa-stat-value" th:text="${waitingCount}" style="color:#f59e0b;">0</div></div>
-        <div class="gfa-stat"><div class="gfa-stat-label">Traites</div><div class="gfa-stat-value" th:text="${closedTodayCount}" style="color:#16a34a;">0</div></div>
+      <div class="rt-header">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5b54c6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <h2 class="rt-title">Statistiques Temps Reel</h2>
       </div>
-      <div class="page-section-card" style="padding:0; overflow:hidden; margin-bottom:20px;">
-        <div class="table-toolbar">
-          <span class="toolbar-title">Activite en cours</span>
-        </div>
-                <div class="table-wrapper">
-<table class="data-table">
-          <thead><tr><th>Guichet</th><th>Service</th><th>Agent</th><th>Ticket</th><th>Statut</th><th>En attente</th></tr></thead>
-          <tbody>
-            <tr th:if="${#lists.isEmpty(activityRows)}"><td colspan="6" class="gfa-empty">Aucune activite en cours.</td></tr>
-            <tr th:each="row : ${activityRows}">
-              <td th:text="${row.guichet()}">Guichet 1</td><td th:text="${row.service()}">Facturation</td><td th:text="${row.agent()}">Agent</td><td th:text="${row.ticketActuel()}">F-001</td><td th:text="${row.statut()}">Disponible</td><td th:text="${row.enAttente()}">0</td>
-            </tr>
-          </tbody>
-        </table>
+      <div th:if="${#lists.isEmpty(serviceStats)}" class="gfa-empty">Aucun service configure.</div>
+      <div th:each="stat : ${serviceStats}" class="rt-section">
+        <div class="rt-section-label" th:text="${stat.nom()}">SERVICE</div>
+        <div class="rt-cards">
+          <div class="rt-card"><div class="rt-card-label">Attente</div><div class="rt-card-value" th:text="${stat.attente()}">0</div></div>
+          <div class="rt-card"><div class="rt-card-label">En cours</div><div class="rt-card-value" th:text="${stat.enCours()}">0</div></div>
+          <div class="rt-card"><div class="rt-card-label">Termines</div><div class="rt-card-value" th:text="${stat.termines()}">0</div></div>
+          <div class="rt-card"><div class="rt-card-label">Incomplets</div><div class="rt-card-value" th:text="${stat.incomplets()}">0</div></div>
+          <div class="rt-card"><div class="rt-card-label">Absents</div><div class="rt-card-value" th:text="${stat.absents()}">0</div></div>
         </div>
       </div>
     </section>

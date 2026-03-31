@@ -185,6 +185,7 @@ public class GfaDisplayController {
         model.addAttribute("waitingCount", gfaTicketRepository.countByStatutIgnoreCase(STATUS_WAITING));
         model.addAttribute("closedTodayCount", gfaTicketRepository.countClosedToday());
         model.addAttribute("activityRows", buildActivityRows(guichets, agents));
+        model.addAttribute("serviceStats", buildServiceStats(services));
         return "facturation/gfa-admin";
     }
 
@@ -743,6 +744,30 @@ public class GfaDisplayController {
                               String ticketActuel,
                               String statut,
                               long enAttente) {
+    }
+
+    public record ServiceStats(String nom,
+                               long attente,
+                               long enCours,
+                               long termines,
+                               long incomplets,
+                               long absents) {
+    }
+
+    private List<ServiceStats> buildServiceStats(List<GfaService> services) {
+        List<ServiceStats> stats = new ArrayList<>();
+        for (GfaService service : services) {
+            Long id = service.getId();
+            stats.add(new ServiceStats(
+                    service.getNom(),
+                    gfaTicketRepository.countByServiceIdAndStatutIgnoreCase(id, STATUS_WAITING),
+                    gfaTicketRepository.countByServiceIdAndStatutIgnoreCase(id, STATUS_IN_PROGRESS),
+                    gfaTicketRepository.countByServiceIdAndStatutIgnoreCase(id, STATUS_COMPLETED),
+                    gfaTicketRepository.countByServiceIdAndStatutIgnoreCase(id, STATUS_INCOMPLETE),
+                    gfaTicketRepository.countByServiceIdAndStatutIgnoreCase(id, STATUS_ABSENT)
+            ));
+        }
+        return stats;
     }
 
     public record TicketView(Long id,
