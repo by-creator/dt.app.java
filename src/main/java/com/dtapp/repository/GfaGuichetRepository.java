@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface GfaGuichetRepository extends JpaRepository<GfaGuichet, Long> {
@@ -14,4 +15,8 @@ public interface GfaGuichetRepository extends JpaRepository<GfaGuichet, Long> {
     List<GfaGuichet> findAllByActifTrueOrderByNumeroAsc();
 
     long countByActifTrue();
+
+    boolean existsByNumero(String numero);
+
+    Optional<GfaGuichet> findByNumero(String numero);
 }

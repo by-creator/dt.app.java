@@ -100,10 +100,12 @@
     <div style="padding:32px 36px;">
 
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:24px; font-size:13px; color:#64748b;">
-        <a th:href="@{/menu}" style="color:#6366f1; text-decoration:none; font-weight:500;">Menu</a>
-        <span>&#8250;</span>
-        <a th:href="@{/menu}" style="color:#6366f1; text-decoration:none; font-weight:500;">Menu DT</a>
-        <span>&#8250;</span>
+        <th:block th:if="${isAdmin}">
+          <a th:href="@{/menu}" style="color:#6366f1; text-decoration:none; font-weight:500;">Menu</a>
+          <span>&#8250;</span>
+          <a th:href="@{/menu/dt}" style="color:#6366f1; text-decoration:none; font-weight:500;">Menu DT</a>
+          <span>&#8250;</span>
+        </th:block>
         <a th:href="@{/menu/facturation}" style="color:#6366f1; text-decoration:none; font-weight:500;">Facturation</a>
         <span>&#8250;</span>
         <span>Gestion Remises</span>

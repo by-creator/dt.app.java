@@ -15,4 +15,6 @@ public interface GfaAgentRepository extends JpaRepository<GfaAgent, Long> {
     Optional<GfaAgent> findFirstByGuichetIdAndActifTrueOrderByNomAscPrenomAsc(Long guichetId);
 
     long countByActifTrue();
+
+    boolean existsByNomAndPrenom(String nom, String prenom);
 }

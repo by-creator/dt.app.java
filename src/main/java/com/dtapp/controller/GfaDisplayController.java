@@ -166,6 +166,9 @@ public class GfaDisplayController {
         List<GfaTicket> tickets = gfaTicketRepository.findAllByOrderByCreatedAtDesc();
         GfaWifiSettings wifiSettings = loadWifiSettings();
 
+        boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        model.addAttribute("isAdmin", isAdmin);
         model.addAttribute("loggedUser", loggedUser);
         model.addAttribute("activeTab", normalizeTab(tab));
         model.addAttribute("services", services);

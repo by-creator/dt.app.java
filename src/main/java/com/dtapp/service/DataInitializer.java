@@ -1,13 +1,7 @@
 package com.dtapp.service;
 
-import com.dtapp.entity.Authority;
-import com.dtapp.entity.AuthorityDefinition;
-import com.dtapp.entity.Compagnie;
-import com.dtapp.entity.User;
-import com.dtapp.repository.AuthorityDefinitionRepository;
-import com.dtapp.repository.AuthorityRepository;
-import com.dtapp.repository.CompagnieRepository;
-import com.dtapp.repository.UserRepository;
+import com.dtapp.entity.*;
+import com.dtapp.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
@@ -29,12 +23,16 @@ public class DataInitializer implements CommandLineRunner {
     private static final String ADMIN_PASSWORD     = "DakarTerminal2024!";
     private static final String DEFAULT_COMPAGNIE  = "DAKAR-TERMINAL";
 
+    private static final String PASSWORD_STANDARD  = "DakarDT2025@@";
+    private static final String PASSWORD_DIRECTION = "SenegalDT2026@@";
+
     private static final List<String> DEFAULT_AUTHORITIES = List.of(
             "ROLE_DIRECTION_GENERALE",
             "ROLE_DIRECTION_FINANCIERE",
             "ROLE_DIRECTION_EXPLOITATION",
             "ROLE_INFORMATIQUE",
             "ROLE_FACTURATION",
+            "ROLE_CAISSE",
             "ROLE_CONTROLE_DE_GESTION",
             "ROLE_COMPTABILITE",
             "ROLE_SERVICE_GENERAUX",
@@ -46,21 +44,87 @@ public class DataInitializer implements CommandLineRunner {
             "ROLE_DOUANE"
     );
 
+    // [username, email, authority]
+    private static final String[][] DEFAULT_USERS = {
+            {"Mohamed Ngom",         "mohamed.ngom@dakar-terminal.com",          "ROLE_FACTURATION"},
+            {"Mamadou Diouf",        "mamadou.diouf16@dakar-terminal.com",        "ROLE_FACTURATION"},
+            {"Aissata Ba",           "aissata.ba@dakar-terminal.com",             "ROLE_FACTURATION"},
+            {"Basile Manga",         "basile.manga@dakar-terminal.com",           "ROLE_FACTURATION"},
+            {"Maimouna Fall",        "maimouna.fall@dakar-terminal.com",          "ROLE_FACTURATION"},
+            {"Ababacar Fall",        "ababacar.fall@dakar-terminal.com",          "ROLE_FACTURATION"},
+            {"Fatoumata Yaya Gueye", "fatoumata-yaya.gueye@dakar-terminal.com",  "ROLE_FACTURATION"},
+            {"Charles Sarr",         "charles.sarr@dakar-terminal.com",           "ROLE_FACTURATION"},
+            {"Alioune Badara Sy",    "aliounebadara.sy@dakar-terminal.com",       "ROLE_FACTURATION"},
+            {"Serigne Ndiaye",       "serigne.ndiaye@dakar-terminal.com",         "ROLE_CAISSE"},
+            {"Marie Diop",           "marie.diop@dakar-terminal.com",             "ROLE_CAISSE"},
+            {"Adama Ndiaye",         "adama.n@dakar-terminal.com",                "ROLE_CAISSE"},
+            {"Assane Diouf",         "assane.diouf@dakar-terminal.com",           "ROLE_DIRECTION_GENERALE"},
+            {"Clarisse Ngueabo",     "clarisse.ngueabo@dakar-terminal.com",       "ROLE_DIRECTION_FINANCIERE"},
+            {"Philippe Napolitano",  "philippe.Napolitano@dakar-terminal.com",    "ROLE_DIRECTION_EXPLOITATION"},
+    };
+
+    // [nom, code]
+    private static final String[][] DEFAULT_SERVICES = {
+            {"VALIDATION",  "V"},
+            {"FACTURATION", "F"},
+            {"CAISSE",      "C"},
+            {"BAD",         "B"},
+    };
+
+    // [numero, infos, serviceCode]
+    private static final String[][] DEFAULT_GUICHETS = {
+            {"1",  "Mohamed Ngom",        "F"},
+            {"2",  "Mamadou Diouf",       "B"},
+            {"3",  "Aissata Ba",          "V"},
+            {"4",  "Basile Manga",        "F"},
+            {"6",  "Maimouna Fall",       "F"},
+            {"7",  "Ababacar Fall",       "V"},
+            {"9",  "Fatoumata Yaya Gueye","V"},
+            {"10", "Charles Sarr",        "B"},
+            {"11", "Serigne Ndiaye",      "C"},
+            {"12", "Marie Diop",          "C"},
+            {"13", "Adama Ndiaye",        "C"},
+    };
+
+    // [nom, prenom, serviceCode, guichetNumero]
+    private static final String[][] DEFAULT_AGENTS = {
+            {"Ngom",   "Mohamed",       "F", "1"},
+            {"Diouf",  "Mamadou",       "B", "2"},
+            {"Ba",     "Aissata",       "V", "3"},
+            {"Manga",  "Basile",        "F", "4"},
+            {"Fall",   "Maimouna",      "F", "6"},
+            {"Fall",   "Ababacar",      "V", "7"},
+            {"Gueye",  "Fatoumata Yaya","V", "9"},
+            {"Sarr",   "Charles",       "B", "10"},
+            {"Ndiaye", "Serigne",       "C", "11"},
+            {"Diop",   "Marie",         "C", "12"},
+            {"Ndiaye", "Adama",         "C", "13"},
+    };
+
     private final UserRepository userRepository;
     private final AuthorityRepository authorityRepository;
     private final AuthorityDefinitionRepository authorityDefinitionRepository;
     private final CompagnieRepository compagnieRepository;
+    private final GfaServiceRepository gfaServiceRepository;
+    private final GfaGuichetRepository gfaGuichetRepository;
+    private final GfaAgentRepository gfaAgentRepository;
     private final PasswordEncoder passwordEncoder;
 
     public DataInitializer(UserRepository userRepository,
                            AuthorityRepository authorityRepository,
                            AuthorityDefinitionRepository authorityDefinitionRepository,
                            CompagnieRepository compagnieRepository,
+                           GfaServiceRepository gfaServiceRepository,
+                           GfaGuichetRepository gfaGuichetRepository,
+                           GfaAgentRepository gfaAgentRepository,
                            PasswordEncoder passwordEncoder) {
         this.userRepository                = userRepository;
         this.authorityRepository           = authorityRepository;
         this.authorityDefinitionRepository = authorityDefinitionRepository;
         this.compagnieRepository           = compagnieRepository;
+        this.gfaServiceRepository          = gfaServiceRepository;
+        this.gfaGuichetRepository          = gfaGuichetRepository;
+        this.gfaAgentRepository            = gfaAgentRepository;
         this.passwordEncoder               = passwordEncoder;
     }
 
@@ -121,5 +185,85 @@ public class DataInitializer implements CommandLineRunner {
                     log.info("Compte admin créé : {} / {} — compagnie : {}", ADMIN_EMAIL, ADMIN_PASSWORD, DEFAULT_COMPAGNIE);
                 }
         );
+
+        // 4. Créer les utilisateurs par défaut
+        for (String[] u : DEFAULT_USERS) {
+            String username  = u[0];
+            String email     = u[1];
+            String authority = u[2];
+
+            if (userRepository.findByEmail(email).isEmpty()) {
+                String rawPassword = authority.equals("ROLE_FACTURATION") || authority.equals("ROLE_CAISSE")
+                        ? PASSWORD_STANDARD
+                        : PASSWORD_DIRECTION;
+
+                User user = new User();
+                user.setUsername(username);
+                user.setEmail(email);
+                user.setPassword(passwordEncoder.encode(rawPassword));
+                user.setEnabled(true);
+                user.setCompagnie(dakarTerminal);
+                user = userRepository.save(user);
+
+                Authority auth = new Authority();
+                auth.setUser(user);
+                auth.setAuthority(authority);
+                authorityRepository.save(auth);
+
+                log.info("Utilisateur créé : {} ({})", email, authority);
+            }
+        }
+
+        // 5. Créer les services GFA
+        for (String[] s : DEFAULT_SERVICES) {
+            String nom  = s[0];
+            String code = s[1];
+
+            if (!gfaServiceRepository.existsByCodeIgnoreCase(code)) {
+                GfaService service = new GfaService();
+                service.setNom(nom);
+                service.setCode(code);
+                gfaServiceRepository.save(service);
+                log.info("Service GFA créé : {} ({})", nom, code);
+            }
+        }
+
+        // 6. Créer les guichets GFA
+        for (String[] g : DEFAULT_GUICHETS) {
+            String numero      = g[0];
+            String infos       = g[1];
+            String serviceCode = g[2];
+
+            if (!gfaGuichetRepository.existsByNumero(numero)) {
+                GfaService service = gfaServiceRepository.findByCodeIgnoreCase(serviceCode).orElse(null);
+                GfaGuichet guichet = new GfaGuichet();
+                guichet.setNumero(numero);
+                guichet.setInfos(infos);
+                guichet.setService(service);
+                gfaGuichetRepository.save(guichet);
+                log.info("Guichet GFA créé : {} — {} ({})", numero, infos, serviceCode);
+            }
+        }
+
+        // 7. Créer les agents GFA
+        for (String[] a : DEFAULT_AGENTS) {
+            String nom           = a[0];
+            String prenom        = a[1];
+            String serviceCode   = a[2];
+            String guichetNumero = a[3];
+
+            if (!gfaAgentRepository.existsByNomAndPrenom(nom, prenom)) {
+                GfaService service = gfaServiceRepository.findByCodeIgnoreCase(serviceCode).orElse(null);
+                GfaGuichet guichet = gfaGuichetRepository.findByNumero(guichetNumero).orElse(null);
+
+                GfaAgent agent = new GfaAgent();
+                agent.setNom(nom);
+                agent.setPrenom(prenom);
+                agent.setService(service);
+                agent.setGuichet(guichet);
+                gfaAgentRepository.save(agent);
+                log.info("Agent GFA créé : {} {} — guichet {}", prenom, nom, guichetNumero);
+            }
+        }
     }
 }
