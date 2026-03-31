@@ -1,15 +1,1 @@
-Notes
-
-2026-03-31T17:29:05.031536+00:00 app[web.1]: 	at org.flywaydb.core.internal.jdbc.JdbcTemplate.executeStatement(JdbcTemplate.java:210) ~[flyway-core-10.10.0.jar!/:na]
-2026-03-31T17:29:05.031536+00:00 app[web.1]: 	at org.flywaydb.core.internal.sqlscript.ParsedSqlStatement.execute(ParsedSqlStatement.java:89) ~[flyway-core-10.10.0.jar!/:na]
-2026-03-31T17:29:05.031537+00:00 app[web.1]: 	at org.flywaydb.core.internal.sqlscript.DefaultSqlScriptExecutor.executeStatement(DefaultSqlScriptExecutor.java:206) ~[flyway-core-10.10.0.jar!/:na]
-2026-03-31T17:29:05.031537+00:00 app[web.1]: 	... 116 common frames omitted
-2026-03-31T17:29:05.031537+00:00 app[web.1]: 
-2026-03-31T17:29:05.112452+00:00 heroku[web.1]: Process exited with status 1
-2026-03-31T17:29:05.135490+00:00 heroku[web.1]: State changed from starting to crashed
-2026-03-31T17:29:10.199436+00:00 heroku[router]: at=error code=H10 desc="App crashed" method=GET path="/" host=dt-app-684626ec3f17.herokuapp.com request_id=d9d58573-555c-661d-3cb5-db05f5f3fd90 fwd="" dyno= connect=0ms service=0ms status=503 bytes=567 protocol=http1.1 tls=true tls_version=unknown
-2026-03-31T17:29:14.505681+00:00 heroku[router]: at=error code=H10 desc="App crashed" method=GET path="/favicon.ico" host=dt-app-684626ec3f17.herokuapp.com request_id=e753e606-c98c-aedc-5cde-fee2d57da9ca fwd="" dyno= connect=0ms service=0ms status=503 bytes=567 protocol=http1.1 tls=true tls_version=unknown
-2026-03-31T17:29:44.844671+00:00 app[api]: Log session created by user iosid242@gmail.com
-
-
-mysql://yy1dcdfe5i3lwqp8:jr4uiidp84ez2t0r@bbj31ma8tye2kagi.cbetxkdyhwsb.us-east-1.rds.amazonaws.com:3306/y0cwuxe50sptiebb
+mysql://i62dckg5wo1j4w7m:n432cvh1cn9ll0a0@co28d739i4m2sb7j.cbetxkdyhwsb.us-east-1.rds.amazonaws.com:3306/zno43rw8armdfp5v

@@ -13,9 +13,13 @@ import com.dtapp.repository.GfaTicketRepository;
 import com.dtapp.repository.GfaWifiSettingsRepository;
 import com.dtapp.repository.UserRepository;
 import com.dtapp.service.PusherService;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -27,11 +31,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -828,5 +835,52 @@ public class GfaDisplayController {
     }
 
     public record ErrorResponse(String message) {
+    }
+
+    @GetMapping("/menu/facturation/gfa/tickets/export")
+    public ResponseEntity<byte[]> exportTickets() throws IOException {
+        List<GfaTicket> tickets = gfaTicketRepository.findAllByOrderByCreatedAtDesc();
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+        String[] columns = {"Numero", "Service", "Guichet", "Agent", "Statut", "Cree le", "Duree"};
+
+        try (XSSFWorkbook workbook = new XSSFWorkbook();
+             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+
+            Sheet sheet = workbook.createSheet("Tickets");
+            Row headerRow = sheet.createRow(0);
+            for (int i = 0; i < columns.length; i++) {
+                headerRow.createCell(i).setCellValue(columns[i]);
+            }
+
+            int rowNum = 1;
+            for (GfaTicket ticket : tickets) {
+                Row row = sheet.createRow(rowNum++);
+                row.createCell(0).setCellValue(ticket.getNumero());
+                row.createCell(1).setCellValue(ticket.getService() != null ? ticket.getService().getNom() : "-");
+                row.createCell(2).setCellValue(ticket.getGuichet() != null ? ticket.getGuichet().getNumero() : "-");
+                row.createCell(3).setCellValue(ticket.getAgent() != null ? formatAgent(ticket.getAgent()) : "-");
+                row.createCell(4).setCellValue(ticket.getStatut());
+                row.createCell(5).setCellValue(ticket.getCreatedAt() != null ? ticket.getCreatedAt().format(dtf) : "-");
+                row.createCell(6).setCellValue(ticket.getFormattedDuration());
+            }
+
+            for (int i = 0; i < columns.length; i++) {
+                sheet.autoSizeColumn(i);
+            }
+
+            workbook.write(out);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+            headers.setContentDispositionFormData("attachment", "tickets-gfa.xlsx");
+            return ResponseEntity.ok().headers(headers).body(out.toByteArray());
+        }
+    }
+
+    @PostMapping("/menu/facturation/gfa/tickets/truncate")
+    public String truncateTickets(RedirectAttributes ra) {
+        gfaTicketRepository.deleteAll();
+        ra.addFlashAttribute("successMsg", "Tous les tickets ont ete supprimes.");
+        return redirectToTab("tickets");
     }
 }

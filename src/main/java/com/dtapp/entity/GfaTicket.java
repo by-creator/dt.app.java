@@ -61,4 +61,12 @@ public class GfaTicket {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    public String getFormattedDuration() {
+        if (processingTime == null) return "-";
+        long h = processingTime / 3600;
+        long m = (processingTime % 3600) / 60;
+        long s = processingTime % 60;
+        return String.format("%02d:%02d:%02d", h, m, s);
+    }
 }
