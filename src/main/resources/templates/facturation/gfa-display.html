@@ -614,15 +614,27 @@
 
     var pusher = new Pusher(pusherKey, {
       cluster: pusherCluster,
-      forceTLS: true
+      forceTLS: true,
+      activityTimeout: 25000,
+      pongTimeout: 10000
     });
 
-    var channel = pusher.subscribe('gfa-display');
-    channel.bind('display-update', function (state) {
-      renderDisplayState(state);
-      if (state.announcementKey && state.announcementKey !== lastAnnouncementKey) {
-        lastAnnouncementKey = state.announcementKey;
-        announceCall(state.currentCall);
+    function bindChannel() {
+      var channel = pusher.subscribe('gfa-display');
+      channel.bind('display-update', function (state) {
+        renderDisplayState(state);
+        if (state.announcementKey && state.announcementKey !== lastAnnouncementKey) {
+          lastAnnouncementKey = state.announcementKey;
+          announceCall(state.currentCall);
+        }
+      });
+    }
+
+    bindChannel();
+
+    pusher.connection.bind('state_change', function (states) {
+      if (states.current === 'connected' && states.previous === 'connecting') {
+        bindChannel();
       }
     });
   })();
