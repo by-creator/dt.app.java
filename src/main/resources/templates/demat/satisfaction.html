@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Enquete de satisfaction - Dakar Terminal</title>
+  <title>Enquête de satisfaction - Dakar Terminal</title>
   <th:block th:replace="~{fragments/pwa-head :: pwaMeta}"></th:block>
   <link rel="stylesheet" th:href="@{/css/brand-base.css}">
   <style>
@@ -302,16 +302,16 @@
   <div class="frame">
     <div class="page">
     <a th:href="@{/demat}" class="back">&#8592; Retour</a>
-    <h1 class="title">Enquete de satisfaction</h1>
+    <h1 class="title">Enquête de satisfaction</h1>
     <p class="intro">
-      Dans le cadre de notre demarche qualite, et dans un souci d'ameliorer nos prestations,
-      nous souhaitons obtenir votre avis sur votre degre de satisfaction. Merci de nous accorder
-      quelques minutes pour repondre a ce questionnaire.
+      Dans le cadre de notre démarche qualité, et dans un souci d'améliorer nos prestations,
+      nous souhaitons obtenir votre avis sur votre degré de satisfaction. Merci de nous accorder
+      quelques minutes pour répondre à ce questionnaire.
     </p>
 
     <div class="wizard-steps">
       <button type="button" class="wizard-step active" data-step="0" onclick="showSurveyStep(0)">Infos</button>
-      <button type="button" class="wizard-step" data-step="1" onclick="showSurveyStep(1)">General</button>
+      <button type="button" class="wizard-step" data-step="1" onclick="showSurveyStep(1)">Général</button>
       <button type="button" class="wizard-step" data-step="2" onclick="showSurveyStep(2)">Facturation</button>
       <button type="button" class="wizard-step" data-step="3" onclick="showSurveyStep(3)">BAE</button>
       <button type="button" class="wizard-step" data-step="4" onclick="showSurveyStep(4)">Accueil</button>
@@ -320,7 +320,7 @@
     </div>
 
     <div th:if="${param.success}" class="alert-success">
-      &#10003; Vos reponses ont ete enregistrees avec succes. Merci pour votre participation !
+      &#10003; Vos réponses ont été enregistrées avec succès. Merci pour votre participation !
     </div>
 
     <form th:action="@{/demat/satisfaction}" method="post">
@@ -330,12 +330,12 @@
         <p class="section-desc">Renseignez vos informations avant de commencer le questionnaire.</p>
         <div class="field-grid">
           <div class="field">
-            <label for="nom-prenom">Nom et prenom</label>
-            <input id="nom-prenom" name="nom" type="text" placeholder="Nom et prenom">
+            <label for="nom-prenom">Nom et prénom</label>
+            <input id="nom-prenom" name="nom" type="text" placeholder="Nom et prénom">
           </div>
           <div class="field">
-            <label for="telephone">Telephone</label>
-            <input id="telephone" name="telephone" type="text" placeholder="Votre telephone">
+            <label for="telephone">Téléphone</label>
+            <input id="telephone" name="telephone" type="text" placeholder="Votre téléphone">
           </div>
           <div class="field full">
             <label for="email">Email</label>
@@ -345,20 +345,20 @@
       </section>
 
       <section class="section" data-panel="1">
-        <h2>Partie 1 : Informations generales</h2>
+        <h2>Partie 1 : Informations générales</h2>
         <div class="question">
-          <div class="question-title">Quel est le volume moyen de marchandises que vous gerez via notre terminal chaque mois ?</div>
+          <div class="question-title">Quel est le volume moyen de marchandises que vous gérez via notre terminal chaque mois ?</div>
           <div class="options">
-            <label class="option"><input type="radio" name="volume"> Moins de 10 conteneurs ou vehicules</label>
-            <label class="option"><input type="radio" name="volume"> 10 a 50 conteneurs ou vehicules</label>
-            <label class="option"><input type="radio" name="volume"> Plus de 50 conteneurs ou vehicules</label>
+            <label class="option"><input type="radio" name="volume"> Moins de 10 conteneurs ou véhicules</label>
+            <label class="option"><input type="radio" name="volume"> 10 à 50 conteneurs ou véhicules</label>
+            <label class="option"><input type="radio" name="volume"> Plus de 50 conteneurs ou véhicules</label>
           </div>
         </div>
         <div class="question">
           <div class="question-title">Depuis combien de temps travaillez-vous avec notre terminal ?</div>
           <div class="options">
             <label class="option"><input type="radio" name="anciennete"> Moins de 1 an</label>
-            <label class="option"><input type="radio" name="anciennete"> 1 a 3 ans</label>
+            <label class="option"><input type="radio" name="anciennete"> 1 à 3 ans</label>
             <label class="option"><input type="radio" name="anciennete"> Plus de 3 ans</label>
           </div>
         </div>
@@ -367,7 +367,7 @@
       <section class="section" data-panel="2">
         <h2>Partie 2 : Facturation</h2>
         <div class="question">
-          <div class="question-title">Les delais de traitement des demandes de facturation sont-ils satisfaisants ?</div>
+          <div class="question-title">Les délais de traitement des demandes de facturation sont-ils satisfaisants ?</div>
           <div class="options">
             <label class="option"><input type="radio" name="delais-facturation"> Toujours</label>
             <label class="option"><input type="radio" name="delais-facturation"> Souvent</label>
@@ -377,7 +377,7 @@
           </div>
         </div>
         <div class="question">
-          <div class="question-title">Recevez-vous des notifications ou rappels sur les echeances et paiements a effectuer ?</div>
+          <div class="question-title">Recevez-vous des notifications ou rappels sur les échéances et paiements à effectuer ?</div>
           <div class="options">
             <label class="option"><input type="radio" name="notifications"> Oui, toujours</label>
             <label class="option"><input type="radio" name="notifications"> Oui, parfois</label>
@@ -385,19 +385,19 @@
           </div>
         </div>
         <div class="question">
-          <div class="question-title">Comment evaluez-vous la reactivite en cas de demande ou reclamation liee a une facture ?</div>
+          <div class="question-title">Comment évaluez-vous la réactivité en cas de demande ou réclamation liée à une facture ?</div>
           <div class="options">
-            <label class="option"><input type="radio" name="reactivite-facture"> Tres insatisfaisant</label>
+            <label class="option"><input type="radio" name="reactivite-facture"> Très insatisfaisant</label>
             <label class="option"><input type="radio" name="reactivite-facture"> Insatisfaisant</label>
             <label class="option"><input type="radio" name="reactivite-facture"> Neutre</label>
             <label class="option"><input type="radio" name="reactivite-facture"> Satisfaisant</label>
-            <label class="option"><input type="radio" name="reactivite-facture"> Tres satisfaisant</label>
+            <label class="option"><input type="radio" name="reactivite-facture"> Très satisfaisant</label>
           </div>
         </div>
         <div class="question">
-          <div class="question-title">Utilisez-vous regulierement notre plateforme digitalisee pour consulter vos factures ou effectuer vos paiements ?</div>
+          <div class="question-title">Utilisez-vous régulièrement notre plateforme digitalisée pour consulter vos factures ou effectuer vos paiements ?</div>
           <div class="options">
-            <label class="option"><input type="radio" name="usage-plateforme"> Oui, systematiquement</label>
+            <label class="option"><input type="radio" name="usage-plateforme"> Oui, systématiquement</label>
             <label class="option"><input type="radio" name="usage-plateforme"> Oui, occasionnellement</label>
             <label class="option"><input type="radio" name="usage-plateforme"> Non (precisez pourquoi)</label>
           </div>
@@ -442,7 +442,7 @@
           </div>
         </div>
         <div class="question">
-          <div class="question-title">Quelles ameliorations suggereriez-vous pour rendre la plateforme plus adaptee a vos besoins ?</div>
+          <div class="question-title">Quelles améliorations suggéreriez-vous pour rendre la plateforme plus adaptée à vos besoins ?</div>
           <textarea name="suggestions-facturation" placeholder="Vos suggestions"></textarea>
         </div>
       </section>
@@ -450,13 +450,13 @@
       <section class="section" data-panel="3">
         <h2>Partie 3 : Temps de passage pour l'obtention du BAE</h2>
         <div class="question">
-          <div class="question-title">Trouvez-vous les delais d'obtention du BAE satisfaisants ?</div>
+          <div class="question-title">Trouvez-vous les délais d'obtention du BAE satisfaisants ?</div>
           <div class="options">
-            <label class="option"><input type="radio" name="delais-bae"> Tres insatisfaisants</label>
+            <label class="option"><input type="radio" name="delais-bae"> Très insatisfaisants</label>
             <label class="option"><input type="radio" name="delais-bae"> Insatisfaisants</label>
             <label class="option"><input type="radio" name="delais-bae"> Neutres</label>
             <label class="option"><input type="radio" name="delais-bae"> Satisfaisants</label>
-            <label class="option"><input type="radio" name="delais-bae"> Tres satisfaisants</label>
+            <label class="option"><input type="radio" name="delais-bae"> Très satisfaisants</label>
           </div>
         </div>
         <div class="question">
@@ -505,26 +505,26 @@
       <section class="section" data-panel="5">
         <h2>Partie 5 : Livraison</h2>
         <div class="question">
-          <div class="question-title">Comment evaluez-vous la fluidite du processus de livraison des marchandises ?</div>
+          <div class="question-title">Comment évaluez-vous la fluidité du processus de livraison des marchandises ?</div>
           <div class="options">
-            <label class="option"><input type="radio" name="fluidite-livraison"> Tres insatisfaisant</label>
+            <label class="option"><input type="radio" name="fluidite-livraison"> Très insatisfaisant</label>
             <label class="option"><input type="radio" name="fluidite-livraison"> Insatisfaisant</label>
             <label class="option"><input type="radio" name="fluidite-livraison"> Neutre</label>
             <label class="option"><input type="radio" name="fluidite-livraison"> Satisfaisant</label>
-            <label class="option"><input type="radio" name="fluidite-livraison"> Tres satisfaisant</label>
+            <label class="option"><input type="radio" name="fluidite-livraison"> Très satisfaisant</label>
           </div>
         </div>
         <div class="question">
-          <div class="question-title">Les horaires de livraison proposes sont-ils adaptes a vos besoins operationnels ?</div>
+          <div class="question-title">Les horaires de livraison proposés sont-ils adaptés à vos besoins opérationnels ?</div>
           <div class="options">
-            <label class="option"><input type="radio" name="horaires-livraison"> Oui, parfaitement adaptes</label>
-            <label class="option"><input type="radio" name="horaires-livraison"> Oui, mais necessitent des ajustements mineurs</label>
+            <label class="option"><input type="radio" name="horaires-livraison"> Oui, parfaitement adaptés</label>
+            <label class="option"><input type="radio" name="horaires-livraison"> Oui, mais nécessitent des ajustements mineurs</label>
             <label class="option"><input type="radio" name="horaires-livraison"> Non, ils sont souvent contraignants</label>
           </div>
-          <textarea name="horaires-livraison-detail" placeholder="Si des ajustements sont necessaires, precisez"></textarea>
+          <textarea name="horaires-livraison-detail" placeholder="Si des ajustements sont nécessaires, précisez"></textarea>
         </div>
         <div class="question">
-          <div class="question-title">Avez-vous rencontre des obstacles ou des retards lies a l'organisation des livraisons ?</div>
+          <div class="question-title">Avez-vous rencontré des obstacles ou des retards liés à l'organisation des livraisons ?</div>
           <div class="options">
             <label class="option"><input type="radio" name="retards-livraison"> Oui</label>
             <label class="option"><input type="radio" name="retards-livraison"> Non</label>
@@ -548,7 +548,7 @@
       </section>
 
       <section class="section" data-panel="6">
-        <h2>Partie 6 : Communication proactive et suggestions generales</h2>
+        <h2>Partie 6 : Communication proactive et suggestions générales</h2>
         <div class="question">
           <div class="question-title">Comment evaluez-vous la qualite de notre communication proactive pour vos operations ?</div>
           <div class="options">
@@ -573,7 +573,7 @@
         </div>
         <div class="question">
           <div class="question-title">Avez-vous d'autres recommandations pour ameliorer nos services ?</div>
-          <textarea name="recommandations-generales" placeholder="Vos recommandations generales"></textarea>
+          <textarea name="recommandations-generales" placeholder="Vos recommandations générales"></textarea>
         </div>
       </section>
 
@@ -648,7 +648,7 @@
   function showSurveyStep(index) {
     if (index > currentSurveyStep) {
       if (!validateCurrentStep()) {
-        showError('Veuillez repondre a toutes les questions obligatoires avant de continuer.');
+        showError('Veuillez répondre à toutes les questions obligatoires avant de continuer.');
         return;
       }
     }
@@ -673,7 +673,7 @@
   surveyForm?.addEventListener('submit', function(e) {
     if (!validateCurrentStep()) {
       e.preventDefault();
-      showError('Veuillez repondre a toutes les questions obligatoires avant de soumettre.');
+      showError('Veuillez répondre à toutes les questions obligatoires avant de soumettre.');
       return;
     }
     syncOptionValues();

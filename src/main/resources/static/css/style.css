@@ -16,21 +16,32 @@ body {
 
 .login-page {
   min-height: 100vh;
-  background: radial-gradient(ellipse at 20% 50%, rgba(99,102,241,0.15) 0%, transparent 60%),
-              linear-gradient(160deg, #0c1527 0%, #0f172a 40%, #131a2e 100%);
+  background: radial-gradient(ellipse at 20% 50%, rgba(99,102,241,0.10) 0%, transparent 70%),
+              linear-gradient(160deg, #f8fafc 0%, #eff6ff 40%, #e2e8f0 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
 }
 
+[data-theme="dark"] .login-page {
+  background: radial-gradient(ellipse at 20% 50%, rgba(99,102,241,0.15) 0%, transparent 60%),
+              linear-gradient(160deg, #0c1527 0%, #0f172a 40%, #131a2e 100%);
+}
+
 .login-card {
-  background: #151f32;
-  border: 1px solid rgba(99,102,241,0.18);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 24px;
   padding: 52px 56px;
   width: 100%;
   max-width: 620px;
+  box-shadow: 0 20px 40px rgba(15,23,42,0.12);
+}
+
+[data-theme="dark"] .login-card {
+  background: #151f32;
+  border: 1px solid rgba(99,102,241,0.18);
   box-shadow: 0 24px 64px rgba(0,0,0,0.5);
 }
 
@@ -62,14 +73,15 @@ body {
 .login-title {
   font-size: 30px;
   font-weight: 800;
-  color: #f1f5f9;
-  margin-bottom: 10px;
+  color: #1e293b;
+  margin-bottom: 16px;
+  text-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
 }
 
 .login-subtitle {
   font-size: 14px;
   color: #64748b;
-  margin-bottom: 36px;
+  margin-bottom: 30px;
   line-height: 1.6;
 }
 
@@ -79,11 +91,26 @@ body {
   font-weight: 700;
   letter-spacing: 1.2px;
   color: #374151;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   text-transform: uppercase;
 }
 
 .login-card .form-label { color: #94a3b8; }
+
+.form-group {
+  margin-bottom: 18px;
+}
+
+.password-wrapper {
+  position: relative;
+}
+
+.btn-login {
+  margin-top: 20px;
+  width: 100%;
+  padding: 13px 16px;
+  border-radius: 12px;
+}
 
 .form-input {
   width: 100%;
@@ -104,18 +131,33 @@ body {
   box-shadow: 0 0 0 2px #6366f1;
 }
 
-/* Login-specific dark inputs (always dark regardless of theme) */
 .login-card .form-input {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #1e293b;
+}
+
+.login-card .form-input::placeholder { color: #94a3b8; }
+
+.login-card .form-input:focus {
+  border-color: #6366f1;
+  background: #eff2ff;
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.25);
+}
+
+[data-theme="dark"] .login-card .form-input {
   border: 1px solid rgba(255,255,255,0.08);
   background: #0f1926;
   color: #e2e8f0;
 }
 
-.login-card .form-input::placeholder { color: #475569; }
+[data-theme="dark"] .login-card .form-input::placeholder { color: #475569; }
 
-.login-card .form-input:focus {
+[data-theme="dark"] .login-card .form-input:focus {
   border-color: rgba(99,102,241,0.6);
+  background: #111d2e;
   box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+}
   background: #111d2e;
 }
 
@@ -180,11 +222,15 @@ body {
 
 .forgot-link {
   font-size: 13px;
-  color: #e2e8f0;
+  color: #1e293b;
   font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 3px;
-  text-decoration-color: rgba(226,232,240,0.4);
+  text-decoration-color: rgba(30,41,59,0.4);
+}
+
+.forgot-link:hover {
+  color: #0f172a;
 }
 
 .alert-error {
@@ -882,9 +928,31 @@ body {
 .table-toolbar {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
   padding: 18px 24px;
   border-bottom: 1px solid #f1f5f9;
+}
+
+.toolbar-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e293b;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toolbar-title::before {
+  content: "\1F4C3"; /* icône document par défaut */
+  font-size: 14px;
+  opacity: 0.85;
+}
+
+.table-toolbar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .table-search-input {
@@ -927,7 +995,9 @@ body {
 
 .table-wrapper {
   overflow: auto;
-  max-height: 520px;
+  /* Limiter la hauteur pour afficher environ 5 lignes de tableau + en-tête,
+     puis activer le défilement si plus de lignes existent. */
+  max-height: 340px;
   width: 100%;
   border-radius: 8px;
 }

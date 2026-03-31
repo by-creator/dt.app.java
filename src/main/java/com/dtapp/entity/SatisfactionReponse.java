@@ -4,10 +4,12 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.Immutable;
 
 import java.time.LocalDateTime;
 
 @Entity
+@Immutable
 @Table(name = "satisfaction_reponses")
 @Getter
 @Setter
@@ -15,7 +17,6 @@ import java.time.LocalDateTime;
 public class SatisfactionReponse {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     // ── Infos ────────────────────────────────────────────────────────────
@@ -80,9 +81,4 @@ public class SatisfactionReponse {
 
     // ── Metadata ──────────────────────────────────────────────────────────
     private LocalDateTime createdAt;
-
-    @PrePersist
-    private void prePersist() {
-        createdAt = LocalDateTime.now();
-    }
 }

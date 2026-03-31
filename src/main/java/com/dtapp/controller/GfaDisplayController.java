@@ -767,6 +767,21 @@ public class GfaDisplayController {
                     gfaTicketRepository.countByServiceIdAndStatutIgnoreCase(id, STATUS_ABSENT)
             ));
         }
+
+        // Ordre demandé : VALIDATION, FACTURATION, CAISSE, BAD, puis les autres
+        List<String> desiredOrder = List.of("VALIDATION", "FACTURATION", "CAISSE", "BAD");
+        stats.sort((s1, s2) -> {
+            String nom1 = s1.nom() != null ? s1.nom().trim().toUpperCase(Locale.ROOT) : "";
+            String nom2 = s2.nom() != null ? s2.nom().trim().toUpperCase(Locale.ROOT) : "";
+            int index1 = desiredOrder.indexOf(nom1);
+            int index2 = desiredOrder.indexOf(nom2);
+            if (index1 < 0) index1 = desiredOrder.size();
+            if (index2 < 0) index2 = desiredOrder.size();
+            int compareIndex = Integer.compare(index1, index2);
+            if (compareIndex != 0) return compareIndex;
+            return nom1.compareTo(nom2);
+        });
+
         return stats;
     }
 

@@ -1,9 +1,21 @@
 package com.dtapp.controller;
 
 import com.dtapp.entity.RattachementBl;
-import com.dtapp.entity.SatisfactionReponse;
+import com.dtapp.entity.SatisfactionInfo;
+import com.dtapp.entity.SatisfactionGeneral;
+import com.dtapp.entity.SatisfactionFacturation;
+import com.dtapp.entity.SatisfactionBae;
+import com.dtapp.entity.SatisfactionAccueil;
+import com.dtapp.entity.SatisfactionLivraison;
+import com.dtapp.entity.SatisfactionCommunication;
 import com.dtapp.repository.RattachementBlRepository;
-import com.dtapp.repository.SatisfactionReponseRepository;
+import com.dtapp.repository.SatisfactionInfoRepository;
+import com.dtapp.repository.SatisfactionGeneralRepository;
+import com.dtapp.repository.SatisfactionFacturationRepository;
+import com.dtapp.repository.SatisfactionBaeRepository;
+import com.dtapp.repository.SatisfactionAccueilRepository;
+import com.dtapp.repository.SatisfactionLivraisonRepository;
+import com.dtapp.repository.SatisfactionCommunicationRepository;
 import com.dtapp.service.EmailService;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,15 +30,33 @@ import java.util.List;
 public class DematController {
 
     private final RattachementBlRepository rattachementBlRepository;
-    private final SatisfactionReponseRepository satisfactionReponseRepository;
+    private final SatisfactionInfoRepository satisfactionInfoRepository;
+    private final SatisfactionGeneralRepository satisfactionGeneralRepository;
+    private final SatisfactionFacturationRepository satisfactionFacturationRepository;
+    private final SatisfactionBaeRepository satisfactionBaeRepository;
+    private final SatisfactionAccueilRepository satisfactionAccueilRepository;
+    private final SatisfactionLivraisonRepository satisfactionLivraisonRepository;
+    private final SatisfactionCommunicationRepository satisfactionCommunicationRepository;
     private final EmailService emailService;
 
     public DematController(RattachementBlRepository rattachementBlRepository,
-                           SatisfactionReponseRepository satisfactionReponseRepository,
+                           SatisfactionInfoRepository satisfactionInfoRepository,
+                           SatisfactionGeneralRepository satisfactionGeneralRepository,
+                           SatisfactionFacturationRepository satisfactionFacturationRepository,
+                           SatisfactionBaeRepository satisfactionBaeRepository,
+                           SatisfactionAccueilRepository satisfactionAccueilRepository,
+                           SatisfactionLivraisonRepository satisfactionLivraisonRepository,
+                           SatisfactionCommunicationRepository satisfactionCommunicationRepository,
                            EmailService emailService) {
-        this.rattachementBlRepository       = rattachementBlRepository;
-        this.satisfactionReponseRepository  = satisfactionReponseRepository;
-        this.emailService                   = emailService;
+        this.rattachementBlRepository = rattachementBlRepository;
+        this.satisfactionInfoRepository = satisfactionInfoRepository;
+        this.satisfactionGeneralRepository = satisfactionGeneralRepository;
+        this.satisfactionFacturationRepository = satisfactionFacturationRepository;
+        this.satisfactionBaeRepository = satisfactionBaeRepository;
+        this.satisfactionAccueilRepository = satisfactionAccueilRepository;
+        this.satisfactionLivraisonRepository = satisfactionLivraisonRepository;
+        this.satisfactionCommunicationRepository = satisfactionCommunicationRepository;
+        this.emailService = emailService;
     }
 
     @GetMapping("/demat")
@@ -156,31 +186,67 @@ public class DematController {
             @RequestParam(name = "suggestions-communication",  required = false) String suggestionsCommunication,
             @RequestParam(name = "recommandations-generales",  required = false) String recommandationsGenerales) {
 
-        SatisfactionReponse r = new SatisfactionReponse();
-        r.setNom(nom);                 r.setTelephone(telephone);        r.setEmail(email);
-        r.setVolume(volume);           r.setAnciennete(anciennete);
-        r.setDelaisFacturation(delaisFacturation);
-        r.setNotifications(notifications);
-        r.setReactiviteFacture(reactiviteFacture);
-        r.setUsagePlateforme(usagePlateforme);                 r.setUsagePlateformeDetail(usagePlateformeDetail);
-        r.setFacilitePlateforme(facilitePlateforme);
-        r.setFonctionnalitesPlateforme(fonctionnalitesPlateforme);
-        r.setFonctionnalitesPlateformeDetail(fonctionnalitesPlateformeDetail);
-        r.setBugsPlateforme(bugsPlateforme);                   r.setBugsPlateformeDetail(bugsPlateformeDetail);
-        r.setAssistancePlateforme(assistancePlateforme);       r.setSuggestionsFacturation(suggestionsFacturation);
-        r.setDelaisBae(delaisBae);
-        r.setSuggestionsBae(suggestionsBae);                   r.setSuggestionsBaeDetail(suggestionsBaeDetail);
-        r.setAccueilLocaux(accueilLocaux);                     r.setPersonnelAccueil(personnelAccueil);
-        r.setInfrastructures(infrastructures);                 r.setInfrastructuresDetail(infrastructuresDetail);
-        r.setFluiditeLivraison(fluiditeLivraison);
-        r.setHorairesLivraison(horairesLivraison);             r.setHorairesLivraisonDetail(horairesLivraisonDetail);
-        r.setRetardsLivraison(retardsLivraison);               r.setRetardsLivraisonDetail(retardsLivraisonDetail);
-        r.setCoordinationLivraison(coordinationLivraison);     r.setAmeliorationsLivraison(ameliorationsLivraison);
-        r.setCommunicationProactive(communicationProactive);
-        r.setAlertes(alertes);
-        r.setSuggestionsCommunication(suggestionsCommunication);
-        r.setRecommandationsGenerales(recommandationsGenerales);
-        satisfactionReponseRepository.save(r);
+        SatisfactionInfo info = new SatisfactionInfo();
+        info.setNom(nom);
+        info.setTelephone(telephone);
+        info.setEmail(email);
+        info = satisfactionInfoRepository.save(info);
+
+        SatisfactionGeneral general = new SatisfactionGeneral();
+        general.setSatisfactionInfo(info);
+        general.setVolume(volume);
+        general.setAnciennete(anciennete);
+        satisfactionGeneralRepository.save(general);
+
+        SatisfactionFacturation facturation = new SatisfactionFacturation();
+        facturation.setSatisfactionInfo(info);
+        facturation.setDelaisFacturation(delaisFacturation);
+        facturation.setNotifications(notifications);
+        facturation.setReactiviteFacture(reactiviteFacture);
+        facturation.setUsagePlateforme(usagePlateforme);
+        facturation.setUsagePlateformeDetail(usagePlateformeDetail);
+        facturation.setFacilitePlateforme(facilitePlateforme);
+        facturation.setFonctionnalitesPlateforme(fonctionnalitesPlateforme);
+        facturation.setFonctionnalitesPlateformeDetail(fonctionnalitesPlateformeDetail);
+        facturation.setBugsPlateforme(bugsPlateforme);
+        facturation.setBugsPlateformeDetail(bugsPlateformeDetail);
+        facturation.setAssistancePlateforme(assistancePlateforme);
+        facturation.setSuggestionsFacturation(suggestionsFacturation);
+        satisfactionFacturationRepository.save(facturation);
+
+        SatisfactionBae bae = new SatisfactionBae();
+        bae.setSatisfactionInfo(info);
+        bae.setDelaisBae(delaisBae);
+        bae.setSuggestionsBae(suggestionsBae);
+        bae.setSuggestionsBaeDetail(suggestionsBaeDetail);
+        satisfactionBaeRepository.save(bae);
+
+        SatisfactionAccueil accueil = new SatisfactionAccueil();
+        accueil.setSatisfactionInfo(info);
+        accueil.setAccueilLocaux(accueilLocaux);
+        accueil.setPersonnelAccueil(personnelAccueil);
+        accueil.setInfrastructures(infrastructures);
+        accueil.setInfrastructuresDetail(infrastructuresDetail);
+        satisfactionAccueilRepository.save(accueil);
+
+        SatisfactionLivraison livraison = new SatisfactionLivraison();
+        livraison.setSatisfactionInfo(info);
+        livraison.setFluiditeLivraison(fluiditeLivraison);
+        livraison.setHorairesLivraison(horairesLivraison);
+        livraison.setHorairesLivraisonDetail(horairesLivraisonDetail);
+        livraison.setRetardsLivraison(retardsLivraison);
+        livraison.setRetardsLivraisonDetail(retardsLivraisonDetail);
+        livraison.setCoordinationLivraison(coordinationLivraison);
+        livraison.setAmeliorationsLivraison(ameliorationsLivraison);
+        satisfactionLivraisonRepository.save(livraison);
+
+        SatisfactionCommunication communication = new SatisfactionCommunication();
+        communication.setSatisfactionInfo(info);
+        communication.setCommunicationProactive(communicationProactive);
+        communication.setAlertes(alertes);
+        communication.setSuggestionsCommunication(suggestionsCommunication);
+        communication.setRecommandationsGenerales(recommandationsGenerales);
+        satisfactionCommunicationRepository.save(communication);
 
         return "redirect:/demat/satisfaction?success=true";
     }

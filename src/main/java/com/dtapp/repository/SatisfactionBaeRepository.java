@@ -1,9 +1,9 @@
 package com.dtapp.repository;
 
-import com.dtapp.entity.SatisfactionReponse;
+import com.dtapp.entity.SatisfactionBae;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface SatisfactionReponseRepository extends JpaRepository<SatisfactionReponse, Long> {
+public interface SatisfactionBaeRepository extends JpaRepository<SatisfactionBae, Long> {
 }
