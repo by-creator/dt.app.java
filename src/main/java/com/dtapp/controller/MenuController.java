@@ -210,12 +210,23 @@ public class MenuController {
     }
 
     @PostMapping("/menu/facturation/gestion-validations/{id}/rejeter")
-    public String rejeterValidation(@PathVariable long id, @RequestParam String motif,
+    public String rejeterValidation(@PathVariable long id,
+                                    @RequestParam(value = "motif", required = false) String motif,
+                                    @RequestParam(value = "motifAutre", required = false) String motifAutre,
                                     Authentication auth, RedirectAttributes ra) {
         RattachementBl bl = rattachementBlRepository.findById(id).orElseThrow();
         User operator = userRepository.findByEmail(auth.getName()).orElseThrow();
+
+        String motifFinal = (motif != null && !motif.isBlank()) ? motif : "";
+        if (motifFinal.isBlank() && motifAutre != null && !motifAutre.isBlank()) {
+            motifFinal = motifAutre.trim();
+        }
+        if (motifFinal.isBlank()) {
+            motifFinal = "Motif non precise";
+        }
+
         bl.setStatut("REJETE");
-        bl.setMotifRejet(motif);
+        bl.setMotifRejet(motifFinal);
         bl.setUserId(operator.getId());
         rattachementBlRepository.save(bl);
         emailService.notifyClientValidationRejete(bl);
