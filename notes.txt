@@ -1,1 +1,5 @@
-mysql://i62dckg5wo1j4w7m:n432cvh1cn9ll0a0@co28d739i4m2sb7j.cbetxkdyhwsb.us-east-1.rds.amazonaws.com:3306/zno43rw8armdfp5v
+Rajoute au niveau de cette route un menu informatique après Direction
+Exploitation de la même manière qu'été créé planification avec un
+premier sous menu Bon de sortie qui lorsqu'on clique affiche un card 
+contenant un formulaire avec les informations ci-dessous à saisir : 
+
