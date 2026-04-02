@@ -353,7 +353,11 @@
                 <td>
                   <div style="display:flex; gap:10px;">
                     <button type="button" class="btn-table-action debloque"
-                            th:onclick="'prefillModifier(' + ${t.id} + ', \'' + ${t.raisonSociale} + '\', \'' + ${t.compteIpaki} + '\', \'' + ${t.compteNeptune} + '\')'">Modifier</button>
+                            th:data-id="${t.id}"
+                            th:data-raison="${t.raisonSociale}"
+                            th:data-ipaki="${t.compteIpaki}"
+                            th:data-neptune="${t.compteNeptune}"
+                            onclick="prefillModifier(this)">Modifier</button>
                     <form th:action="@{'/menu/facturation/unify/admin/supprimer/' + ${t.id}}" method="post" style="display:inline;">
                       <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                       <button type="submit" class="btn-table-action bloquer"
@@ -416,8 +420,17 @@
     try { return JSON.parse(localStorage.getItem(LS_KEY) || '{}'); } catch(e) { return {}; }
   }
 
-  function restoreFields() {
+  function ensureDefaultFormData() {
     const data = getFormData();
+    if (!data.typePersonne || !data.typePersonne.trim()) {
+      data.typePersonne = 'MORALE';
+      localStorage.setItem(LS_KEY, JSON.stringify(data));
+    }
+    return data;
+  }
+
+  function restoreFields() {
+    const data = ensureDefaultFormData();
     Object.keys(data).forEach(key => {
       const el = document.querySelector('[name="' + key + '"], #' + key.replace(/([A-Z])/g, '-$1').toLowerCase());
       if (el) el.value = data[key];
@@ -442,9 +455,9 @@
 
   // ── Imprimer fiche ─────────────────────────────────────────────────────
   function imprimerFiche() {
-    const d = getFormData();
+    const d = ensureDefaultFormData();
     const p = new URLSearchParams({
-      date: d.date || '', typePersonne: d.typePersonne || '',
+      date: d.date || '', typePersonne: d.typePersonne || 'MORALE',
       compteIpaki: d.compteIpaki || '', compteNeptune: d.compteNeptune || '',
       raisonSociale: d.raisonSociale || '', telephone: d.telephone || '',
       email: d.email || '', adresse: d.adresse || '',
@@ -481,14 +494,15 @@
   }
 
   // ── Admin modifier ─────────────────────────────────────────────────────
-  function prefillModifier(id, raison, ipaki, neptune) {
+  function prefillModifier(button) {
     const modal = document.getElementById('modalModifier');
     const form  = document.getElementById('formModifier');
     if (!modal || !form) return;
+    const { id, raison, ipaki, neptune } = button.dataset;
     form.action = BASE_URL + '/admin/modifier/' + id;
-    document.getElementById('mod-raison').value  = raison  !== 'null' ? raison  : '';
-    document.getElementById('mod-ipaki').value   = ipaki   !== 'null' ? ipaki   : '';
-    document.getElementById('mod-neptune').value = neptune !== 'null' ? neptune : '';
+    document.getElementById('mod-raison').value  = raison || '';
+    document.getElementById('mod-ipaki').value   = ipaki || '';
+    document.getElementById('mod-neptune').value = neptune || '';
     modal.style.display = 'flex';
   }
 

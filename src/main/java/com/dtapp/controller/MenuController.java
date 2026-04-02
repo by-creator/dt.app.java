@@ -18,6 +18,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -294,7 +295,7 @@ public class MenuController {
                                 @RequestParam(required = false) String registre,
                                 Model model) {
         model.addAttribute("date", date);
-        model.addAttribute("typePersonne", typePersonne);
+        model.addAttribute("typePersonne", StringUtils.hasText(typePersonne) ? typePersonne : "MORALE");
         model.addAttribute("compteIpaki", compteIpaki);
         model.addAttribute("compteNeptune", compteNeptune);
         model.addAttribute("raisonSociale", raisonSociale);

@@ -142,7 +142,7 @@
   <div class="grid-2">
     <div class="field-row">
       <span class="field-label">Type de personne</span>
-      <span class="field-value" th:text="${typePersonne}"></span>
+      <span class="field-value" th:text="${typePersonne != null and !#strings.isEmpty(typePersonne)} ? ${typePersonne} : 'MORALE'"></span>
     </div>
     <div class="field-row">
       <span class="field-label">Raison sociale</span>
