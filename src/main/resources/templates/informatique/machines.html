@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Machines - Dakar Terminal</title>
+  <th:block th:replace="~{fragments/pwa-head :: pwaMeta}"></th:block>
+  <script th:src="@{/js/theme.js}"></script>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+  <style>
+    .form-grid-machines {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .form-grid-machines .full { grid-column: 1 / -1; }
+    @media (max-width: 900px) {
+      .form-grid-machines { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-box">
+        <img th:src="@{/img/image.png}" alt="Dakar Terminal" style="max-height:40px; width:150px;">
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <a th:href="@{/dashboard}" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+          <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+        </svg>
+        Dashboard
+      </a>
+      <a th:href="@{/menu}" class="nav-item active">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+        Menu
+      </a>
+      <a th:href="@{/parametres}" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        Paramètres
+      </a>
+    </nav>
+    <div class="sidebar-user">
+      <div class="user-row">
+        <div class="user-avatar-sm"
+             th:text="${#strings.toUpperCase(#strings.substring(loggedUser.username, 0, 1))}">A</div>
+        <span class="user-display-name" th:text="${loggedUser.username}">Admin</span>
+        <form th:action="@{/logout}" method="post" style="margin:0">
+          <button type="submit" class="logout-btn" title="Se déconnecter">&#x2192;</button>
+        </form>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <main class="main-content" style="padding:0;">
+
+    <div class="subpage-topbar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+      </svg>
+      Machines
+    </div>
+
+    <!-- Tabs -->
+    <div class="subpage-tabs">
+      <a th:href="@{/menu/informatique/parc/machines}" class="subpage-tab active">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+        </svg>
+        Machines
+      </a>
+      <a th:href="@{/menu/informatique/parc/postes-fixes}" class="subpage-tab">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/>
+        </svg>
+        Postes Fixes
+      </a>
+    </div>
+
+    <div style="padding:32px 36px;">
+
+      <!-- Breadcrumb -->
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:24px; font-size:13px; color:#64748b;">
+        <a th:href="@{/menu/informatique}" style="color:#6366f1; text-decoration:none; font-weight:500;">Informatique</a>
+        <span>&#8250;</span>
+        <a th:href="@{/menu/informatique/parc}" style="color:#6366f1; text-decoration:none; font-weight:500;">Parc</a>
+        <span>&#8250;</span>
+        <span>Machines</span>
+      </div>
+
+      <!-- Flash messages -->
+      <div th:if="${success}" class="alert-success" style="margin-bottom:20px;">
+        <span th:text="${success}"></span>
+      </div>
+      <div th:if="${error}" class="alert-error" style="margin-bottom:20px;">
+        <span th:text="${error}"></span>
+      </div>
+
+      <!-- ── Formulaire ajout / édition ── -->
+      <div class="page-section-card" style="margin-bottom:28px;">
+        <div class="blocage-card-header">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+          </svg>
+          <span id="machineFormTitle">Ajouter une machine</span>
+        </div>
+        <p class="blocage-card-subtitle">Renseignez les informations de la machine. Le nom est obligatoire.</p>
+
+        <form id="machineForm" th:action="@{/menu/informatique/parc/machines/create}" method="post">
+          <input type="hidden" id="machineId" name="id" value="">
+          <div class="form-grid-machines">
+            <div class="form-group">
+              <label for="mName" class="form-label">NOM *</label>
+              <input id="mName" name="name" type="text" class="form-input" placeholder="ex: BSNDKRL800052" required>
+            </div>
+            <div class="form-group">
+              <label for="mType" class="form-label">TYPE</label>
+              <input id="mType" name="type" type="text" class="form-input" placeholder="Laptop, Desktop…">
+            </div>
+            <div class="form-group">
+              <label for="mModel" class="form-label">MODÈLE</label>
+              <input id="mModel" name="model" type="text" class="form-input" placeholder="LATITUDE 5430…">
+            </div>
+            <div class="form-group">
+              <label for="mUsername" class="form-label">UTILISATEUR</label>
+              <input id="mUsername" name="username" type="text" class="form-input">
+            </div>
+            <div class="form-group">
+              <label for="mAjowName" class="form-label">AJOW NAME</label>
+              <input id="mAjowName" name="ajowName" type="text" class="form-input">
+            </div>
+            <div class="form-group">
+              <label for="mServiceTag" class="form-label">SERVICE TAG</label>
+              <input id="mServiceTag" name="serviceTag" type="text" class="form-input">
+            </div>
+            <div class="form-group">
+              <label for="mVersionOs" class="form-label">VERSION OS</label>
+              <input id="mVersionOs" name="versionOs" type="text" class="form-input" placeholder="Windows 11…">
+            </div>
+            <div class="form-group">
+              <label for="mSociete" class="form-label">SOCIÉTÉ</label>
+              <input id="mSociete" name="societe" type="text" class="form-input">
+            </div>
+            <div class="form-group">
+              <label for="mService" class="form-label">SERVICE</label>
+              <input id="mService" name="service" type="text" class="form-input">
+            </div>
+            <div class="form-group">
+              <label for="mEmplacement" class="form-label">EMPLACEMENT</label>
+              <input id="mEmplacement" name="emplacement" type="text" class="form-input">
+            </div>
+            <div class="form-group">
+              <label for="mSites" class="form-label">SITES</label>
+              <input id="mSites" name="sites" type="text" class="form-input">
+            </div>
+            <div class="form-group">
+              <label for="mDateAcq" class="form-label">DATE ACQUISITION</label>
+              <input id="mDateAcq" name="dateAcquisition" type="text" class="form-input" placeholder="dd/MM/yyyy">
+            </div>
+            <div class="form-group">
+              <label for="mDateDep" class="form-label">DATE DÉPLOIEMENT</label>
+              <input id="mDateDep" name="dateDeploiement" type="text" class="form-input" placeholder="dd/MM/yyyy">
+            </div>
+            <div class="form-group full">
+              <label for="mCommentaire" class="form-label">COMMENTAIRE</label>
+              <input id="mCommentaire" name="commentaire" type="text" class="form-input">
+            </div>
+          </div>
+          <div class="blocage-actions">
+            <button type="submit" class="btn-debloquer">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v13a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+              </svg>
+              <span id="machineSubmitLabel">Enregistrer</span>
+            </button>
+            <button type="button" id="machineCancelBtn" onclick="resetMachineForm()"
+                    class="btn-actualiser" style="display:none;">
+              Annuler
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- ── Table ── -->
+      <div class="page-section-card" style="padding:0; overflow:hidden;">
+        <div class="table-toolbar">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+            </svg>
+            <span style="font-weight:600; font-size:14px;">Liste des machines</span>
+          </div>
+
+          <!-- Search -->
+          <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+            <form method="get" style="display:flex; gap:6px; align-items:center;">
+              <div style="position:relative;">
+                <svg style="position:absolute; left:10px; top:50%; transform:translateY(-50%); color:#94a3b8;"
+                     width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input type="search" name="search" class="table-search-input"
+                       placeholder="Rechercher…" th:value="${search}"
+                       style="padding-left:32px; width:220px;">
+              </div>
+              <button type="submit" class="btn-actualiser" style="padding:6px 14px;">OK</button>
+              <a th:if="${search != ''}" th:href="@{/menu/informatique/parc/machines}"
+                 class="btn-actualiser" style="padding:6px 14px;">✕</a>
+            </form>
+
+            <!-- Import -->
+            <form id="importMachinesForm" th:action="@{/menu/informatique/parc/machines/import}"
+                  method="post" enctype="multipart/form-data">
+              <input type="file" id="importMachinesFile" name="file" accept=".xlsx" style="display:none;">
+              <button type="button" id="importMachinesBtn" class="btn-actualiser"
+                      style="padding:6px 14px; display:inline-flex; align-items:center; gap:6px;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                Importer
+              </button>
+            </form>
+
+            <!-- Export -->
+            <a th:href="@{/menu/informatique/parc/machines/export}" class="btn-actualiser"
+               style="padding:6px 14px; display:inline-flex; align-items:center; gap:6px; text-decoration:none;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Exporter
+            </a>
+
+            <span class="pagination-info"
+                  th:text="${totalItems} + ' machine' + (${totalItems} > 1 ? 's' : '')">0</span>
+          </div>
+        </div>
+
+        <div class="table-wrapper">
+          <table id="tableMachines" class="data-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>NOM</th>
+                <th>TYPE</th>
+                <th>UTILISATEUR</th>
+                <th>MODÈLE</th>
+                <th>SERVICE</th>
+                <th>SITES</th>
+                <th>DATE</th>
+                <th>ACTIONS</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:if="${#lists.isEmpty(machines)}">
+                <td colspan="9" style="text-align:center; color:#94a3b8; padding:32px;">Aucune machine trouvée.</td>
+              </tr>
+              <tr th:each="m, stat : ${machines}"
+                  th:data-id="${m.id}"
+                  th:data-name="${m.name}"
+                  th:data-mtype="${m.type}"
+                  th:data-ajowname="${m.ajowName}"
+                  th:data-username="${m.username}"
+                  th:data-servicetag="${m.serviceTag}"
+                  th:data-versionos="${m.versionOs}"
+                  th:data-model="${m.model}"
+                  th:data-societe="${m.societe}"
+                  th:data-service="${m.service}"
+                  th:data-emplacement="${m.emplacement}"
+                  th:data-sites="${m.sites}"
+                  th:data-dateacquisition="${m.dateAcquisition}"
+                  th:data-datedeploiement="${m.dateDeploiement}"
+                  th:data-commentaire="${m.commentaire}">
+                <td th:text="${(currentPage * pageSize) + stat.index + 1}">1</td>
+                <td class="td-item" th:text="${m.name}">—</td>
+                <td th:text="${m.type ?: '—'}">—</td>
+                <td th:text="${m.username ?: '—'}">—</td>
+                <td th:text="${m.model ?: '—'}">—</td>
+                <td th:text="${m.service ?: '—'}">—</td>
+                <td th:text="${m.sites ?: '—'}">—</td>
+                <td th:text="${m.formattedDate}">—</td>
+                <td style="white-space:nowrap;">
+                  <button type="button" class="btn-table-action debloque js-edit-machine">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    </svg>
+                    Modifier
+                  </button>
+                  <form th:action="@{/menu/informatique/parc/machines/{id}/delete(id=${m.id})}"
+                        method="post" style="display:inline;" class="js-delete-form">
+                    <input type="hidden" name="page"   th:value="${currentPage}">
+                    <input type="hidden" name="search" th:value="${search}">
+                    <button type="submit" class="btn-table-action bloquer">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                        <path d="M10 11v6"/><path d="M14 11v6"/>
+                      </svg>
+                      Supprimer
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div th:if="${totalPages > 1}"
+             style="display:flex; gap:6px; align-items:center; padding:16px 20px; border-top:1px solid #f1f5f9;">
+          <a th:if="${currentPage > 0}"
+             th:href="@{/menu/informatique/parc/machines(page=${currentPage - 1}, search=${search})}"
+             class="btn-actualiser" style="padding:5px 12px;">&#8592;</a>
+          <a th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+             th:href="@{/menu/informatique/parc/machines(page=${i}, search=${search})}"
+             th:text="${i + 1}"
+             th:class="${i == currentPage} ? 'btn-debloquer' : 'btn-actualiser'"
+             style="padding:5px 12px; text-decoration:none;">1</a>
+          <a th:if="${currentPage < totalPages - 1}"
+             th:href="@{/menu/informatique/parc/machines(page=${currentPage + 1}, search=${search})}"
+             class="btn-actualiser" style="padding:5px 12px;">&#8594;</a>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+  // Import
+  document.getElementById('importMachinesBtn').addEventListener('click', function() {
+    document.getElementById('importMachinesFile').click();
+  });
+  document.getElementById('importMachinesFile').addEventListener('change', function() {
+    if (this.files.length > 0) document.getElementById('importMachinesForm').submit();
+  });
+
+  // Édition — délégation sur tbody
+  document.getElementById('tableMachines').addEventListener('click', function(e) {
+    const btn = e.target.closest('.js-edit-machine');
+    if (!btn) return;
+    const d = btn.closest('tr').dataset;
+    document.getElementById('machineFormTitle').textContent   = 'Modifier la machine';
+    document.getElementById('machineSubmitLabel').textContent = 'Mettre à jour';
+    document.getElementById('machineForm').action = '/menu/informatique/parc/machines/' + d.id + '/edit';
+    document.getElementById('machineId').value        = d.id              || '';
+    document.getElementById('mName').value            = d.name            || '';
+    document.getElementById('mType').value            = d.mtype           || '';
+    document.getElementById('mAjowName').value        = d.ajowname        || '';
+    document.getElementById('mUsername').value        = d.username        || '';
+    document.getElementById('mServiceTag').value      = d.servicetag      || '';
+    document.getElementById('mVersionOs').value       = d.versionos       || '';
+    document.getElementById('mModel').value           = d.model           || '';
+    document.getElementById('mSociete').value         = d.societe         || '';
+    document.getElementById('mService').value         = d.service         || '';
+    document.getElementById('mEmplacement').value     = d.emplacement     || '';
+    document.getElementById('mSites').value           = d.sites           || '';
+    document.getElementById('mDateAcq').value         = d.dateacquisition || '';
+    document.getElementById('mDateDep').value         = d.datedeploiement || '';
+    document.getElementById('mCommentaire').value     = d.commentaire     || '';
+    document.getElementById('machineCancelBtn').style.display = '';
+    document.getElementById('machineForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  // Suppression — confirmation via délégation
+  document.getElementById('tableMachines').addEventListener('submit', function(e) {
+    if (e.target.classList.contains('js-delete-form')) {
+      if (!confirm('Supprimer cette machine ?')) e.preventDefault();
+    }
+  });
+
+  function resetMachineForm() {
+    document.getElementById('machineFormTitle').textContent   = 'Ajouter une machine';
+    document.getElementById('machineSubmitLabel').textContent = 'Enregistrer';
+    document.getElementById('machineForm').action = '/menu/informatique/parc/machines/create';
+    document.getElementById('machineForm').reset();
+    document.getElementById('machineId').value = '';
+    document.getElementById('machineCancelBtn').style.display = 'none';
+  }
+</script>
+</body>
+</html>

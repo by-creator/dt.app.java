@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Parc Informatique - Dakar Terminal</title>
+  <th:block th:replace="~{fragments/pwa-head :: pwaMeta}"></th:block>
+  <script th:src="@{/js/theme.js}"></script>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<div class="app-layout">
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-box">
+        <img th:src="@{/img/image.png}" alt="Dakar Terminal" style="max-height:40px;width:150px;">
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <a th:href="@{/dashboard}" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+          <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+        </svg>
+        Dashboard
+      </a>
+      <a th:href="@{/menu}" class="nav-item active">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/>
+          <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+        Menu
+      </a>
+      <a th:href="@{/parametres}" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        Paramètres
+      </a>
+    </nav>
+    <div class="sidebar-user">
+      <div class="user-row">
+        <div class="user-avatar-sm"
+             th:text="${#strings.toUpperCase(#strings.substring(loggedUser.username, 0, 1))}">A</div>
+        <span class="user-display-name" th:text="${loggedUser.username}">Admin</span>
+        <form th:action="@{/logout}" method="post" style="margin:0">
+          <button type="submit" class="logout-btn" title="Se déconnecter">&#x2192;</button>
+        </form>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <main class="main-content" style="padding:0;">
+
+    <div class="subpage-topbar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+      </svg>
+      Parc Informatique
+    </div>
+
+    <div style="padding:32px 36px;">
+
+      <div style="margin-bottom:28px;">
+        <a th:href="@{/menu/informatique}" style="color:#6366f1;text-decoration:none;font-weight:600;font-size:14px;">
+          &#8592; Retour au menu Informatique
+        </a>
+      </div>
+
+      <div style="margin-bottom:24px;">
+        <h2 style="font-size:22px;font-weight:700;color:#0f172a;margin:0 0 6px;">Parc Informatique</h2>
+        <p style="color:#64748b;font-size:14px;margin:0;">Gérez les machines et les postes fixes du parc informatique.</p>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;">
+
+        <!-- Card Machines -->
+        <a th:href="@{/menu/informatique/parc/machines}"
+           style="display:block;background:white;border:1px solid #e2e8f0;border-radius:16px;padding:28px;text-decoration:none;transition:box-shadow 0.2s,border-color 0.2s;"
+           onmouseover="this.style.boxShadow='0 4px 24px rgba(99,102,241,0.12)';this.style.borderColor='#6366f1';"
+           onmouseout="this.style.boxShadow='none';this.style.borderColor='#e2e8f0';">
+          <div style="width:48px;height:48px;border-radius:12px;background:#ede9fe;display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+            </svg>
+          </div>
+          <div style="font-size:16px;font-weight:700;color:#0f172a;margin-bottom:6px;">Machines</div>
+          <div style="font-size:13px;color:#64748b;margin-bottom:16px;">Gérez le parc de laptops et ordinateurs portables.</div>
+          <div style="font-size:13px;font-weight:600;color:#6366f1;">Ouvrir &#x2197;</div>
+        </a>
+
+        <!-- Card Postes Fixes -->
+        <a th:href="@{/menu/informatique/parc/postes-fixes}"
+           style="display:block;background:white;border:1px solid #e2e8f0;border-radius:16px;padding:28px;text-decoration:none;transition:box-shadow 0.2s,border-color 0.2s;"
+           onmouseover="this.style.boxShadow='0 4px 24px rgba(99,102,241,0.12)';this.style.borderColor='#6366f1';"
+           onmouseout="this.style.boxShadow='none';this.style.borderColor='#e2e8f0';">
+          <div style="width:48px;height:48px;border-radius:12px;background:#ede9fe;display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="12" y2="18"/>
+            </svg>
+          </div>
+          <div style="font-size:16px;font-weight:700;color:#0f172a;margin-bottom:6px;">Postes Fixes</div>
+          <div style="font-size:13px;color:#64748b;margin-bottom:16px;">Gérez les postes téléphoniques fixes et leur annuaire.</div>
+          <div style="font-size:13px;font-weight:600;color:#6366f1;">Ouvrir &#x2197;</div>
+        </a>
+
+      </div>
+    </div>
+  </main>
+</div>
+
+</body>
+</html>

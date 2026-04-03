@@ -1,22 +1,9 @@
-Au niveau de la route /menu/dt je souhaite que tu rajoutes 
-un card informatique juste après Direction Exploitation 
-qui sera nommé Informatique et une fois dedans avoir 
-un premier sous menu Bon de sortie et lorsqu'on clique 
-dessus cela nous renvoie un card contenant un formulaire
-contenant les informations suivantes
+Au niveau de la route /menu/informatique je souhaite que
+tu rajoutes un card Parc qui aura comme sous menu deux 
+autres card à savoir machines et postes fixes 
 
-Date de sortie 
-
-Désignation 
-
-Quantité
-
-Destination
-
-Responsable
-
-Réceptionnaire
-
-Ensuite nous aurons un bouton imprimer qui va permettre
-d'imprimer le bon avec deux espaces où signer avec 
-cachet en dessous du Responsable et du Réceptionnaire
+Dans le dossier racine /others il y'a deux fichiers 
+respetifs machines et postes_fixes dont tu vas t'inspirer
+pour créer les crud des différents sous menus de Parc
+tout en rajoutant la possibilité d'import et d'export
+des informations pour chaque élément.
