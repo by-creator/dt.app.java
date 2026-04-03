@@ -26,6 +26,7 @@
     .modal-box p { margin: 0 0 20px; font-size: 13px; color: #64748b; }
     .modal-box label { display: block; font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 6px; }
     .modal-box select, .modal-box input[type="number"] { width: 100%; height: 44px; border-radius: 10px; border: 1px solid #d9e2ef; padding: 0 14px; font-size: 14px; margin-bottom: 20px; background: white; color: #0f172a; }
+    .modal-box textarea { width: 100%; border-radius: 10px; border: 1px solid #d9e2ef; padding: 10px 14px; font-size: 14px; margin-bottom: 20px; background: white; color: #0f172a; resize: vertical; min-height: 90px; box-sizing: border-box; font-family: inherit; }
     .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
     .btn-cancel   { padding: 10px 18px; border: none; border-radius: 10px; background: #f1f5f9; color: #334155; font-weight: 700; font-size: 13px; cursor: pointer; }
     .btn-confirm  { padding: 10px 18px; border: none; border-radius: 10px; background: #16a34a; color: white; font-weight: 700; font-size: 13px; cursor: pointer; }
@@ -208,13 +209,18 @@
       <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
       <input type="hidden" name="returnTo" th:value="${currentPagePath}">
       <label>Motif</label>
-      <select name="motif" required>
+      <select name="motif" id="selectMotif" required onchange="toggleAutre(this)">
         <option value="">-- Choisir un motif --</option>
         <option value="Dossier incomplet">Dossier incomplet</option>
         <option value="Dossier deja traite">Dossier deja traite</option>
         <option value="Dossier en cours de traitement merci de patienter">Dossier en cours de traitement merci de patienter</option>
         <option value="Le montant de la facture d'acconnage inferieur au seuil requis">Le montant de la facture d'acconnage inferieur au seuil requis</option>
+        <option value="Autre">Autre</option>
       </select>
+      <div id="zoneAutre" style="display:none;">
+        <label>Preciser le motif</label>
+        <textarea id="texteAutre" name="motifAutre" placeholder="Saisissez le motif de rejet..."></textarea>
+      </div>
       <div class="modal-actions">
         <button type="button" class="btn-cancel" onclick="closeModals()">Annuler</button>
         <button type="submit" class="btn-confirm-red">Confirmer</button>
@@ -264,8 +270,24 @@
     document.getElementById('fv-' + curId).submit();
   }
 
+  function toggleAutre(select) {
+    const zone = document.getElementById('zoneAutre');
+    const textarea = document.getElementById('texteAutre');
+    if (select.value === 'Autre') {
+      zone.style.display = 'block';
+      textarea.required = true;
+    } else {
+      zone.style.display = 'none';
+      textarea.required = false;
+    }
+  }
+
   function openRejet(id) {
     document.getElementById('formRejet').action = '/menu/gestion-remises/' + id + '/rejeter';
+    document.getElementById('selectMotif').value = '';
+    document.getElementById('zoneAutre').style.display = 'none';
+    document.getElementById('texteAutre').value = '';
+    document.getElementById('texteAutre').required = false;
     document.getElementById('modalRejet').classList.add('open');
   }
 
@@ -273,6 +295,15 @@
     document.getElementById('modalPct').classList.remove('open');
     document.getElementById('modalRejet').classList.remove('open');
   }
+
+  document.getElementById('formRejet').addEventListener('submit', function(e) {
+    const select = document.getElementById('selectMotif');
+    if (select.value === 'Autre') {
+      const texte = document.getElementById('texteAutre').value.trim();
+      if (!texte) { e.preventDefault(); return; }
+      select.value = texte;
+    }
+  });
 
   document.querySelectorAll('.modal-overlay').forEach(m => {
     m.addEventListener('click', e => { if (e.target === m) closeModals(); });

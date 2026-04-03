@@ -1,5 +1,4 @@
-Au niveau de cette route /menu/facturation/unify/imprimer-fiche le type 
-de personne qui doit être MORALE comme défini par défaut sur le formulaire
-ne s'affiche pas et sur cette route menu/facturation/unify?tab=admin au
-niveau de la table précisément au niveau des actions je devrais avoir
-le bouton modifier et supprimer
+Au niveau des routes /direction-generale/gestion-remises , /direction-financiere/gestion-remises , /direction-exploitation/gestion-remises
+et /facturation/gestion-remises je souhaite que comme pour la gestion des validations sur cette route /facturation/gestion-validations
+si on clique sur Rejeter tu rajoutes une option Autre qui affiche un textarea qui permettra de saisir un motif de rejet 
+spécifique 
