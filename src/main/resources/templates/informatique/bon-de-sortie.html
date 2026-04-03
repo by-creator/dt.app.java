@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bon de sortie - Dakar Terminal</title>
+  <th:block th:replace="~{fragments/pwa-head :: pwaMeta}"></th:block>
+  <script th:src="@{/js/theme.js}"></script>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+  <style>
+    /* ── Formulaire ── */
+    .bon-form-card {
+      background: white;
+      border-radius: 16px;
+      border: 1px solid #e2e8f0;
+      padding: 32px;
+      max-width: 680px;
+    }
+    .bon-form-card .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+    .bon-form-card .form-row.single {
+      grid-template-columns: 1fr;
+    }
+    .bon-form-card .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 18px;
+    }
+    .bon-form-card .form-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .bon-form-card .form-input {
+      height: 42px;
+      border-radius: 10px;
+      border: 1px solid #d9e2ef;
+      padding: 0 14px;
+      font-size: 14px;
+      background: white;
+      color: #0f172a;
+      transition: border-color 0.15s;
+      font-family: inherit;
+    }
+    .bon-form-card .form-input:focus {
+      outline: none;
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+    }
+    .btn-imprimer {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #6366f1;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 22px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.15s;
+    }
+    .btn-imprimer:hover { background: #4f46e5; }
+
+    /* ── Zone d'impression — styles identiques à unify-fiche ── */
+    #bon-print-area {
+      display: none;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-size: 13px;
+      color: #1e293b;
+    }
+    #bon-print-area .fiche-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid #6366f1;
+      padding-bottom: 16px;
+      margin-bottom: 28px;
+    }
+    #bon-print-area .fiche-header .logo-area img {
+      max-height: 48px;
+    }
+    #bon-print-area .fiche-header .doc-title {
+      text-align: right;
+    }
+    #bon-print-area .fiche-header .doc-title h1 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #6366f1;
+      letter-spacing: 0.5px;
+    }
+    #bon-print-area .fiche-header .doc-title .doc-ref {
+      font-size: 11px;
+      color: #64748b;
+      margin-top: 2px;
+    }
+    #bon-print-area .fiche-header .doc-title .doc-date {
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 4px;
+    }
+    #bon-print-area .company-block {
+      margin-bottom: 20px;
+    }
+    #bon-print-area .company-name {
+      font-size: 14px;
+      font-weight: 700;
+      text-decoration: underline;
+      color: #0f172a;
+    }
+    #bon-print-area .company-sub {
+      font-size: 13px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 4px;
+    }
+    #bon-print-area .company-info {
+      font-size: 12px;
+      color: #475569;
+      line-height: 1.6;
+    }
+    #bon-print-area .section-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #6366f1;
+      background: #eef2ff;
+      padding: 7px 14px;
+      border-radius: 4px;
+      margin-bottom: 14px;
+      margin-top: 22px;
+    }
+    #bon-print-area .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px 32px;
+    }
+    #bon-print-area .field-row {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    #bon-print-area .field-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    #bon-print-area .field-value {
+      font-size: 14px;
+      color: #0f172a;
+      padding: 6px 0;
+      border-bottom: 1px solid #e2e8f0;
+      min-height: 30px;
+    }
+    #bon-print-area .field-row.full {
+      grid-column: span 2;
+    }
+    #bon-print-area .signature-area {
+      margin-top: 48px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+    }
+    #bon-print-area .signature-box {
+      border: 1px dashed #cbd5e1;
+      border-radius: 6px;
+      padding: 16px;
+      text-align: center;
+      min-height: 90px;
+    }
+    #bon-print-area .signature-box .sig-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 4px;
+    }
+    #bon-print-area .signature-box .sig-name {
+      font-size: 13px;
+      color: #0f172a;
+      margin-bottom: 6px;
+    }
+    #bon-print-area .signature-box .sig-sub {
+      font-size: 11px;
+      color: #94a3b8;
+    }
+    #bon-print-area .fiche-footer {
+      margin-top: 48px;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: #94a3b8;
+    }
+
+    /* ── Impression ── */
+    @media print {
+      body * { visibility: hidden; }
+      #bon-print-area, #bon-print-area * { visibility: visible; }
+      #bon-print-area {
+        display: block !important;
+        position: fixed;
+        inset: 0;
+        padding: 28px 36px;
+        background: white;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-layout">
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-box">
+        <img th:src="@{/img/image.png}" alt="Dakar Terminal" style="max-height: 40px; width: 150px;">
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <a th:href="@{/dashboard}" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+          <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+        </svg>
+        Dashboard
+      </a>
+      <a th:href="@{/menu}" class="nav-item active">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/>
+          <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+        Menu
+      </a>
+      <a th:href="@{/parametres}" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        Parametres
+      </a>
+    </nav>
+
+    <div class="sidebar-user">
+      <div class="user-row">
+        <div class="user-avatar-sm"
+             th:text="${#strings.toUpperCase(#strings.substring(loggedUser.username, 0, 1))}">A</div>
+        <span class="user-display-name" th:text="${loggedUser.username}">Admin</span>
+        <form th:action="@{/logout}" method="post" style="margin:0">
+          <button type="submit" class="logout-btn" title="Se deconnecter">&#x2192;</button>
+        </form>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content" style="padding:0;">
+
+    <div class="subpage-topbar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+      </svg>
+      Bon de sortie
+    </div>
+
+    <div style="padding: 32px 36px;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:24px; font-size:13px; color:#64748b;">
+        <a th:href="@{/menu/dt}" style="color:#6366f1; text-decoration:none; font-weight:500;">Menu DT</a>
+        <span>&#8250;</span>
+        <a th:href="@{/menu/informatique}" style="color:#6366f1; text-decoration:none; font-weight:500;">Informatique</a>
+        <span>&#8250;</span>
+        <span>Bon de sortie</span>
+      </div>
+
+      <div class="bon-form-card">
+        <div class="blocage-card-header" style="margin-bottom:20px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+          </svg>
+          <span>Bon de sortie</span>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="dateSortie">Date de sortie</label>
+            <input type="date" id="dateSortie" class="form-input">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="quantite">Quantite</label>
+            <input type="text" id="quantite" class="form-input" placeholder="Ex : 2">
+          </div>
+        </div>
+
+        <div class="form-row single">
+          <div class="form-group">
+            <label class="form-label" for="designation">Designation</label>
+            <input type="text" id="designation" class="form-input" placeholder="Ex : Ordinateur portable Dell">
+          </div>
+        </div>
+
+        <div class="form-row single">
+          <div class="form-group">
+            <label class="form-label" for="destination">Destination</label>
+            <input type="text" id="destination" class="form-input" placeholder="Ex : Direction Exploitation">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="responsable">Responsable</label>
+            <input type="text" id="responsable" class="form-input" placeholder="Nom du responsable">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="receptionnaire">Receptionnaire</label>
+            <input type="text" id="receptionnaire" class="form-input" placeholder="Nom du receptionnaire">
+          </div>
+        </div>
+
+        <button class="btn-imprimer" onclick="imprimerBon()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
+          </svg>
+          Imprimer
+        </button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ── Zone d'impression ── -->
+<div id="bon-print-area">
+
+  <div class="fiche-header">
+    <div class="logo-area">
+      <img src="/img/image.png" alt="Dakar Terminal" onerror="this.style.display='none'">
+    </div>
+    <div class="doc-title">
+      <h1>Bon de sortie</h1>
+      <div class="doc-ref">Document N&deg; : DT-QUA-F-0025 R&eacute;v. 1 &mdash; PAQHSE</div>
+      <div class="doc-date" id="p-date-header"></div>
+    </div>
+  </div>
+
+  <div class="company-block">
+    <div class="company-name">DAKAR TERMINAL</div>
+    <div class="company-sub">S&Eacute;N&Eacute;GAL</div>
+    <div class="company-info">S.A. Capital 2.500.000.000 Frs CFA</div>
+    <div class="company-info">RCCM SN DKR 2014 B 2969</div>
+    <div class="company-info">NINEA 004996742 2G3</div>
+    <div class="company-info">47, Avenue Hassan II - B.P. 233</div>
+    <div class="company-info">DAKAR T&eacute;l : +33 859 33 99</div>
+  </div>
+
+  <div class="section-title">Informations de sortie</div>
+  <div class="grid-2">
+    <div class="field-row">
+      <span class="field-label">Date de sortie</span>
+      <span class="field-value" id="p-date"></span>
+    </div>
+    <div class="field-row">
+      <span class="field-label">Quantite</span>
+      <span class="field-value" id="p-quantite"></span>
+    </div>
+    <div class="field-row full">
+      <span class="field-label">Designation</span>
+      <span class="field-value" id="p-designation"></span>
+    </div>
+    <div class="field-row full">
+      <span class="field-label">Destination</span>
+      <span class="field-value" id="p-destination"></span>
+    </div>
+  </div>
+
+  <div class="section-title">Signataires</div>
+  <div class="signature-area">
+    <div class="signature-box">
+      <div class="sig-label">Responsable</div>
+      <div class="sig-name" id="p-responsable"></div>
+      <div class="sig-sub">(Signature &amp; Cachet)</div>
+    </div>
+    <div class="signature-box">
+      <div class="sig-label">R&eacute;ceptionnaire</div>
+      <div class="sig-name" id="p-receptionnaire"></div>
+      <div class="sig-sub">(Signature &amp; Cachet)</div>
+    </div>
+  </div>
+
+  <div class="fiche-footer">
+    <span>Dakar Terminal &mdash; Document g&eacute;n&eacute;r&eacute; automatiquement</span>
+    <span id="p-footer-date"></span>
+  </div>
+
+</div>
+
+<script>
+  function imprimerBon() {
+    const dateSortie     = document.getElementById('dateSortie').value;
+    const quantite       = document.getElementById('quantite').value;
+    const designation    = document.getElementById('designation').value;
+    const destination    = document.getElementById('destination').value;
+    const responsable    = document.getElementById('responsable').value;
+    const receptionnaire = document.getElementById('receptionnaire').value;
+
+    let dateLabel = dateSortie;
+    if (dateSortie) {
+      const p = dateSortie.split('-');
+      dateLabel = p[2] + '/' + p[1] + '/' + p[0];
+    }
+
+    const now = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+
+    document.getElementById('p-date-header').textContent  = 'Date : ' + now;
+    document.getElementById('p-date').textContent         = dateLabel;
+    document.getElementById('p-quantite').textContent     = quantite;
+    document.getElementById('p-designation').textContent  = designation;
+    document.getElementById('p-destination').textContent  = destination;
+    document.getElementById('p-responsable').textContent  = responsable;
+    document.getElementById('p-receptionnaire').textContent = receptionnaire;
+    document.getElementById('p-footer-date').textContent  = now;
+
+    window.print();
+  }
+</script>
+
+</body>
+</html>

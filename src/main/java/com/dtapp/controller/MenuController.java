@@ -148,6 +148,18 @@ public class MenuController {
         return renderMenuView("direction-exploitation", model, auth);
     }
 
+    @GetMapping("/menu/informatique")
+    public String informatiqueMenu(Model model, Authentication auth) {
+        return renderMenuView("informatique", model, auth);
+    }
+
+    @GetMapping("/menu/informatique/bon-de-sortie")
+    public String informatiqueBonDeSortie(Model model, Authentication auth) {
+        User loggedUser = userRepository.findByEmail(auth.getName()).orElseThrow();
+        model.addAttribute("loggedUser", loggedUser);
+        return "informatique/bon-de-sortie";
+    }
+
     @GetMapping("/menu/direction-generale/gestion-remises")
     public String directionGeneraleRemises(Model model, Authentication auth) {
         return renderRemisesPage(model, auth, "Direction Generale", "/menu/direction-generale");

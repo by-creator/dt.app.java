@@ -1,4 +1,22 @@
-Au niveau des routes /direction-generale/gestion-remises , /direction-financiere/gestion-remises , /direction-exploitation/gestion-remises
-et /facturation/gestion-remises je souhaite que comme pour la gestion des validations sur cette route /facturation/gestion-validations
-si on clique sur Rejeter tu rajoutes une option Autre qui affiche un textarea qui permettra de saisir un motif de rejet 
-spécifique 
+Au niveau de la route /menu/dt je souhaite que tu rajoutes 
+un card informatique juste après Direction Exploitation 
+qui sera nommé Informatique et une fois dedans avoir 
+un premier sous menu Bon de sortie et lorsqu'on clique 
+dessus cela nous renvoie un card contenant un formulaire
+contenant les informations suivantes
+
+Date de sortie 
+
+Désignation 
+
+Quantité
+
+Destination
+
+Responsable
+
+Réceptionnaire
+
+Ensuite nous aurons un bouton imprimer qui va permettre
+d'imprimer le bon avec deux espaces où signer avec 
+cachet en dessous du Responsable et du Réceptionnaire

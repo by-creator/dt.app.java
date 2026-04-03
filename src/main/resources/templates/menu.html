@@ -112,7 +112,16 @@
         </div>
       </div>
 
-      <div th:if="${menuView != 'dt' and menuView != 'facturation' and menuView != 'planification' and menuView != 'direction-generale' and menuView != 'direction-financiere' and menuView != 'direction-exploitation'}">
+      <div th:if="${menuView == 'informatique'}">
+        <div class="page-badge"><span class="page-badge-dot"></span> NAVIGATION RAPIDE</div>
+        <h1 class="page-title" style="font-size:26px; margin-bottom:4px;">Menu Informatique</h1>
+        <p class="page-subtitle">Retrouvez les acces du module Informatique.</p>
+        <div style="margin-top:14px;">
+          <a th:href="@{/menu/dt}" style="color:#a5b4fc; text-decoration:none; font-weight:600;">&#8592; Retour au menu principal</a>
+        </div>
+      </div>
+
+      <div th:if="${menuView != 'dt' and menuView != 'facturation' and menuView != 'planification' and menuView != 'direction-generale' and menuView != 'direction-financiere' and menuView != 'direction-exploitation' and menuView != 'informatique'}">
         <div class="page-badge"><span class="page-badge-dot"></span> NAVIGATION RAPIDE</div>
         <h1 class="page-title" style="font-size:26px; margin-bottom:4px;">Menu administrateur</h1>
         <p class="page-subtitle">Recherchez un module et accedez aux espaces disponibles pour votre role.</p>
@@ -123,7 +132,7 @@
       </div>
     </div>
 
-    <div class="modules-grid" id="modulesGrid" th:if="${menuView != 'dt' and menuView != 'facturation' and menuView != 'planification' and menuView != 'direction-generale' and menuView != 'direction-financiere' and menuView != 'direction-exploitation'}">
+    <div class="modules-grid" id="modulesGrid" th:if="${menuView != 'dt' and menuView != 'facturation' and menuView != 'planification' and menuView != 'direction-generale' and menuView != 'direction-financiere' and menuView != 'direction-exploitation' and menuView != 'informatique'}">
 
       <a th:href="@{/menu/dt}" class="module-card" data-name="menu dt">
         <div class="module-icon">
@@ -216,6 +225,17 @@
         </div>
         <div class="module-title">Direction Exploitation</div>
         <div class="module-desc">Accedez au sous-menu de la Direction Exploitation.</div>
+        <div class="module-link">Ouvrir <span>&#x2197;</span></div>
+      </a>
+
+      <a th:href="@{/menu/informatique}" class="module-card" data-name="informatique">
+        <div class="module-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+          </svg>
+        </div>
+        <div class="module-title">Informatique</div>
+        <div class="module-desc">Accedez au sous-menu du module Informatique.</div>
         <div class="module-link">Ouvrir <span>&#x2197;</span></div>
       </a>
 
@@ -399,12 +419,25 @@
       </a>
     </div>
 
+    <div class="modules-grid" id="modulesGridInformatique" th:if="${menuView == 'informatique'}">
+      <a th:href="@{/menu/informatique/bon-de-sortie}" class="module-card" data-name="bon de sortie">
+        <div class="module-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/>
+          </svg>
+        </div>
+        <div class="module-title">Bon de sortie</div>
+        <div class="module-desc">Creez et imprimez un bon de sortie.</div>
+        <div class="module-link">Ouvrir <span>&#x2197;</span></div>
+      </a>
+    </div>
+
   </main>
 </div>
 
 <script>
   function filterModules(query) {
-    const groups = ['#modulesGrid .module-card', '#modulesGridDt .module-card', '#modulesGridFacturation .module-card', '#modulesGridPlanification .module-card', '#modulesGridDirectionGenerale .module-card', '#modulesGridDirectionFinanciere .module-card', '#modulesGridDirectionExploitation .module-card'];
+    const groups = ['#modulesGrid .module-card', '#modulesGridDt .module-card', '#modulesGridFacturation .module-card', '#modulesGridPlanification .module-card', '#modulesGridDirectionGenerale .module-card', '#modulesGridDirectionFinanciere .module-card', '#modulesGridDirectionExploitation .module-card', '#modulesGridInformatique .module-card'];
     const q = query.toLowerCase().trim();
 
     groups.forEach(selector => {
