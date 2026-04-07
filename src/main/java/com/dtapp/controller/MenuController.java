@@ -415,36 +415,68 @@ public class MenuController {
             ra.addFlashAttribute("successMsg", "Aucun fichier selectionne.");
             return "redirect:/menu/facturation/unify?tab=admin";
         }
-        int imported = 0;
-        try (org.apache.poi.ss.usermodel.Workbook wb = new XSSFWorkbook(file.getInputStream())) {
-            Sheet sheet = wb.getSheetAt(0);
-            java.util.List<TiersUnify> batch = new java.util.ArrayList<>();
-            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
-                Row row = sheet.getRow(i);
-                if (row == null) continue;
-                TiersUnify t = new TiersUnify();
-                t.setRaisonSociale(getCellString(row, 0));
-                t.setCompteIpaki(getCellString(row, 1));
-                t.setCompteNeptune(getCellString(row, 2));
-                batch.add(t);
-                imported++;
-            }
-            if (!batch.isEmpty()) {
-                tiersUnifyRepository.saveAll(batch);
+        java.util.List<TiersUnify> batch = new java.util.ArrayList<>();
+        try (java.io.InputStream is = file.getInputStream();
+             org.apache.poi.openxml4j.opc.OPCPackage pkg = org.apache.poi.openxml4j.opc.OPCPackage.open(is)) {
+
+            org.apache.poi.xssf.eventusermodel.XSSFReader xssfReader =
+                    new org.apache.poi.xssf.eventusermodel.XSSFReader(pkg);
+            org.apache.poi.xssf.model.SharedStrings sharedStrings = xssfReader.getSharedStringsTable();
+
+            javax.xml.parsers.SAXParserFactory factory = javax.xml.parsers.SAXParserFactory.newInstance();
+            factory.setNamespaceAware(true);
+            org.xml.sax.XMLReader xmlReader = factory.newSAXParser().getXMLReader();
+
+            org.apache.poi.xssf.eventusermodel.XSSFSheetXMLHandler.SheetContentsHandler rowHandler =
+                    new org.apache.poi.xssf.eventusermodel.XSSFSheetXMLHandler.SheetContentsHandler() {
+                        private final String[] rowData = new String[3];
+
+                        @Override
+                        public void startRow(int rowNum) {
+                            java.util.Arrays.fill(rowData, null);
+                        }
+
+                        @Override
+                        public void endRow(int rowNum) {
+                            if (rowNum == 0) return; // skip header
+                            TiersUnify t = new TiersUnify();
+                            t.setRaisonSociale(rowData[0]);
+                            t.setCompteIpaki(rowData[1]);
+                            t.setCompteNeptune(rowData[2]);
+                            batch.add(t);
+                        }
+
+                        @Override
+                        public void cell(String cellRef, String value, org.apache.poi.xssf.usermodel.XSSFComment c) {
+                            if (cellRef == null || value == null || value.isBlank()) return;
+                            int col = org.apache.poi.ss.util.CellReference.convertColStringToIndex(
+                                    cellRef.replaceAll("[0-9]", ""));
+                            if (col >= 0 && col < 3) rowData[col] = value.trim();
+                        }
+                    };
+
+            org.apache.poi.xssf.eventusermodel.XSSFSheetXMLHandler sheetHandler =
+                    new org.apache.poi.xssf.eventusermodel.XSSFSheetXMLHandler(
+                            xssfReader.getStylesTable(), null, sharedStrings, rowHandler,
+                            new org.apache.poi.ss.usermodel.DataFormatter(), false);
+            xmlReader.setContentHandler(sheetHandler);
+
+            org.apache.poi.xssf.eventusermodel.XSSFReader.SheetIterator sheets =
+                    (org.apache.poi.xssf.eventusermodel.XSSFReader.SheetIterator) xssfReader.getSheetsData();
+            if (sheets.hasNext()) {
+                try (java.io.InputStream sheetStream = sheets.next()) {
+                    xmlReader.parse(new org.xml.sax.InputSource(sheetStream));
+                }
             }
         } catch (Exception e) {
             ra.addFlashAttribute("successMsg", "Erreur lors de l'import : " + e.getMessage());
             return "redirect:/menu/facturation/unify?tab=admin";
         }
-        ra.addFlashAttribute("successMsg", imported + " tiers importe(s) avec succes.");
+        if (!batch.isEmpty()) {
+            tiersUnifyRepository.saveAll(batch);
+        }
+        ra.addFlashAttribute("successMsg", batch.size() + " tiers importe(s) avec succes.");
         return "redirect:/menu/facturation/unify?tab=admin";
-    }
-
-    private String getCellString(Row row, int col) {
-        Cell cell = row.getCell(col, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
-        if (cell == null) return null;
-        String v = new org.apache.poi.ss.usermodel.DataFormatter().formatCellValue(cell);
-        return (v != null && !v.isBlank()) ? v.trim() : null;
     }
 
     @PostMapping("/menu/facturation/gestion-rapports/admin")
