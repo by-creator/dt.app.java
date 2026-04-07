@@ -418,6 +418,7 @@ public class MenuController {
         int imported = 0;
         try (org.apache.poi.ss.usermodel.Workbook wb = new XSSFWorkbook(file.getInputStream())) {
             Sheet sheet = wb.getSheetAt(0);
+            java.util.List<TiersUnify> batch = new java.util.ArrayList<>();
             for (int i = 1; i <= sheet.getLastRowNum(); i++) {
                 Row row = sheet.getRow(i);
                 if (row == null) continue;
@@ -425,8 +426,11 @@ public class MenuController {
                 t.setRaisonSociale(getCellString(row, 0));
                 t.setCompteIpaki(getCellString(row, 1));
                 t.setCompteNeptune(getCellString(row, 2));
-                tiersUnifyRepository.save(t);
+                batch.add(t);
                 imported++;
+            }
+            if (!batch.isEmpty()) {
+                tiersUnifyRepository.saveAll(batch);
             }
         } catch (Exception e) {
             ra.addFlashAttribute("successMsg", "Erreur lors de l'import : " + e.getMessage());
