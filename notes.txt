@@ -1,9 +1,0 @@
-Au niveau de cette route /menu/facturation/unify?tab=admin lorsque je souhaite 
-importer des données depuis un fichier xlsx j'ai toujours une erreur j'ai 
-essayé avec un fichier csv l'application ne s'est pas planté mais j'ai eu 
-ce message :
-
-Erreur lors de l'import : No valid entries or contents found, this is not a valid OOXML (Office Open XML) file
-
-Vérifier la possibilité de pouvoir ipmorter les données depuis un fichier 
-csv 
