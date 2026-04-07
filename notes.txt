@@ -1,28 +1,9 @@
-Au niveau de cette route /menu/facturation/unify?tab=admin lorsque je souhaite importer les données depuis un fichier
-j'ai ce message :
+Au niveau de cette route /menu/facturation/unify?tab=admin lorsque je souhaite 
+importer des données depuis un fichier xlsx j'ai toujours une erreur j'ai 
+essayé avec un fichier csv l'application ne s'est pas planté mais j'ai eu 
+ce message :
 
-Whitelabel Error Page
-This application has no explicit mapping for /error, so you are seeing this as a fallback.
+Erreur lors de l'import : No valid entries or contents found, this is not a valid OOXML (Office Open XML) file
 
-Tue Apr 07 09:31:14 UTC 2026
-There was an unexpected error (type=Internal Server Error, status=500).
-
-Au niveau des logs j'ai ceci : 
-
-2026-04-07T09:31:14.027228+00:00 app[web.1]: 	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63)
-2026-04-07T09:31:14.027230+00:00 app[web.1]: 	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:903)
-2026-04-07T09:31:14.027230+00:00 app[web.1]: 	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1775)
-2026-04-07T09:31:14.027231+00:00 app[web.1]: 	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52)
-2026-04-07T09:31:14.027231+00:00 app[web.1]: 	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:973)
-2026-04-07T09:31:14.027231+00:00 app[web.1]: 	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:491)
-2026-04-07T09:31:14.027231+00:00 app[web.1]: 	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:63)
-2026-04-07T09:31:14.027231+00:00 app[web.1]: 	at java.base/java.lang.Thread.run(Thread.java:1583)
-2026-04-07T09:31:14.134777+00:00 heroku[router]: at=info method=GET path="/menu/facturation/unify?tab=admin" host=site-dt-staging-4682ed3f9fbf.herokuapp.com request_id=e4ef8759-5b2b-7ec0-f646-713a96725154 fwd="154.125.138.60" dyno=web.1 connect=0ms service=171ms status=500 bytes=287 protocol=http1.1 tls=true tls_version=unknown
-2026-04-07T09:31:14.636071+00:00 heroku[router]: at=info method=GET path="/favicon.ico" host=site-dt-staging-4682ed3f9fbf.herokuapp.com request_id=093832c7-1c05-e2a2-f57a-d413d7dd805a fwd="154.125.138.60" dyno=web.1 connect=0ms service=108ms status=404 bytes=100 protocol=http1.1 tls=true tls_version=unknown
-2026-04-07T09:34:07.422952+00:00 app[api]: Log session created by user iosid242@gmail.com
-
-Au niveau de la base de données j'ai ceci : 
-
-SQL Error [1226] [42000]: User 'ehx8ou7qzb69hu4w' has exceeded the 'max_questions' resource (current value: 3600)
-
-Et jsuqu'à lors l'accès aux ressources de la base demeure impossible
+Vérifier la possibilité de pouvoir ipmorter les données depuis un fichier 
+csv 
