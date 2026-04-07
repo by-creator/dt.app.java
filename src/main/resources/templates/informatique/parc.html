@@ -80,33 +80,27 @@
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;">
 
         <!-- Card Machines -->
-        <a th:href="@{/menu/informatique/parc/machines}"
-           style="display:block;background:white;border:1px solid #e2e8f0;border-radius:16px;padding:28px;text-decoration:none;transition:box-shadow 0.2s,border-color 0.2s;"
-           onmouseover="this.style.boxShadow='0 4px 24px rgba(99,102,241,0.12)';this.style.borderColor='#6366f1';"
-           onmouseout="this.style.boxShadow='none';this.style.borderColor='#e2e8f0';">
-          <div style="width:48px;height:48px;border-radius:12px;background:#ede9fe;display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <a th:href="@{/menu/informatique/parc/machines}" class="module-card">
+          <div class="module-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
             </svg>
           </div>
-          <div style="font-size:16px;font-weight:700;color:#0f172a;margin-bottom:6px;">Machines</div>
-          <div style="font-size:13px;color:#64748b;margin-bottom:16px;">Gérez le parc de laptops et ordinateurs portables.</div>
-          <div style="font-size:13px;font-weight:600;color:#6366f1;">Ouvrir &#x2197;</div>
+          <div class="module-title">Machines</div>
+          <div class="module-desc">Gérez le parc de laptops et ordinateurs portables.</div>
+          <div class="module-link">Ouvrir <span>&#x2197;</span></div>
         </a>
 
         <!-- Card Postes Fixes -->
-        <a th:href="@{/menu/informatique/parc/postes-fixes}"
-           style="display:block;background:white;border:1px solid #e2e8f0;border-radius:16px;padding:28px;text-decoration:none;transition:box-shadow 0.2s,border-color 0.2s;"
-           onmouseover="this.style.boxShadow='0 4px 24px rgba(99,102,241,0.12)';this.style.borderColor='#6366f1';"
-           onmouseout="this.style.boxShadow='none';this.style.borderColor='#e2e8f0';">
-          <div style="width:48px;height:48px;border-radius:12px;background:#ede9fe;display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <a th:href="@{/menu/informatique/parc/postes-fixes}" class="module-card">
+          <div class="module-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="12" y2="18"/>
             </svg>
           </div>
-          <div style="font-size:16px;font-weight:700;color:#0f172a;margin-bottom:6px;">Postes Fixes</div>
-          <div style="font-size:13px;color:#64748b;margin-bottom:16px;">Gérez les postes téléphoniques fixes et leur annuaire.</div>
-          <div style="font-size:13px;font-weight:600;color:#6366f1;">Ouvrir &#x2197;</div>
+          <div class="module-title">Postes Fixes</div>
+          <div class="module-desc">Gérez les postes téléphoniques fixes et leur annuaire.</div>
+          <div class="module-link">Ouvrir <span>&#x2197;</span></div>
         </a>
 
       </div>

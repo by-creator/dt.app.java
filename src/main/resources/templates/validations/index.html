@@ -123,52 +123,74 @@
       <div class="page-section-card" style="padding:0; overflow:hidden;">
         <div class="table-toolbar">
           <span class="toolbar-title">Demandes de validation</span>
+          <span class="pagination-info" th:if="${totalItems > 0}"
+                th:text="${totalItems} + ' demande' + (${totalItems} > 1 ? 's' : '')"></span>
         </div>
-                <div class="table-wrapper">
-<table class="data-table">
-          <thead>
-          <tr>
-            <th>Date</th>
-            <th>Nom</th>
-            <th>Prenom</th>
-            <th>Email</th>
-            <th>Ndeg BL</th>
-            <th>Maison de transit</th>
-            <th>Statut</th>
-            <th>Motif rejet</th>
-            <th>Actions</th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr th:if="${#lists.isEmpty(demandes)}">
-            <td colspan="9" style="text-align:center; color:#94a3b8; padding:32px;">
-              Aucune validation disponible pour le moment.
-            </td>
-          </tr>
-          <tr th:each="d : ${demandes}">
-            <td th:text="${#temporals.format(d.createdAt, 'dd/MM/yyyy HH:mm')}"></td>
-            <td th:text="${d.nom}"></td>
-            <td th:text="${d.prenom}"></td>
-            <td th:text="${d.email}"></td>
-            <td style="font-weight:700;" th:text="${d.bl}"></td>
-            <td th:text="${d.maison}"></td>
-            <td>
-              <span th:if="${d.statut == 'EN_ATTENTE'}" class="badge badge-yellow">EN ATTENTE</span>
-              <span th:if="${d.statut == 'VALIDE'}" class="badge badge-green">VALIDE</span>
-              <span th:if="${d.statut == 'REJETE'}" class="badge badge-red">REJETE</span>
-              <span th:if="${d.statut != 'EN_ATTENTE' and d.statut != 'VALIDE' and d.statut != 'REJETE'}" class="badge badge-gray" th:text="${d.statut}"></span>
-            </td>
-            <td style="font-size:12px; color:#94a3b8;" th:text="${d.motifRejet != null ? d.motifRejet : '-'}"></td>
-            <td>
-              <div th:if="${d.statut == 'EN_ATTENTE'}" class="row-actions">
-                <form th:action="@{${currentPagePath} + '/' + ${d.id} + '/valider'}" method="post" th:id="'fv-' + ${d.id}"></form>
-                <button type="button" class="btn-valider" th:onclick="'confirmVal(' + ${d.id} + ')'">Valider</button>
-                <button type="button" class="btn-rejeter" th:onclick="'openRejet(' + ${d.id} + ')'">Rejeter</button>
-              </div>
-            </td>
-          </tr>
-          </tbody>
-        </table>
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Nom</th>
+                <th>Prenom</th>
+                <th>Email</th>
+                <th>Ndeg BL</th>
+                <th>Maison de transit</th>
+                <th>Statut</th>
+                <th>Motif rejet</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:if="${#lists.isEmpty(demandes)}">
+                <td colspan="9" style="text-align:center; color:#94a3b8; padding:32px;">
+                  Aucune validation disponible pour le moment.
+                </td>
+              </tr>
+              <tr th:each="d : ${demandes}">
+                <td th:text="${#temporals.format(d.createdAt, 'dd/MM/yyyy HH:mm')}"></td>
+                <td th:text="${d.nom}"></td>
+                <td th:text="${d.prenom}"></td>
+                <td th:text="${d.email}"></td>
+                <td style="font-weight:700;" th:text="${d.bl}"></td>
+                <td th:text="${d.maison}"></td>
+                <td>
+                  <span th:if="${d.statut == 'EN_ATTENTE'}" class="badge badge-yellow">EN ATTENTE</span>
+                  <span th:if="${d.statut == 'VALIDE'}" class="badge badge-green">VALIDE</span>
+                  <span th:if="${d.statut == 'REJETE'}" class="badge badge-red">REJETE</span>
+                  <span th:if="${d.statut != 'EN_ATTENTE' and d.statut != 'VALIDE' and d.statut != 'REJETE'}" class="badge badge-gray" th:text="${d.statut}"></span>
+                </td>
+                <td style="font-size:12px; color:#94a3b8;" th:text="${d.motifRejet != null ? d.motifRejet : '-'}"></td>
+                <td>
+                  <div th:if="${d.statut == 'EN_ATTENTE'}" class="row-actions">
+                    <form th:action="@{${currentPagePath} + '/' + ${d.id} + '/valider'}" method="post" th:id="'fv-' + ${d.id}"></form>
+                    <button type="button" class="btn-valider" th:onclick="'confirmVal(' + ${d.id} + ')'">Valider</button>
+                    <button type="button" class="btn-rejeter" th:onclick="'openRejet(' + ${d.id} + ')'">Rejeter</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination-bar" th:if="${totalPages > 0}">
+          <span class="pagination-info"
+                th:text="${totalItems} + ' demande' + (${totalItems} > 1 ? 's' : '') +
+                          ' · Page ' + (${currentPage} + 1) + ' / ' + ${totalPages}"></span>
+          <div class="pagination-controls">
+            <a class="page-btn" th:classappend="${currentPage == 0} ? 'disabled' : ''"
+               th:href="${currentPage == 0} ? '#' : @{${currentPagePath}(page=0)}">««</a>
+            <a class="page-btn" th:classappend="${currentPage == 0} ? 'disabled' : ''"
+               th:href="${currentPage == 0} ? '#' : @{${currentPagePath}(page=${currentPage - 1})}">‹</a>
+            <th:block th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
+              <a class="page-btn" th:classappend="${i == currentPage} ? 'active' : ''"
+                 th:href="@{${currentPagePath}(page=${i})}"
+                 th:text="${i + 1}">1</a>
+            </th:block>
+            <a class="page-btn" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled' : ''"
+               th:href="${currentPage + 1 >= totalPages} ? '#' : @{${currentPagePath}(page=${currentPage + 1})}">›</a>
+            <a class="page-btn" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled' : ''"
+               th:href="${currentPage + 1 >= totalPages} ? '#' : @{${currentPagePath}(page=${totalPages - 1})}">»»</a>
+          </div>
         </div>
       </div>
     </div>

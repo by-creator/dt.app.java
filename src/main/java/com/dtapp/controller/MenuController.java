@@ -163,18 +163,21 @@ public class MenuController {
     }
 
     @GetMapping("/menu/direction-generale/gestion-remises")
-    public String directionGeneraleRemises(Model model, Authentication auth) {
-        return renderRemisesPage(model, auth, "Direction Generale", "/menu/direction-generale");
+    public String directionGeneraleRemises(@RequestParam(defaultValue = "0") int page,
+                                           Model model, Authentication auth) {
+        return renderRemisesPage(model, auth, "Direction Generale", "/menu/direction-generale", page);
     }
 
     @GetMapping("/menu/direction-financiere/gestion-remises")
-    public String directionFinanciereRemises(Model model, Authentication auth) {
-        return renderRemisesPage(model, auth, "Direction Financiere", "/menu/direction-financiere");
+    public String directionFinanciereRemises(@RequestParam(defaultValue = "0") int page,
+                                             Model model, Authentication auth) {
+        return renderRemisesPage(model, auth, "Direction Financiere", "/menu/direction-financiere", page);
     }
 
     @GetMapping("/menu/direction-exploitation/gestion-remises")
-    public String directionExploitationRemises(Model model, Authentication auth) {
-        return renderRemisesPage(model, auth, "Direction Exploitation", "/menu/direction-exploitation");
+    public String directionExploitationRemises(@RequestParam(defaultValue = "0") int page,
+                                               Model model, Authentication auth) {
+        return renderRemisesPage(model, auth, "Direction Exploitation", "/menu/direction-exploitation", page);
     }
 
     @GetMapping("/menu/facturation/ies")
@@ -191,19 +194,31 @@ public class MenuController {
     }
 
     @GetMapping("/menu/facturation/gestion-remises")
-    public String facturationRemises(Model model, Authentication auth) {
-        return renderRemisesPage(model, auth, "Facturation", "/menu/facturation");
+    public String facturationRemises(@RequestParam(defaultValue = "0") int page,
+                                     Model model, Authentication auth) {
+        return renderRemisesPage(model, auth, "Facturation", "/menu/facturation", page);
     }
 
     @GetMapping("/menu/facturation/gestion-validations")
-    public String facturationValidations(Model model, Authentication auth) {
+    public String facturationValidations(@RequestParam(defaultValue = "0") int page,
+                                         Model model, Authentication auth) {
         User loggedUser = userRepository.findByEmail(auth.getName()).orElseThrow();
-        List<RattachementBl> demandes = rattachementBlRepository.findByTypeOrderByCreatedAtDesc("FACTURATION");
         Set<String> roles = auth.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority).collect(Collectors.toSet());
         boolean admin = roles.contains("ROLE_ADMIN");
+        int safePage = Math.max(page, 0);
+        Page<RattachementBl> demandesPage = rattachementBlRepository.findByTypePaged(
+                "FACTURATION", PageRequest.of(safePage, BL_PAGE_SIZE));
+        if (safePage > 0 && safePage >= demandesPage.getTotalPages() && demandesPage.getTotalPages() > 0) {
+            safePage = demandesPage.getTotalPages() - 1;
+            demandesPage = rattachementBlRepository.findByTypePaged(
+                    "FACTURATION", PageRequest.of(safePage, BL_PAGE_SIZE));
+        }
         model.addAttribute("loggedUser", loggedUser);
-        model.addAttribute("demandes", demandes);
+        model.addAttribute("demandes", demandesPage.getContent());
+        model.addAttribute("currentPage", demandesPage.getNumber());
+        model.addAttribute("totalPages", demandesPage.getTotalPages());
+        model.addAttribute("totalItems", demandesPage.getTotalElements());
         model.addAttribute("sectionLabel", "Facturation");
         model.addAttribute("parentMenuPath", "/menu/facturation");
         model.addAttribute("currentPagePath", "/menu/facturation/gestion-validations");
@@ -263,6 +278,8 @@ public class MenuController {
     }
 
     private static final int UNIFY_PAGE_SIZE = 10;
+    private static final int BL_PAGE_SIZE    = 15;
+    private static final int SAT_PAGE_SIZE   = 20;
 
     @GetMapping("/menu/facturation/unify")
     public String facturationUnifyWizard(@RequestParam(defaultValue = "formulaire-creation") String tab,
@@ -623,15 +640,29 @@ public class MenuController {
     }
 
     @GetMapping("/menu/dt/satisfaction")
-    public String satisfactionDashboard(Model model, Authentication auth) {
+    public String satisfactionDashboard(@RequestParam(defaultValue = "0") int page,
+                                        Model model, Authentication auth) {
         User loggedUser = userRepository.findByEmail(auth.getName()).orElseThrow();
         List<SatisfactionReponse> reponses = satisfactionReponseRepository
                 .findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
         int total = reponses.size();
 
+        int safePage = Math.max(page, 0);
+        org.springframework.data.domain.Page<SatisfactionReponse> reponsesPage =
+                satisfactionReponseRepository.findAll(
+                        PageRequest.of(safePage, SAT_PAGE_SIZE, Sort.by(Sort.Direction.DESC, "createdAt")));
+        if (safePage > 0 && safePage >= reponsesPage.getTotalPages() && reponsesPage.getTotalPages() > 0) {
+            safePage = reponsesPage.getTotalPages() - 1;
+            reponsesPage = satisfactionReponseRepository.findAll(
+                    PageRequest.of(safePage, SAT_PAGE_SIZE, Sort.by(Sort.Direction.DESC, "createdAt")));
+        }
+
         model.addAttribute("loggedUser", loggedUser);
         model.addAttribute("currentDate", formatDate());
-        model.addAttribute("reponses", reponses);
+        model.addAttribute("reponses", reponsesPage.getContent());
+        model.addAttribute("currentPage", reponsesPage.getNumber());
+        model.addAttribute("totalPages", reponsesPage.getTotalPages());
+        model.addAttribute("totalItems", reponsesPage.getTotalElements());
         model.addAttribute("total", total);
 
         // ── Général ────────────────────────────────────────────────────────
@@ -862,15 +893,26 @@ public class MenuController {
     private String renderRemisesPage(Model model,
                                      Authentication auth,
                                      String sectionLabel,
-                                     String parentMenuPath) {
+                                     String parentMenuPath,
+                                     int page) {
         User loggedUser = userRepository.findByEmail(auth.getName()).orElseThrow();
-        List<RattachementBl> demandes = rattachementBlRepository.findByTypeOrderByCreatedAtDesc("REMISE");
         Set<String> roles = auth.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority).collect(Collectors.toSet());
         boolean admin = roles.contains("ROLE_ADMIN");
         String currentPagePath = parentMenuPath + "/gestion-remises";
+        int safePage = Math.max(page, 0);
+        Page<RattachementBl> demandesPage = rattachementBlRepository.findByTypePaged(
+                "REMISE", PageRequest.of(safePage, BL_PAGE_SIZE));
+        if (safePage > 0 && safePage >= demandesPage.getTotalPages() && demandesPage.getTotalPages() > 0) {
+            safePage = demandesPage.getTotalPages() - 1;
+            demandesPage = rattachementBlRepository.findByTypePaged(
+                    "REMISE", PageRequest.of(safePage, BL_PAGE_SIZE));
+        }
         model.addAttribute("loggedUser", loggedUser);
-        model.addAttribute("demandes", demandes);
+        model.addAttribute("demandes", demandesPage.getContent());
+        model.addAttribute("currentPage", demandesPage.getNumber());
+        model.addAttribute("totalPages", demandesPage.getTotalPages());
+        model.addAttribute("totalItems", demandesPage.getTotalElements());
         model.addAttribute("sectionLabel", sectionLabel);
         model.addAttribute("parentMenuPath", parentMenuPath);
         model.addAttribute("currentPagePath", currentPagePath);
