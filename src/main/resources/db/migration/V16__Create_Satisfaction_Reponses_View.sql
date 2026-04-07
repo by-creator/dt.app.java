@@ -1,5 +1,8 @@
+-- Drop table if exists (may have been created as a table instead of a view)
+DROP TABLE IF EXISTS satisfaction_reponses;
+
 -- Create view for satisfaction responses combining all tables
-CREATE VIEW satisfaction_reponses AS
+CREATE OR REPLACE VIEW satisfaction_reponses AS
 SELECT
     i.id,
     i.nom,

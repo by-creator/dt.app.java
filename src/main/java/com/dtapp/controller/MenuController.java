@@ -13,6 +13,8 @@ import com.dtapp.service.EmailService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -260,19 +262,41 @@ public class MenuController {
         return "facturation/reports";
     }
 
+    private static final int UNIFY_PAGE_SIZE = 10;
+
     @GetMapping("/menu/facturation/unify")
     public String facturationUnifyWizard(@RequestParam(defaultValue = "formulaire-creation") String tab,
                                          @RequestParam(defaultValue = "1") int step,
+                                         @RequestParam(required = false) String search,
+                                         @RequestParam(defaultValue = "0") int page,
                                          Model model,
                                          Authentication auth) {
         User loggedUser = userRepository.findByEmail(auth.getName()).orElseThrow();
         boolean isAdmin = auth.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        int safePage = Math.max(page, 0);
+        Page<TiersUnify> tiersPage = tiersUnifyRepository.search(
+                search,
+                PageRequest.of(safePage, UNIFY_PAGE_SIZE, Sort.by(Sort.Direction.DESC, "createdAt"))
+        );
+        if (safePage > 0 && safePage >= tiersPage.getTotalPages() && tiersPage.getTotalPages() > 0) {
+            safePage = tiersPage.getTotalPages() - 1;
+            tiersPage = tiersUnifyRepository.search(
+                    search,
+                    PageRequest.of(safePage, UNIFY_PAGE_SIZE, Sort.by(Sort.Direction.DESC, "createdAt"))
+            );
+        }
+
         model.addAttribute("loggedUser", loggedUser);
         model.addAttribute("activeTab", normalizeUnifyTab(tab));
         model.addAttribute("activeStep", normalizeUnifyStep(step));
         model.addAttribute("isAdmin", isAdmin);
-        model.addAttribute("tiers", tiersUnifyRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt")));
+        model.addAttribute("tiers", tiersPage.getContent());
+        model.addAttribute("search", search != null ? search : "");
+        model.addAttribute("currentPage", tiersPage.getNumber());
+        model.addAttribute("totalPages", tiersPage.getTotalPages());
+        model.addAttribute("totalItems", tiersPage.getTotalElements());
         return "facturation/unify";
     }
 

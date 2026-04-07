@@ -221,11 +221,16 @@
       <!-- ── Liste des tiers ────────────────────────────────────────────── -->
       <div class="page-section-card" th:if="${activeTab == 'liste-tiers'}" style="padding:0; overflow:hidden;">
         <div class="table-toolbar">
-          <div style="font-weight:600; font-size:14px;">Liste des tiers</div>
-          <input id="tiersSearch" type="search" class="table-search-input" placeholder="Rechercher un tiers..." oninput="filterSimpleRows('tiersTable', this.value)">
+          <span class="pagination-info" th:if="${totalItems > 0}"
+                th:text="${totalItems} + ' enregistrement' + (${totalItems} > 1 ? 's' : '')"></span>
+          <form th:action="@{/menu/facturation/unify}" method="get" style="display:flex; align-items:center; gap:8px;">
+            <input type="hidden" name="tab" value="liste-tiers">
+            <input type="search" name="search" class="table-search-input" placeholder="Rechercher un tiers..." th:value="${search}">
+            <button type="submit" class="btn-actualiser" style="white-space:nowrap;">Rechercher</button>
+          </form>
         </div>
         <div class="table-wrapper">
-          <table class="data-table" id="tiersTable">
+          <table class="data-table">
             <thead>
               <tr>
                 <th>#</th>
@@ -248,6 +253,26 @@
               </tr>
             </tbody>
           </table>
+        </div>
+        <div class="pagination-bar" th:if="${totalPages > 0}">
+          <span class="pagination-info"
+                th:text="${totalItems} + ' enregistrement' + (${totalItems} > 1 ? 's' : '') +
+                          ' · Page ' + (${currentPage} + 1) + ' / ' + ${totalPages}"></span>
+          <div class="pagination-controls">
+            <a class="page-btn" th:classappend="${currentPage == 0} ? 'disabled' : ''"
+               th:href="${currentPage == 0} ? '#' : @{/menu/facturation/unify(tab='liste-tiers', page=0, search=${search})}">««</a>
+            <a class="page-btn" th:classappend="${currentPage == 0} ? 'disabled' : ''"
+               th:href="${currentPage == 0} ? '#' : @{/menu/facturation/unify(tab='liste-tiers', page=${currentPage - 1}, search=${search})}">‹</a>
+            <th:block th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
+              <a class="page-btn" th:classappend="${i == currentPage} ? 'active' : ''"
+                 th:href="@{/menu/facturation/unify(tab='liste-tiers', page=${i}, search=${search})}"
+                 th:text="${i + 1}">1</a>
+            </th:block>
+            <a class="page-btn" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled' : ''"
+               th:href="${currentPage + 1 >= totalPages} ? '#' : @{/menu/facturation/unify(tab='liste-tiers', page=${currentPage + 1}, search=${search})}">›</a>
+            <a class="page-btn" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled' : ''"
+               th:href="${currentPage + 1 >= totalPages} ? '#' : @{/menu/facturation/unify(tab='liste-tiers', page=${totalPages - 1}, search=${search})}">»»</a>
+          </div>
         </div>
       </div>
 
@@ -325,11 +350,16 @@
         </div>
 
         <div class="table-toolbar" style="padding-left:0; padding-right:0;">
-          <div style="font-weight:600; font-size:14px;">Liste admin</div>
-          <input id="adminSearch" type="search" class="table-search-input" placeholder="Rechercher..." oninput="filterSimpleRows('unifyAdminTable', this.value)">
+          <span class="pagination-info" th:if="${totalItems > 0}"
+                th:text="${totalItems} + ' enregistrement' + (${totalItems} > 1 ? 's' : '')"></span>
+          <form th:action="@{/menu/facturation/unify}" method="get" style="display:flex; align-items:center; gap:8px;">
+            <input type="hidden" name="tab" value="admin">
+            <input type="search" name="search" class="table-search-input" placeholder="Rechercher..." th:value="${search}">
+            <button type="submit" class="btn-actualiser" style="white-space:nowrap;">Rechercher</button>
+          </form>
         </div>
         <div class="table-wrapper">
-          <table class="data-table" id="unifyAdminTable">
+          <table class="data-table">
             <thead>
               <tr>
                 <th>#</th>
@@ -368,6 +398,26 @@
               </tr>
             </tbody>
           </table>
+        </div>
+        <div class="pagination-bar" th:if="${totalPages > 0}">
+          <span class="pagination-info"
+                th:text="${totalItems} + ' enregistrement' + (${totalItems} > 1 ? 's' : '') +
+                          ' · Page ' + (${currentPage} + 1) + ' / ' + ${totalPages}"></span>
+          <div class="pagination-controls">
+            <a class="page-btn" th:classappend="${currentPage == 0} ? 'disabled' : ''"
+               th:href="${currentPage == 0} ? '#' : @{/menu/facturation/unify(tab='admin', page=0, search=${search})}">««</a>
+            <a class="page-btn" th:classappend="${currentPage == 0} ? 'disabled' : ''"
+               th:href="${currentPage == 0} ? '#' : @{/menu/facturation/unify(tab='admin', page=${currentPage - 1}, search=${search})}">‹</a>
+            <th:block th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
+              <a class="page-btn" th:classappend="${i == currentPage} ? 'active' : ''"
+                 th:href="@{/menu/facturation/unify(tab='admin', page=${i}, search=${search})}"
+                 th:text="${i + 1}">1</a>
+            </th:block>
+            <a class="page-btn" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled' : ''"
+               th:href="${currentPage + 1 >= totalPages} ? '#' : @{/menu/facturation/unify(tab='admin', page=${currentPage + 1}, search=${search})}">›</a>
+            <a class="page-btn" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled' : ''"
+               th:href="${currentPage + 1 >= totalPages} ? '#' : @{/menu/facturation/unify(tab='admin', page=${totalPages - 1}, search=${search})}">»»</a>
+          </div>
         </div>
 
         <!-- Formulaire modification (caché, affiché par JS) -->
