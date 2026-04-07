@@ -1251,6 +1251,10 @@ body {
 [data-theme="dark"] .users-table tbody tr:hover td { background: #273549; }
 
 [data-theme="dark"] .table-toolbar       { border-color: #334155; background: #1e293b; }
+[data-theme="dark"] .toolbar-title       { color: #e2e8f0; }
+
+[data-theme="dark"] .data-table thead th,
+[data-theme="dark"] .users-table thead th { background: #312e81; color: #f1f5f9; border-color: #4338ca; }
 
 [data-theme="dark"] .sysinfo-row         { border-color: #334155; }
 [data-theme="dark"] .sysinfo-row .key    { color: #94a3b8; }
