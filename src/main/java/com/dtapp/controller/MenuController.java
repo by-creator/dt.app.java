@@ -191,9 +191,11 @@ public class MenuController {
         User loggedUser = userRepository.findByEmail(auth.getName()).orElseThrow();
         Set<String> roles = auth.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority).collect(Collectors.toSet());
+        boolean isAdmin = roles.contains("ROLE_ADMIN");
         model.addAttribute("loggedUser", loggedUser);
         model.addAttribute("activeTab", normalizeIesTab(tab));
-        model.addAttribute("isAdmin", roles.contains("ROLE_ADMIN"));
+        model.addAttribute("isAdmin", isAdmin);
+        model.addAttribute("sidebarMenuUrl", isAdmin ? "/menu" : "/menu/facturation");
         return "facturation/ies";
     }
 
@@ -278,6 +280,7 @@ public class MenuController {
         model.addAttribute("loggedUser", loggedUser);
         model.addAttribute("activeTab", normalizeReportsTab(tab));
         model.addAttribute("isAdmin", isAdmin);
+        model.addAttribute("sidebarMenuUrl", isAdmin ? "/menu" : "/menu/facturation");
         return "facturation/reports";
     }
 
@@ -318,6 +321,7 @@ public class MenuController {
         model.addAttribute("currentPage", tiersPage.getNumber());
         model.addAttribute("totalPages", tiersPage.getTotalPages());
         model.addAttribute("totalItems", tiersPage.getTotalElements());
+        model.addAttribute("sidebarMenuUrl", isAdmin ? "/menu" : "/menu/facturation");
         return "facturation/unify";
     }
 

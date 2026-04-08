@@ -1,6 +1,0 @@
-Sur heroku lorsque j'ai voulu importer des données depuis cette route /menu/facturation/unify?tab=admin j'ai ce problème : 
-
- at=error code=H12 desc="Request timeout" method=POST path="/menu/facturation/unify/admin/import" host=site-dt-staging-4682ed3f9fbf.herokuapp.com request_id=e3d37205-0a87-c469-b990-1c5bf6bb3108 fwd="154.125.138.60" dyno=web.1 connect=0ms service=31738ms status=503 bytes=567 protocol=http1.1 tls=true tls_version=unknown
-
-
- Et j'ai remarqué que quand j'ai fait un retour et j'ai actualisé j'ai trouvé 15660 enregistrements au lieu de 28551 enregistrements comme enregistré en local
