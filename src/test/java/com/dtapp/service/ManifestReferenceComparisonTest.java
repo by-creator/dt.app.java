@@ -30,12 +30,8 @@ class ManifestReferenceComparisonTest {
 
     @Test
     void parserMatchesReferenceFileForWeightAndVolumeColumns() throws Exception {
-        Path txtPath = resolveFixtureOrNull("ALL_DAKAR_BL_Extract2", ".TXT");
-        Assumptions.assumeTrue(txtPath != null,
-                "Fichier de test ALL_DAKAR_BL_Extract2*.TXT absent; test de comparaison ignore.");
-        Path xlsPath = resolveFixtureOrNull("EXTRACTION", ".xls");
-        Assumptions.assumeTrue(xlsPath != null,
-                "Fichier de reference EXTRACTION*.xls absent; test de comparaison ignore.");
+        Path txtPath = resolveFixtureOrSkip("ALL_DAKAR_BL_Extract2", ".TXT");
+        Path xlsPath = resolveFixtureOrSkip("EXTRACTION", ".xls");
 
         EdiParser parser = new EdiParser();
         List<EdiRecord> records = parser.parse(txtPath.toString());
@@ -163,6 +159,13 @@ class ManifestReferenceComparisonTest {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    private Path resolveFixtureOrSkip(String requiredNameFragment, String requiredExtension) {
+        Path path = resolveFixtureOrNull(requiredNameFragment, requiredExtension);
+        Assumptions.assumeTrue(path != null,
+                "Fichier de comparaison absent: " + requiredNameFragment + "*" + requiredExtension);
+        return Objects.requireNonNull(path);
     }
 
     static class XlsRowProjection {

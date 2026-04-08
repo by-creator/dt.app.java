@@ -346,6 +346,7 @@ function applyTableFilters(table, rows, filters, emptyState) {
 
 function initColumnFilters(table) {
   if (table.dataset.columnFiltersInit === '1') return;
+  if (table.dataset.disableColumnFilters === 'true') return;
   table.dataset.columnFiltersInit = '1';
 
   var headerCells = Array.from(table.querySelectorAll('thead th'));

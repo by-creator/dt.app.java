@@ -177,7 +177,7 @@
         <!-- Fenêtre de 10 lignes avec scroll interne — en-tête collant -->
         <div th:if="${!xlsHeaders.isEmpty()}"
              class="table-wrapper">
-          <table class="data-table" id="xlsTable"
+          <table class="data-table" id="xlsTable" data-disable-column-filters="true"
                  style="border-collapse: separate; border-spacing: 0;">
             <thead>
               <tr>
