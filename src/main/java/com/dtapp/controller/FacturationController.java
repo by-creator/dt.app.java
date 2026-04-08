@@ -80,13 +80,23 @@ public class FacturationController {
 
     @PostMapping("/facturation/gestion-validations/{id}/rejeter")
     public String rejeterValidation(@PathVariable long id,
-                                    @RequestParam String motif,
+                                    @RequestParam(value = "motif", required = false) String motif,
+                                    @RequestParam(value = "motifAutre", required = false) String motifAutre,
                                     Authentication auth,
                                     RedirectAttributes ra) {
         RattachementBl bl = rattachementBlRepository.findById(id).orElseThrow();
         User operator = userRepository.findByEmail(auth.getName()).orElseThrow();
+        String motifFinal = (motif != null && !motif.isBlank()) ? motif.trim() : "";
+        if ("Autre".equalsIgnoreCase(motifFinal) || motifFinal.isBlank()) {
+            if (motifAutre != null && !motifAutre.isBlank()) {
+                motifFinal = motifAutre.trim();
+            }
+        }
+        if (motifFinal.isBlank()) {
+            motifFinal = "Motif non precise";
+        }
         bl.setStatut("REJETE");
-        bl.setMotifRejet(motif);
+        bl.setMotifRejet(motifFinal);
         bl.setUserId(operator.getId());
         rattachementBlRepository.save(bl);
         emailService.notifyClientValidationRejete(bl);
@@ -140,13 +150,23 @@ public class FacturationController {
 
     @PostMapping("/facturation/gestion-remises/{id}/rejeter")
     public String rejeterRemise(@PathVariable long id,
-                                @RequestParam String motif,
+                                @RequestParam(value = "motif", required = false) String motif,
+                                @RequestParam(value = "motifAutre", required = false) String motifAutre,
                                 Authentication auth,
                                 RedirectAttributes ra) {
         RattachementBl bl = rattachementBlRepository.findById(id).orElseThrow();
         User operator = userRepository.findByEmail(auth.getName()).orElseThrow();
+        String motifFinal = (motif != null && !motif.isBlank()) ? motif.trim() : "";
+        if ("Autre".equalsIgnoreCase(motifFinal) || motifFinal.isBlank()) {
+            if (motifAutre != null && !motifAutre.isBlank()) {
+                motifFinal = motifAutre.trim();
+            }
+        }
+        if (motifFinal.isBlank()) {
+            motifFinal = "Motif non precise";
+        }
         bl.setStatut("REJETE");
-        bl.setMotifRejet(motif);
+        bl.setMotifRejet(motifFinal);
         bl.setUserId(operator.getId());
         rattachementBlRepository.save(bl);
         emailService.notifyClientRemiseRejete(bl);

@@ -1,4 +1,0 @@
-Pour chaque table de mon projet à la place de la barre de recherche 
-je souhaite avoir des filtres en fonction du nom des en-têtes présentes
-au niveau de la table affichée ce qui affinera la recherche en fonction 
-du type de données fait le pour toutes les tables présentes et futures
