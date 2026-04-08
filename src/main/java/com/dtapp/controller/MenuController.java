@@ -9,6 +9,7 @@ import com.dtapp.repository.RattachementBlRepository;
 import com.dtapp.repository.SatisfactionReponseRepository;
 import com.dtapp.repository.TiersUnifyRepository;
 import com.dtapp.repository.UserRepository;
+import com.dtapp.service.BulkInsertService;
 import com.dtapp.service.EmailService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.poi.ss.usermodel.*;
@@ -44,19 +45,22 @@ public class MenuController {
     private final GfaGuichetRepository gfaGuichetRepository;
     private final TiersUnifyRepository tiersUnifyRepository;
     private final EmailService emailService;
+    private final BulkInsertService bulkInsertService;
 
     public MenuController(UserRepository userRepository,
                           RattachementBlRepository rattachementBlRepository,
                           SatisfactionReponseRepository satisfactionReponseRepository,
                           GfaGuichetRepository gfaGuichetRepository,
                           TiersUnifyRepository tiersUnifyRepository,
-                          EmailService emailService) {
+                          EmailService emailService,
+                          BulkInsertService bulkInsertService) {
         this.userRepository = userRepository;
         this.rattachementBlRepository = rattachementBlRepository;
         this.satisfactionReponseRepository = satisfactionReponseRepository;
         this.gfaGuichetRepository = gfaGuichetRepository;
         this.tiersUnifyRepository = tiersUnifyRepository;
         this.emailService = emailService;
+        this.bulkInsertService = bulkInsertService;
     }
 
     @GetMapping("/menu")
@@ -538,7 +542,12 @@ public class MenuController {
             return "redirect:/menu/facturation/unify?tab=admin";
         }
         if (!batch.isEmpty()) {
-            tiersUnifyRepository.saveAll(batch);
+            try {
+                bulkInsertService.bulkInsertTiersUnify(batch);
+            } catch (Exception e) {
+                ra.addFlashAttribute("successMsg", "Erreur lors de l'import : " + e.getMessage());
+                return "redirect:/menu/facturation/unify?tab=admin";
+            }
         }
         ra.addFlashAttribute("successMsg", batch.size() + " tiers importe(s) avec succes.");
         return "redirect:/menu/facturation/unify?tab=admin";

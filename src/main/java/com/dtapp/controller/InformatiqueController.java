@@ -6,6 +6,7 @@ import com.dtapp.entity.User;
 import com.dtapp.repository.MachineRepository;
 import com.dtapp.repository.PosteFixeRepository;
 import com.dtapp.repository.UserRepository;
+import com.dtapp.service.BulkInsertService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -33,13 +34,16 @@ public class InformatiqueController {
     private final UserRepository userRepository;
     private final MachineRepository machineRepository;
     private final PosteFixeRepository posteFixeRepository;
+    private final BulkInsertService bulkInsertService;
 
     public InformatiqueController(UserRepository userRepository,
                                   MachineRepository machineRepository,
-                                  PosteFixeRepository posteFixeRepository) {
-        this.userRepository     = userRepository;
-        this.machineRepository  = machineRepository;
+                                  PosteFixeRepository posteFixeRepository,
+                                  BulkInsertService bulkInsertService) {
+        this.userRepository      = userRepository;
+        this.machineRepository   = machineRepository;
         this.posteFixeRepository = posteFixeRepository;
+        this.bulkInsertService   = bulkInsertService;
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -261,7 +265,7 @@ public class InformatiqueController {
                 m.setCommentaire(cellStr(row, 13));
                 toSave.add(m);
             }
-            machineRepository.saveAll(toSave);
+            bulkInsertService.bulkInsertMachines(toSave);
             ra.addFlashAttribute("success", toSave.size() + " machine(s) importée(s) avec succès.");
         } catch (Exception e) {
             ra.addFlashAttribute("error", "Erreur lors de l'import : " + e.getMessage());
@@ -421,7 +425,7 @@ public class InformatiqueController {
                 p.setCommentaire(cellStr(row, 5));
                 toSave.add(p);
             }
-            posteFixeRepository.saveAll(toSave);
+            bulkInsertService.bulkInsertPostesFixes(toSave);
             ra.addFlashAttribute("success", toSave.size() + " poste(s) fixe(s) importé(s) avec succès.");
         } catch (Exception e) {
             ra.addFlashAttribute("error", "Erreur lors de l'import : " + e.getMessage());

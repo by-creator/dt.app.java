@@ -306,7 +306,7 @@
         <div style="display:grid; grid-template-columns:minmax(280px, 360px) 1fr; gap:24px; margin-bottom:24px; align-items:start;">
           <!-- Import / Export -->
           <div class="page-section-card" style="margin:0;">
-            <div style="font-size:17px; font-weight:700; color:#e2e8f0; margin-bottom:6px;">Import / Export</div>
+            <div class="card-section-title" style="margin-bottom:6px;">Import / Export</div>
             <p style="margin:0 0 16px; color:#94a3b8; font-size:14px;">Selectionnez un fichier puis lancez l'import.</p>
             <form th:action="@{/menu/facturation/unify/admin/import}" method="post" enctype="multipart/form-data">
               <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
@@ -324,7 +324,7 @@
 
           <!-- Formulaire ajout/modification -->
           <div class="page-section-card" style="margin:0;" id="adminForm">
-            <div style="font-size:17px; font-weight:700; color:#e2e8f0; margin-bottom:16px;" id="adminFormTitle">Ajouter un tiers</div>
+            <div class="card-section-title" style="margin-bottom:16px;" id="adminFormTitle">Ajouter un tiers</div>
             <form id="formAdminAjout" th:action="@{/menu/facturation/unify/admin/ajouter}" method="post">
               <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
               <div class="form-grid-2">
@@ -423,7 +423,7 @@
         <!-- Formulaire modification (caché, affiché par JS) -->
         <div id="modalModifier" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:999; display:none; align-items:center; justify-content:center;">
           <div style="background:#1e293b; border-radius:16px; padding:28px; width:100%; max-width:480px;">
-            <p style="font-size:17px; font-weight:700; color:#e2e8f0; margin:0 0 20px;">Modifier le tiers</p>
+            <p class="card-section-title" style="margin:0 0 20px;">Modifier le tiers</p>
             <form id="formModifier" method="post">
               <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
               <div class="form-group" style="margin-bottom:14px;">

@@ -3,6 +3,7 @@ package com.dtapp.controller;
 import com.dtapp.entity.Codification;
 import com.dtapp.repository.CodificationRepository;
 import com.dtapp.repository.UserRepository;
+import com.dtapp.service.BulkInsertService;
 import com.dtapp.service.EdiExporter;
 import com.dtapp.service.EdiParser;
 import com.dtapp.service.EdiRecord;
@@ -54,17 +55,20 @@ public class MenuPlanificationController {
     private final XlsExporter xlsExporter;
     private final CodificationRepository codificationRepository;
     private final UserRepository userRepository;
+    private final BulkInsertService bulkInsertService;
 
     public MenuPlanificationController(EdiParser parser,
                                        EdiExporter exporter,
                                        XlsExporter xlsExporter,
                                        CodificationRepository codificationRepository,
-                                       UserRepository userRepository) {
+                                       UserRepository userRepository,
+                                       BulkInsertService bulkInsertService) {
         this.parser = parser;
         this.exporter = exporter;
         this.xlsExporter = xlsExporter;
         this.codificationRepository = codificationRepository;
         this.userRepository = userRepository;
+        this.bulkInsertService = bulkInsertService;
     }
 
     @GetMapping("/upload-manifest")
@@ -144,6 +148,13 @@ public class MenuPlanificationController {
                         .iftminData(iftminBytes)
                         .compagnie(compagnie)
                         .build()));
+
+                // Insertion groupée des lignes via LOAD DATA LOCAL INFILE
+                try {
+                    bulkInsertService.bulkInsertLignes(records, codification.getId());
+                } catch (Exception e) {
+                    log.error("Erreur LOAD DATA INFILE pour codification_id={}", codification.getId(), e);
+                }
 
                 redirectAttributes.addFlashAttribute("success", "Manifeste traite avec succes. Call Number : " + callNumber);
                 redirectAttributes.addFlashAttribute("codification_id", codification.getId());
