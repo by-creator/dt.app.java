@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.lang.NonNull;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import javax.sql.DataSource;
@@ -93,8 +94,10 @@ public class BulkInsertService {
     // ── tiers_unify ────────────────────────────────────────────────────────────
 
     /**
-     * Insère en masse des TiersUnify.
+     * Insère en masse des TiersUnify — exécuté en tâche de fond (@Async)
+     * pour éviter le timeout H12 de Heroku (30 s).
      */
+    @Async
     public void bulkInsertTiersUnify(List<TiersUnify> items) {
         if (items.isEmpty()) return;
 

@@ -542,14 +542,10 @@ public class MenuController {
             return "redirect:/menu/facturation/unify?tab=admin";
         }
         if (!batch.isEmpty()) {
-            try {
-                bulkInsertService.bulkInsertTiersUnify(batch);
-            } catch (Exception e) {
-                ra.addFlashAttribute("successMsg", "Erreur lors de l'import : " + e.getMessage());
-                return "redirect:/menu/facturation/unify?tab=admin";
-            }
+            bulkInsertService.bulkInsertTiersUnify(batch);
         }
-        ra.addFlashAttribute("successMsg", batch.size() + " tiers importe(s) avec succes.");
+        ra.addFlashAttribute("successMsg",
+                batch.size() + " tiers en cours d'import en arrière-plan. Actualisez dans quelques instants.");
         return "redirect:/menu/facturation/unify?tab=admin";
     }
 
