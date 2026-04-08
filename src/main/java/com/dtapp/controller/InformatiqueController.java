@@ -19,8 +19,11 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -233,37 +236,69 @@ public class InformatiqueController {
     public String importMachines(@RequestParam MultipartFile file,
                                  RedirectAttributes ra) {
         if (file.isEmpty()) {
-            ra.addFlashAttribute("error", "Veuillez sélectionner un fichier Excel.");
+            ra.addFlashAttribute("error", "Veuillez sélectionner un fichier.");
             return "redirect:/menu/informatique/parc/machines";
         }
-        try (InputStream is = file.getInputStream();
-             Workbook wb = new XSSFWorkbook(is)) {
-
-            Sheet sheet = wb.getSheetAt(0);
+        String originalFilename = file.getOriginalFilename();
+        String filename = originalFilename != null ? originalFilename.toLowerCase() : "";
+        try {
             List<Machine> toSave = new ArrayList<>();
-            boolean firstRow = true;
-
-            for (Row row : sheet) {
-                if (firstRow) { firstRow = false; continue; } // skip header
-                String name = cellStr(row, 1);
-                if (name.isBlank()) continue;
-
-                Machine m = new Machine();
-                m.setName(name);
-                m.setType(cellStr(row, 0));
-                m.setAjowName(cellStr(row, 2));
-                m.setUsername(cellStr(row, 3));
-                m.setServiceTag(cellStr(row, 4));
-                m.setVersionOs(cellStr(row, 5));
-                m.setModel(cellStr(row, 6));
-                m.setSociete(cellStr(row, 7));
-                m.setService(cellStr(row, 8));
-                m.setEmplacement(cellStr(row, 9));
-                m.setSites(cellStr(row, 10));
-                m.setDateAcquisition(cellStr(row, 11));
-                m.setDateDeploiement(cellStr(row, 12));
-                m.setCommentaire(cellStr(row, 13));
-                toSave.add(m);
+            if (filename.endsWith(".csv")) {
+                try (BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
+                    String firstLine = reader.readLine(); // detect delimiter from header
+                    if (firstLine == null) throw new IllegalArgumentException("Fichier CSV vide.");
+                    String sep = firstLine.contains(";") ? ";" : ",";
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        String[] cols = line.split(sep, -1);
+                        String name = cols.length > 1 ? cols[1].trim() : "";
+                        if (name.isBlank()) continue;
+                        Machine m = new Machine();
+                        m.setType(cols.length > 0 ? cols[0].trim() : null);
+                        m.setName(name);
+                        m.setAjowName(cols.length > 2  ? cols[2].trim()  : null);
+                        m.setUsername(cols.length > 3  ? cols[3].trim()  : null);
+                        m.setServiceTag(cols.length > 4  ? cols[4].trim()  : null);
+                        m.setVersionOs(cols.length > 5  ? cols[5].trim()  : null);
+                        m.setModel(cols.length > 6  ? cols[6].trim()  : null);
+                        m.setSociete(cols.length > 7  ? cols[7].trim()  : null);
+                        m.setService(cols.length > 8  ? cols[8].trim()  : null);
+                        m.setEmplacement(cols.length > 9  ? cols[9].trim()  : null);
+                        m.setSites(cols.length > 10 ? cols[10].trim() : null);
+                        m.setDateAcquisition(cols.length > 11 ? cols[11].trim() : null);
+                        m.setDateDeploiement(cols.length > 12 ? cols[12].trim() : null);
+                        m.setCommentaire(cols.length > 13 ? cols[13].trim() : null);
+                        toSave.add(m);
+                    }
+                }
+            } else {
+                try (InputStream is = file.getInputStream();
+                     Workbook wb = new XSSFWorkbook(is)) {
+                    Sheet sheet = wb.getSheetAt(0);
+                    boolean firstRow = true;
+                    for (Row row : sheet) {
+                        if (firstRow) { firstRow = false; continue; }
+                        String name = cellStr(row, 1);
+                        if (name.isBlank()) continue;
+                        Machine m = new Machine();
+                        m.setName(name);
+                        m.setType(cellStr(row, 0));
+                        m.setAjowName(cellStr(row, 2));
+                        m.setUsername(cellStr(row, 3));
+                        m.setServiceTag(cellStr(row, 4));
+                        m.setVersionOs(cellStr(row, 5));
+                        m.setModel(cellStr(row, 6));
+                        m.setSociete(cellStr(row, 7));
+                        m.setService(cellStr(row, 8));
+                        m.setEmplacement(cellStr(row, 9));
+                        m.setSites(cellStr(row, 10));
+                        m.setDateAcquisition(cellStr(row, 11));
+                        m.setDateDeploiement(cellStr(row, 12));
+                        m.setCommentaire(cellStr(row, 13));
+                        toSave.add(m);
+                    }
+                }
             }
             bulkInsertService.bulkInsertMachines(toSave);
             ra.addFlashAttribute("success", toSave.size() + " machine(s) importée(s) avec succès.");
@@ -401,29 +436,61 @@ public class InformatiqueController {
     public String importPostesFixes(@RequestParam MultipartFile file,
                                     RedirectAttributes ra) {
         if (file.isEmpty()) {
-            ra.addFlashAttribute("error", "Veuillez sélectionner un fichier Excel.");
+            ra.addFlashAttribute("error", "Veuillez sélectionner un fichier.");
             return "redirect:/menu/informatique/parc/postes-fixes";
         }
-        try (InputStream is = file.getInputStream();
-             Workbook wb = new XSSFWorkbook(is)) {
-
-            Sheet sheet = wb.getSheetAt(0);
+        String originalFilename = file.getOriginalFilename();
+        String filename = originalFilename != null ? originalFilename.toLowerCase() : "";
+        try {
             List<PosteFixe> toSave = new ArrayList<>();
-            boolean firstRow = true;
-
-            for (Row row : sheet) {
-                if (firstRow) { firstRow = false; continue; }
-                String annuaire = cellStr(row, 1);
-                String nom      = cellStr(row, 2);
-                if (annuaire.isBlank() && nom.isBlank()) continue;
-
-                PosteFixe p = new PosteFixe();
-                p.setAnnuaire(annuaire);
-                p.setNom(nom);
-                p.setPrenom(cellStr(row, 3));
-                p.setType(cellStr(row, 4));
-                p.setCommentaire(cellStr(row, 5));
-                toSave.add(p);
+            if (filename.endsWith(".csv")) {
+                try (BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
+                    String firstLine = reader.readLine();
+                    if (firstLine == null) throw new IllegalArgumentException("Fichier CSV vide.");
+                    String sep = firstLine.contains(";") ? ";" : ",";
+                    // Detect format: if first column header is "id" → export format (skip col 0)
+                    // Otherwise source format (annuaire at col 0, no ID column)
+                    String[] headers = firstLine.split(sep, -1);
+                    int off = headers[0].trim().equalsIgnoreCase("id") ? 1 : 0;
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        String[] cols = line.split(sep, -1);
+                        String annuaire = cols.length > off     ? cols[off].trim()     : "";
+                        String nom      = cols.length > off + 1 ? cols[off + 1].trim() : "";
+                        if (annuaire.isBlank() && nom.isBlank()) continue;
+                        PosteFixe p = new PosteFixe();
+                        p.setAnnuaire(annuaire.isBlank()             ? null : annuaire);
+                        p.setNom(nom.isBlank()                       ? null : nom);
+                        p.setPrenom(cols.length > off + 2            ? cols[off + 2].trim() : null);
+                        p.setType(cols.length > off + 3              ? cols[off + 3].trim() : null);
+                        p.setCommentaire(cols.length > off + 4       ? cols[off + 4].trim() : null);
+                        toSave.add(p);
+                    }
+                }
+            } else {
+                try (InputStream is = file.getInputStream();
+                     Workbook wb = new XSSFWorkbook(is)) {
+                    Sheet sheet = wb.getSheetAt(0);
+                    // Detect format from header row
+                    int off = 0;
+                    Row headerRow = sheet.getRow(0);
+                    if (headerRow != null && cellStr(headerRow, 0).equalsIgnoreCase("id")) off = 1;
+                    boolean firstRow = true;
+                    for (Row row : sheet) {
+                        if (firstRow) { firstRow = false; continue; }
+                        String annuaire = cellStr(row, off);
+                        String nom      = cellStr(row, off + 1);
+                        if (annuaire.isBlank() && nom.isBlank()) continue;
+                        PosteFixe p = new PosteFixe();
+                        p.setAnnuaire(annuaire.isBlank() ? null : annuaire);
+                        p.setNom(nom.isBlank()           ? null : nom);
+                        p.setPrenom(cellStr(row, off + 2));
+                        p.setType(cellStr(row, off + 3));
+                        p.setCommentaire(cellStr(row, off + 4));
+                        toSave.add(p);
+                    }
+                }
             }
             bulkInsertService.bulkInsertPostesFixes(toSave);
             ra.addFlashAttribute("success", toSave.size() + " poste(s) fixe(s) importé(s) avec succès.");

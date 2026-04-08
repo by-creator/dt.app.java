@@ -4,40 +4,59 @@ import com.dtapp.entity.Authority;
 import com.dtapp.entity.AuthorityDefinition;
 import com.dtapp.entity.Compagnie;
 import com.dtapp.entity.User;
+import com.dtapp.repository.AuditLogRepository;
 import com.dtapp.repository.AuthorityDefinitionRepository;
 import com.dtapp.repository.AuthorityRepository;
 import com.dtapp.repository.CompagnieRepository;
 import com.dtapp.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 @Controller
 @RequestMapping("/admin")
 @Slf4j
 public class AdminController {
 
+    private static final int AUDIT_PAGE_SIZE = 10;
+
     private final UserRepository userRepository;
     private final CompagnieRepository compagnieRepository;
     private final AuthorityRepository authorityRepository;
     private final AuthorityDefinitionRepository authorityDefinitionRepository;
+    private final AuditLogRepository auditLogRepository;
     private final PasswordEncoder passwordEncoder;
 
     public AdminController(UserRepository userRepository,
                            CompagnieRepository compagnieRepository,
                            AuthorityRepository authorityRepository,
                            AuthorityDefinitionRepository authorityDefinitionRepository,
+                           AuditLogRepository auditLogRepository,
                            PasswordEncoder passwordEncoder) {
         this.userRepository                 = userRepository;
         this.compagnieRepository            = compagnieRepository;
         this.authorityRepository            = authorityRepository;
         this.authorityDefinitionRepository  = authorityDefinitionRepository;
+        this.auditLogRepository             = auditLogRepository;
         this.passwordEncoder                = passwordEncoder;
     }
 
@@ -45,6 +64,8 @@ public class AdminController {
 
     @GetMapping
     public String index(@RequestParam(defaultValue = "users") String tab,
+                        @RequestParam(required = false) String auditSearch,
+                        @RequestParam(defaultValue = "0") int auditPage,
                         Model model, Authentication auth) {
         model.addAttribute("loggedUser", userRepository.findByEmail(auth.getName()).orElseThrow());
         model.addAttribute("users",      userRepository.findAllByOrderByCreatedAtDesc());
@@ -52,7 +73,139 @@ public class AdminController {
         model.addAttribute("authorities", authorityRepository.findAllWithUser());
         model.addAttribute("authorityDefinitions", authorityDefinitionRepository.findAll(Sort.by("name")));
         model.addAttribute("tab", tab);
+
+        int safePage = Math.max(auditPage, 0);
+        Page<com.dtapp.entity.AuditLog> auditPageData = auditLogRepository.search(
+                auditSearch,
+                PageRequest.of(safePage, AUDIT_PAGE_SIZE, Sort.by(Sort.Direction.DESC, "createdAt"))
+        );
+        model.addAttribute("auditLogs",        auditPageData.getContent());
+        model.addAttribute("auditSearch",      auditSearch != null ? auditSearch : "");
+        model.addAttribute("auditCurrentPage", auditPageData.getNumber());
+        model.addAttribute("auditTotalPages",  auditPageData.getTotalPages());
+        model.addAttribute("auditTotalItems",  auditPageData.getTotalElements());
+
         return "admin/index";
+    }
+
+    // ===== CONVERSION XLSX / CSV =====
+
+    @PostMapping("/convert")
+    @ResponseBody
+    public ResponseEntity<byte[]> convert(@RequestParam MultipartFile file,
+                                          @RequestParam String direction) {
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body("Aucun fichier sélectionné.".getBytes(StandardCharsets.UTF_8));
+        }
+        try {
+            byte[] result;
+            String outputName;
+            String contentType;
+            String baseName = baseName(file.getOriginalFilename());
+
+            if ("xlsx-to-csv".equals(direction)) {
+                result      = xlsxToCsv(file.getInputStream());
+                outputName  = baseName + ".csv";
+                contentType = "text/csv";
+            } else if ("csv-to-xlsx".equals(direction)) {
+                result      = csvToXlsx(file.getInputStream());
+                outputName  = baseName + ".xlsx";
+                contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+            } else {
+                return ResponseEntity.badRequest()
+                        .body("Direction de conversion invalide.".getBytes(StandardCharsets.UTF_8));
+            }
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + outputName + "\"")
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .body(result);
+        } catch (Exception e) {
+            log.error("Erreur de conversion fichier", e);
+            return ResponseEntity.badRequest()
+                    .body(("Erreur lors de la conversion : " + e.getMessage()).getBytes(StandardCharsets.UTF_8));
+        }
+    }
+
+    private String baseName(String filename) {
+        if (filename == null) return "converted";
+        int dot = filename.lastIndexOf('.');
+        return dot > 0 ? filename.substring(0, dot) : filename;
+    }
+
+    private byte[] xlsxToCsv(InputStream is) throws IOException {
+        StringBuilder sb = new StringBuilder();
+        try (Workbook workbook = new XSSFWorkbook(is)) {
+            Sheet sheet = workbook.getSheetAt(0);
+            DataFormatter fmt = new DataFormatter();
+            for (Row row : sheet) {
+                int last = row.getLastCellNum();
+                for (int i = 0; i < last; i++) {
+                    Cell cell = row.getCell(i, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
+                    String val = fmt.formatCellValue(cell);
+                    if (i > 0) sb.append(',');
+                    if (val.contains(",") || val.contains("\"") || val.contains("\n") || val.contains("\r")) {
+                        sb.append('"').append(val.replace("\"", "\"\"")).append('"');
+                    } else {
+                        sb.append(val);
+                    }
+                }
+                sb.append("\r\n");
+            }
+        }
+        return sb.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    private byte[] csvToXlsx(InputStream is) throws IOException {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
+             Workbook workbook = new XSSFWorkbook();
+             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Sheet sheet = workbook.createSheet("Data");
+            String line;
+            int rowNum = 0;
+            while ((line = reader.readLine()) != null) {
+                Row row = sheet.createRow(rowNum++);
+                String[] cells = parseCsvLine(line);
+                for (int i = 0; i < cells.length; i++) {
+                    row.createCell(i).setCellValue(cells[i]);
+                }
+            }
+            workbook.write(out);
+            return out.toByteArray();
+        }
+    }
+
+    private String[] parseCsvLine(String line) {
+        List<String> cells = new ArrayList<>();
+        boolean inQuotes = false;
+        StringBuilder current = new StringBuilder();
+        for (int i = 0; i < line.length(); i++) {
+            char c = line.charAt(i);
+            if (inQuotes) {
+                if (c == '"') {
+                    if (i + 1 < line.length() && line.charAt(i + 1) == '"') {
+                        current.append('"');
+                        i++;
+                    } else {
+                        inQuotes = false;
+                    }
+                } else {
+                    current.append(c);
+                }
+            } else {
+                if (c == '"') {
+                    inQuotes = true;
+                } else if (c == ',') {
+                    cells.add(current.toString());
+                    current = new StringBuilder();
+                } else {
+                    current.append(c);
+                }
+            }
+        }
+        cells.add(current.toString());
+        return cells.toArray(new String[0]);
     }
 
     // ===== COMPAGNIES =====

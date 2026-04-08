@@ -175,7 +175,7 @@
             <!-- Import -->
             <form id="importPostesForm" th:action="@{/menu/informatique/parc/postes-fixes/import}"
                   method="post" enctype="multipart/form-data">
-              <input type="file" id="importPostesFile" name="file" accept=".xlsx" style="display:none;">
+              <input type="file" id="importPostesFile" name="file" accept=".xlsx,.csv" style="display:none;">
               <button type="button" id="importPostesBtn" class="btn-actualiser"
                       style="padding:6px 14px; display:inline-flex; align-items:center; gap:6px;">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

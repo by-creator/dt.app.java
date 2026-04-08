@@ -30,7 +30,9 @@ class ManifestReferenceComparisonTest {
 
     @Test
     void parserMatchesReferenceFileForWeightAndVolumeColumns() throws Exception {
-        Path txtPath = resolveFixture("ALL_DAKAR_BL_Extract2", ".TXT");
+        Path txtPath = resolveFixtureOrNull("ALL_DAKAR_BL_Extract2", ".TXT");
+        Assumptions.assumeTrue(txtPath != null,
+                "Fichier de test ALL_DAKAR_BL_Extract2*.TXT absent; test de comparaison ignore.");
         Path xlsPath = resolveFixtureOrNull("EXTRACTION", ".xls");
         Assumptions.assumeTrue(xlsPath != null,
                 "Fichier de reference EXTRACTION*.xls absent; test de comparaison ignore.");
@@ -147,15 +149,6 @@ class ManifestReferenceComparisonTest {
 
     private void assertClose(double expected, double actual, String label) {
         assertEquals(expected, actual, 0.01d, label);
-    }
-
-    private Path resolveFixture(String requiredNameFragment, String requiredExtension) {
-        Path path = resolveFixtureOrNull(requiredNameFragment, requiredExtension);
-        if (path == null) {
-            throw new RuntimeException("Impossible de resoudre le fichier de test pour le motif: "
-                    + requiredNameFragment + "*" + requiredExtension);
-        }
-        return path;
     }
 
     private Path resolveFixtureOrNull(String requiredNameFragment, String requiredExtension) {

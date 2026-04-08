@@ -224,7 +224,7 @@
             <!-- Import -->
             <form id="importMachinesForm" th:action="@{/menu/informatique/parc/machines/import}"
                   method="post" enctype="multipart/form-data">
-              <input type="file" id="importMachinesFile" name="file" accept=".xlsx" style="display:none;">
+              <input type="file" id="importMachinesFile" name="file" accept=".xlsx,.csv" style="display:none;">
               <button type="button" id="importMachinesBtn" class="btn-actualiser"
                       style="padding:6px 14px; display:inline-flex; align-items:center; gap:6px;">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -254,6 +254,7 @@
               <tr>
                 <th>#</th>
                 <th>NOM</th>
+                <th>NOM AJOW</th>
                 <th>TYPE</th>
                 <th>UTILISATEUR</th>
                 <th>MODÈLE</th>
@@ -265,7 +266,7 @@
             </thead>
             <tbody>
               <tr th:if="${#lists.isEmpty(machines)}">
-                <td colspan="9" style="text-align:center; color:#94a3b8; padding:32px;">Aucune machine trouvée.</td>
+                <td colspan="10" style="text-align:center; color:#94a3b8; padding:32px;">Aucune machine trouvée.</td>
               </tr>
               <tr th:each="m, stat : ${machines}"
                   th:data-id="${m.id}"
@@ -285,6 +286,7 @@
                   th:data-commentaire="${m.commentaire}">
                 <td th:text="${(currentPage * pageSize) + stat.index + 1}">1</td>
                 <td class="td-item" th:text="${m.name}">—</td>
+                <td th:text="${m.ajowName ?: '—'}">—</td>
                 <td th:text="${m.type ?: '—'}">—</td>
                 <td th:text="${m.username ?: '—'}">—</td>
                 <td th:text="${m.model ?: '—'}">—</td>

@@ -84,6 +84,18 @@
         </svg>
         Rôles
       </a>
+      <a id="tab-audit" href="javascript:void(0)" onclick="showTab('audit')" class="subpage-tab">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 12h6"/><path d="M9 16h6"/><path d="M9 8h6"/><path d="M5 3h11l3 3v15H5z"/><path d="M16 3v4h4"/>
+        </svg>
+        Audit
+      </a>
+      <a id="tab-convert" href="javascript:void(0)" onclick="showTab('convert')" class="subpage-tab">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M7 16V4m0 0L3 8m4-4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/>
+        </svg>
+        Conversion
+      </a>
     </div>
 
     <div style="padding:32px 36px;">
@@ -562,6 +574,157 @@
         </div>
       </div>
 
+      <!-- ======================================================= -->
+      <!-- PANE AUDIT                                               -->
+      <!-- ======================================================= -->
+      <div id="pane-audit" class="tab-pane" style="display:none;">
+
+        <div class="page-section-card" style="padding:24px; margin-bottom:28px;">
+          <div class="menu-header-row">
+            <div>
+              <div class="page-badge"><span class="page-badge-dot"></span> JOURNAL DES ACTIONS</div>
+              <h1 class="page-title" style="font-size:22px; margin-bottom:4px;">Audit des accès et opérations</h1>
+              <p class="page-subtitle">Consultez les requêtes enregistrées par l'application.</p>
+            </div>
+            <form th:action="@{/admin}" method="get" style="display:flex; align-items:center; gap:12px;">
+              <input type="hidden" name="tab" value="audit">
+              <div class="menu-search-wrap">
+                <input type="search" name="auditSearch" class="menu-search"
+                       placeholder="Rechercher..." th:value="${auditSearch}">
+              </div>
+              <button type="submit" class="btn-actualiser" style="white-space:nowrap;">Actualiser</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="page-section-card" style="padding:0; overflow:hidden;">
+          <div class="table-toolbar">
+            <span class="toolbar-title">Journal d'audit</span>
+            <span class="pagination-info" th:if="${auditTotalItems > 0}"
+                  th:text="${auditTotalItems} + ' enregistrement' + (${auditTotalItems} > 1 ? 's' : '')"></span>
+          </div>
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>DATE</th>
+                  <th>UTILISATEUR</th>
+                  <th>RÔLE</th>
+                  <th>MÉTHODE</th>
+                  <th>URL</th>
+                  <th>STATUT</th>
+                  <th>DURÉE</th>
+                  <th>IP</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="log : ${auditLogs}">
+                  <td th:text="${log.createdAt != null ? #temporals.format(log.createdAt, 'dd/MM/yyyy HH:mm:ss') : '—'}">—</td>
+                  <td>
+                    <div style="font-weight:600;" th:text="${log.userName != null ? log.userName : 'Anonyme'}">Anonyme</div>
+                    <div style="font-size:12px; color:#94a3b8;" th:text="${log.userEmail != null ? log.userEmail : '—'}">—</div>
+                  </td>
+                  <td th:text="${log.userRole != null ? log.userRole : '—'}">—</td>
+                  <td>
+                    <span class="status-badge"
+                          th:classappend="${log.method == 'POST'} ? ' bloque' : (${log.method == 'GET'} ? ' debloque' : '')"
+                          th:text="${log.method}">GET</span>
+                  </td>
+                  <td>
+                    <div style="font-weight:600;" th:text="${log.routeName != null ? log.routeName : '—'}">—</div>
+                    <div style="font-size:12px; color:#94a3b8; max-width:320px; word-break:break-all;" th:text="${log.url}">—</div>
+                  </td>
+                  <td th:text="${log.responseStatus != null ? log.responseStatus : '—'}">—</td>
+                  <td th:text="${log.durationMs != null ? log.durationMs + ' ms' : '—'}">—</td>
+                  <td th:text="${log.ipAddress != null ? log.ipAddress : '—'}">—</td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(auditLogs)}">
+                  <td colspan="8" style="text-align:center; color:#94a3b8; padding:32px;">
+                    Aucun log d'audit disponible.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="pagination-bar" th:if="${auditTotalPages > 0}">
+            <span class="pagination-info"
+                  th:text="${auditTotalItems} + ' enregistrement' + (${auditTotalItems} > 1 ? 's' : '') +
+                            ' · Page ' + (${auditCurrentPage} + 1) + ' / ' + ${auditTotalPages}">
+            </span>
+            <div class="pagination-controls">
+              <a class="page-btn"
+                 th:classappend="${auditCurrentPage == 0} ? 'disabled' : ''"
+                 th:href="${auditCurrentPage == 0} ? '#' : @{/admin(tab='audit',auditPage=0,auditSearch=${auditSearch})}">««</a>
+              <a class="page-btn"
+                 th:classappend="${auditCurrentPage == 0} ? 'disabled' : ''"
+                 th:href="${auditCurrentPage == 0} ? '#' : @{/admin(tab='audit',auditPage=${auditCurrentPage - 1},auditSearch=${auditSearch})}">‹</a>
+              <th:block th:each="i : ${#numbers.sequence(0, auditTotalPages - 1)}">
+                <a class="page-btn"
+                   th:classappend="${i == auditCurrentPage} ? 'active' : ''"
+                   th:href="@{/admin(tab='audit',auditPage=${i},auditSearch=${auditSearch})}"
+                   th:text="${i + 1}">1</a>
+              </th:block>
+              <a class="page-btn"
+                 th:classappend="${auditCurrentPage + 1 >= auditTotalPages} ? 'disabled' : ''"
+                 th:href="${auditCurrentPage + 1 >= auditTotalPages} ? '#' : @{/admin(tab='audit',auditPage=${auditCurrentPage + 1},auditSearch=${auditSearch})}">›</a>
+              <a class="page-btn"
+                 th:classappend="${auditCurrentPage + 1 >= auditTotalPages} ? 'disabled' : ''"
+                 th:href="${auditCurrentPage + 1 >= auditTotalPages} ? '#' : @{/admin(tab='audit',auditPage=${auditTotalPages - 1},auditSearch=${auditSearch})}">»»</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================================================= -->
+      <!-- PANE CONVERSION XLSX / CSV                               -->
+      <!-- ======================================================= -->
+      <div id="pane-convert" class="tab-pane" style="display:none;">
+
+        <div class="page-section-card" style="margin-bottom:28px;">
+          <div class="blocage-card-header">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M7 16V4m0 0L3 8m4-4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/>
+            </svg>
+            <span>Convertir un fichier</span>
+          </div>
+          <p class="blocage-card-subtitle">Uploadez un fichier XLSX ou CSV et choisissez le sens de la conversion.</p>
+
+          <div id="convertError" class="alert-error" style="display:none; margin-bottom:16px;"></div>
+
+          <form id="convertForm" enctype="multipart/form-data">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px;">
+              <div class="form-group">
+                <label class="form-label">FICHIER À CONVERTIR</label>
+                <input id="convertFile" name="file" type="file"
+                       accept=".xlsx,.csv"
+                       class="form-input" required>
+                <div style="font-size:12px; color:#94a3b8; margin-top:4px;">Formats acceptés : .xlsx, .csv</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">SENS DE LA CONVERSION</label>
+                <select id="convertDirection" name="direction" class="form-input" required>
+                  <option value="xlsx-to-csv">XLSX → CSV</option>
+                  <option value="csv-to-xlsx">CSV → XLSX</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="blocage-actions">
+              <button type="submit" id="convertBtn" class="btn-debloquer">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M7 16V4m0 0L3 8m4-4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/>
+                </svg>
+                <span id="convertBtnLabel">Convertir et télécharger</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+      </div>
+
     </div><!-- /padding wrapper -->
   </main>
 </div>
@@ -648,6 +811,46 @@
     document.getElementById('compagnieForm').reset();
     document.getElementById('compagnieCancelBtn').style.display = 'none';
   }
+
+  // ===== CONVERT FORM =====
+  document.getElementById('convertForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var errorEl = document.getElementById('convertError');
+    var btn = document.getElementById('convertBtn');
+    var label = document.getElementById('convertBtnLabel');
+    errorEl.style.display = 'none';
+    btn.disabled = true;
+    label.textContent = 'Conversion en cours...';
+
+    var formData = new FormData(this);
+    fetch('/admin/convert', { method: 'POST', body: formData })
+      .then(function(resp) {
+        if (!resp.ok) {
+          return resp.text().then(function(msg) { throw new Error(msg); });
+        }
+        var disposition = resp.headers.get('Content-Disposition') || '';
+        var match = disposition.match(/filename="?([^"]+)"?/);
+        var filename = match ? match[1] : 'converted';
+        return resp.blob().then(function(blob) {
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        });
+      })
+      .catch(function(err) {
+        errorEl.textContent = err.message || 'Une erreur est survenue.';
+        errorEl.style.display = '';
+      })
+      .finally(function() {
+        btn.disabled = false;
+        label.textContent = 'Convertir et télécharger';
+      });
+  });
 </script>
 
 </body>
