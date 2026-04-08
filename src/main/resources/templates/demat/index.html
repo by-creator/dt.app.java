@@ -120,6 +120,10 @@
     .red { background: #f6dde0; color: #d13a2f; }
     .violet { background: #ede9fe; color: #7c3aed; }
 
+    @media (min-width: 801px) {
+      .grid { max-width: 100%; grid-template-columns: repeat(5, 1fr); }
+    }
+
     @media (max-width: 800px) {
       .hero h1 { font-size: 24px; }
       .hero p { font-size: 15px; }
