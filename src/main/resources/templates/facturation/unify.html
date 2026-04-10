@@ -352,11 +352,18 @@
         <div class="table-toolbar" style="padding-left:0; padding-right:0;">
           <span class="pagination-info" th:if="${totalItems > 0}"
                 th:text="${totalItems} + ' enregistrement' + (${totalItems} > 1 ? 's' : '')"></span>
-          <form th:action="@{/menu/facturation/unify}" method="get" style="display:flex; align-items:center; gap:8px;">
-            <input type="hidden" name="tab" value="admin">
-            <input type="search" name="search" class="table-search-input" placeholder="Rechercher..." th:value="${search}">
-            <button type="submit" class="btn-actualiser" style="white-space:nowrap;">Rechercher</button>
-          </form>
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <form th:action="@{/menu/facturation/unify}" method="get" style="display:flex; align-items:center; gap:8px;">
+              <input type="hidden" name="tab" value="admin">
+              <input type="search" name="search" class="table-search-input" placeholder="Rechercher..." th:value="${search}">
+              <button type="submit" class="btn-actualiser" style="white-space:nowrap;">Rechercher</button>
+            </form>
+            <form th:action="@{/menu/facturation/unify/admin/purger-invalides}" method="post"
+                  onsubmit="return confirm('Supprimer tous les tiers dont le compte Ipaki ne commence pas par SN00, ND ou un chiffre ? Cette action est irreversible.')">
+              <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+              <button type="submit" class="btn-table-action bloquer" style="white-space:nowrap;">Supprimer comptes invalides</button>
+            </form>
+          </div>
         </div>
         <div class="table-wrapper">
           <table class="data-table">

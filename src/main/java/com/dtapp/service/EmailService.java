@@ -40,14 +40,14 @@ public class EmailService {
         this.mailSender = mailSender;
     }
 
-    public void sendValidationNotification(RattachementBl bl, List<MultipartFile> attachments) {
+    public void sendValidationNotification(RattachementBl bl, String compteIpaki, List<MultipartFile> attachments) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
             helper.setFrom(mailFrom, "DAKAR-TERMINAL");
             helper.setTo(mailTo);
             helper.setSubject("Nouvelle demande de validation - BL " + bl.getBl());
-            helper.setText(buildEmailHtml(bl, "validation"), true);
+            helper.setText(buildValidationEmailHtml(bl, compteIpaki), true);
             helper.addInline("dtLogo", new ClassPathResource("static/img/image.png"));
             addAttachments(helper, attachments);
             mailSender.send(message);
@@ -56,14 +56,14 @@ public class EmailService {
         }
     }
 
-    public void sendRemiseNotification(RattachementBl bl, List<MultipartFile> attachments) {
+    public void sendRemiseNotification(RattachementBl bl, String compteIpaki, List<MultipartFile> attachments) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
             helper.setFrom(mailFrom, "DAKAR-TERMINAL");
             helper.setTo(mailToRemise);
             helper.setSubject("Nouvelle demande de remise - BL " + bl.getBl());
-            helper.setText(buildEmailHtml(bl, "remise"), true);
+            helper.setText(buildRemiseEmailHtml(bl, compteIpaki), true);
             helper.addInline("dtLogo", new ClassPathResource("static/img/image.png"));
             addAttachments(helper, attachments);
             mailSender.send(message);
@@ -422,26 +422,56 @@ public class EmailService {
     }
 
     @NonNull
-    private String buildEmailHtml(RattachementBl bl, String type) {
-        String titre = "validation".equals(type)
-                ? "Nouvelle demande de validation"
-                : "Nouvelle demande de remise";
+    private String buildValidationEmailHtml(RattachementBl bl, String compteIpaki) {
         String loginUrl = baseUrl + "/login";
-
+        String ipakiRow = (compteIpaki != null && !compteIpaki.isBlank())
+                ? "      <tr><td style=\"padding:10px 0;color:#94a3b8\">Compte Ipaki</td><td style=\"padding:10px 0;font-weight:600;color:#0f172a\">" + safe(compteIpaki) + "</td></tr>"
+                : "";
         return "<!DOCTYPE html><html><body style=\"font-family:Arial,sans-serif;background:#f8fbff;margin:0;padding:20px\">" +
                "<div style=\"max-width:600px;margin:0 auto;background:white;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08)\">" +
                "  <div style=\"background:#ffffff;padding:28px;text-align:center;border-bottom:1px solid #e2e8f0\">" +
                "    <img src=\"cid:dtLogo\" alt=\"Dakar Terminal\" style=\"max-height:50px;max-width:240px\">" +
                "  </div>" +
                "  <div style=\"padding:36px 40px\">" +
-               "    <h2 style=\"color:#0f172a;margin:0 0 8px;font-size:20px\">" + titre + "</h2>" +
+               "    <h2 style=\"color:#0f172a;margin:0 0 8px;font-size:20px\">Nouvelle demande de validation</h2>" +
                "    <p style=\"color:#64748b;margin:0 0 28px;font-size:14px\">Une nouvelle demande a ete recue. Voici les informations :</p>" +
                "    <table style=\"width:100%;border-collapse:collapse;font-size:14px\">" +
                "      <tr style=\"border-bottom:1px solid #f1f5f9\"><td style=\"padding:10px 0;color:#94a3b8;width:160px\">Nom</td><td style=\"padding:10px 0;font-weight:600;color:#0f172a\">" + safe(bl.getNom()) + "</td></tr>" +
                "      <tr style=\"border-bottom:1px solid #f1f5f9\"><td style=\"padding:10px 0;color:#94a3b8\">Prenom</td><td style=\"padding:10px 0;font-weight:600;color:#0f172a\">" + safe(bl.getPrenom()) + "</td></tr>" +
                "      <tr style=\"border-bottom:1px solid #f1f5f9\"><td style=\"padding:10px 0;color:#94a3b8\">Email</td><td style=\"padding:10px 0;font-weight:600;color:#0f172a\">" + safe(bl.getEmail()) + "</td></tr>" +
                "      <tr style=\"border-bottom:1px solid #f1f5f9\"><td style=\"padding:10px 0;color:#94a3b8\">Numero BL</td><td style=\"padding:10px 0;font-weight:600;color:#0f172a\">" + safe(bl.getBl()) + "</td></tr>" +
-               "      <tr><td style=\"padding:10px 0;color:#94a3b8\">Maison de transit</td><td style=\"padding:10px 0;font-weight:600;color:#0f172a\">" + safe(bl.getMaison()) + "</td></tr>" +
+               "      <tr style=\"border-bottom:1px solid #f1f5f9\"><td style=\"padding:10px 0;color:#94a3b8\">Maison de transit</td><td style=\"padding:10px 0;font-weight:600;color:#0f172a\">" + safe(bl.getMaison()) + "</td></tr>" +
+               ipakiRow +
+               "    </table>" +
+               "    <div style=\"margin-top:36px;text-align:center\">" +
+               "      <a href=\"" + loginUrl + "\" style=\"display:inline-block;background:#3367bf;color:white;padding:14px 36px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px\">Acceder a l'application</a>" +
+               "    </div>" +
+               "  </div>" +
+               "  <div style=\"padding:16px;text-align:center;background:#f8fbff;color:#94a3b8;font-size:12px\">&copy; 2026 Dakar Terminal. Tous droits reserves.</div>" +
+               "</div></body></html>";
+    }
+
+    @NonNull
+    private String buildRemiseEmailHtml(RattachementBl bl, String compteIpaki) {
+        String loginUrl = baseUrl + "/login";
+        String ipakiRow = (compteIpaki != null && !compteIpaki.isBlank())
+                ? "      <tr><td style=\"padding:10px 0;color:#94a3b8\">Compte Ipaki</td><td style=\"padding:10px 0;font-weight:600;color:#0f172a\">" + safe(compteIpaki) + "</td></tr>"
+                : "";
+        return "<!DOCTYPE html><html><body style=\"font-family:Arial,sans-serif;background:#f8fbff;margin:0;padding:20px\">" +
+               "<div style=\"max-width:600px;margin:0 auto;background:white;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08)\">" +
+               "  <div style=\"background:#ffffff;padding:28px;text-align:center;border-bottom:1px solid #e2e8f0\">" +
+               "    <img src=\"cid:dtLogo\" alt=\"Dakar Terminal\" style=\"max-height:50px;max-width:240px\">" +
+               "  </div>" +
+               "  <div style=\"padding:36px 40px\">" +
+               "    <h2 style=\"color:#0f172a;margin:0 0 8px;font-size:20px\">Nouvelle demande de remise</h2>" +
+               "    <p style=\"color:#64748b;margin:0 0 28px;font-size:14px\">Une nouvelle demande a ete recue. Voici les informations :</p>" +
+               "    <table style=\"width:100%;border-collapse:collapse;font-size:14px\">" +
+               "      <tr style=\"border-bottom:1px solid #f1f5f9\"><td style=\"padding:10px 0;color:#94a3b8;width:160px\">Nom</td><td style=\"padding:10px 0;font-weight:600;color:#0f172a\">" + safe(bl.getNom()) + "</td></tr>" +
+               "      <tr style=\"border-bottom:1px solid #f1f5f9\"><td style=\"padding:10px 0;color:#94a3b8\">Prenom</td><td style=\"padding:10px 0;font-weight:600;color:#0f172a\">" + safe(bl.getPrenom()) + "</td></tr>" +
+               "      <tr style=\"border-bottom:1px solid #f1f5f9\"><td style=\"padding:10px 0;color:#94a3b8\">Email</td><td style=\"padding:10px 0;font-weight:600;color:#0f172a\">" + safe(bl.getEmail()) + "</td></tr>" +
+               "      <tr style=\"border-bottom:1px solid #f1f5f9\"><td style=\"padding:10px 0;color:#94a3b8\">Numero BL</td><td style=\"padding:10px 0;font-weight:600;color:#0f172a\">" + safe(bl.getBl()) + "</td></tr>" +
+               "      <tr style=\"border-bottom:1px solid #f1f5f9\"><td style=\"padding:10px 0;color:#94a3b8\">Maison de transit</td><td style=\"padding:10px 0;font-weight:600;color:#0f172a\">" + safe(bl.getMaison()) + "</td></tr>" +
+               ipakiRow +
                "    </table>" +
                "    <div style=\"margin-top:36px;text-align:center\">" +
                "      <a href=\"" + loginUrl + "\" style=\"display:inline-block;background:#3367bf;color:white;padding:14px 36px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px\">Acceder a l'application</a>" +

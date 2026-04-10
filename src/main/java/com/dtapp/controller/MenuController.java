@@ -168,20 +168,44 @@ public class MenuController {
 
     @GetMapping("/menu/direction-generale/gestion-remises")
     public String directionGeneraleRemises(@RequestParam(defaultValue = "0") int page,
+                                           @RequestParam(required = false) String filterDate,
+                                           @RequestParam(required = false) String filterNom,
+                                           @RequestParam(required = false) String filterPrenom,
+                                           @RequestParam(required = false) String filterEmail,
+                                           @RequestParam(required = false) String filterBl,
+                                           @RequestParam(required = false) String filterMaison,
+                                           @RequestParam(required = false) String filterStatut,
                                            Model model, Authentication auth) {
-        return renderRemisesPage(model, auth, "Direction Generale", "/menu/direction-generale", page);
+        return renderRemisesPage(model, auth, "Direction Generale", "/menu/direction-generale", page,
+                filterDate, filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut);
     }
 
     @GetMapping("/menu/direction-financiere/gestion-remises")
     public String directionFinanciereRemises(@RequestParam(defaultValue = "0") int page,
+                                             @RequestParam(required = false) String filterDate,
+                                             @RequestParam(required = false) String filterNom,
+                                             @RequestParam(required = false) String filterPrenom,
+                                             @RequestParam(required = false) String filterEmail,
+                                             @RequestParam(required = false) String filterBl,
+                                             @RequestParam(required = false) String filterMaison,
+                                             @RequestParam(required = false) String filterStatut,
                                              Model model, Authentication auth) {
-        return renderRemisesPage(model, auth, "Direction Financiere", "/menu/direction-financiere", page);
+        return renderRemisesPage(model, auth, "Direction Financiere", "/menu/direction-financiere", page,
+                filterDate, filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut);
     }
 
     @GetMapping("/menu/direction-exploitation/gestion-remises")
     public String directionExploitationRemises(@RequestParam(defaultValue = "0") int page,
+                                               @RequestParam(required = false) String filterDate,
+                                               @RequestParam(required = false) String filterNom,
+                                               @RequestParam(required = false) String filterPrenom,
+                                               @RequestParam(required = false) String filterEmail,
+                                               @RequestParam(required = false) String filterBl,
+                                               @RequestParam(required = false) String filterMaison,
+                                               @RequestParam(required = false) String filterStatut,
                                                Model model, Authentication auth) {
-        return renderRemisesPage(model, auth, "Direction Exploitation", "/menu/direction-exploitation", page);
+        return renderRemisesPage(model, auth, "Direction Exploitation", "/menu/direction-exploitation", page,
+                filterDate, filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut);
     }
 
     @GetMapping("/menu/facturation/ies")
@@ -201,30 +225,52 @@ public class MenuController {
 
     @GetMapping("/menu/facturation/gestion-remises")
     public String facturationRemises(@RequestParam(defaultValue = "0") int page,
+                                     @RequestParam(required = false) String filterDate,
+                                     @RequestParam(required = false) String filterNom,
+                                     @RequestParam(required = false) String filterPrenom,
+                                     @RequestParam(required = false) String filterEmail,
+                                     @RequestParam(required = false) String filterBl,
+                                     @RequestParam(required = false) String filterMaison,
+                                     @RequestParam(required = false) String filterStatut,
                                      Model model, Authentication auth) {
-        return renderRemisesPage(model, auth, "Facturation", "/menu/facturation", page);
+        return renderRemisesPage(model, auth, "Facturation", "/menu/facturation", page,
+                filterDate, filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut);
     }
 
     @GetMapping("/menu/facturation/gestion-validations")
     public String facturationValidations(@RequestParam(defaultValue = "0") int page,
+                                         @RequestParam(required = false) String filterDate,
+                                         @RequestParam(required = false) String filterNom,
+                                         @RequestParam(required = false) String filterPrenom,
+                                         @RequestParam(required = false) String filterEmail,
+                                         @RequestParam(required = false) String filterBl,
+                                         @RequestParam(required = false) String filterMaison,
+                                         @RequestParam(required = false) String filterStatut,
                                          Model model, Authentication auth) {
         User loggedUser = userRepository.findByEmail(auth.getName()).orElseThrow();
         Set<String> roles = auth.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority).collect(Collectors.toSet());
         boolean admin = roles.contains("ROLE_ADMIN");
         int safePage = Math.max(page, 0);
-        Page<RattachementBl> demandesPage = rattachementBlRepository.findByTypePaged(
-                "FACTURATION", PageRequest.of(safePage, BL_PAGE_SIZE));
+        Page<RattachementBl> demandesPage = fetchBls("FACTURATION", filterDate,
+                filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut, safePage);
         if (safePage > 0 && safePage >= demandesPage.getTotalPages() && demandesPage.getTotalPages() > 0) {
             safePage = demandesPage.getTotalPages() - 1;
-            demandesPage = rattachementBlRepository.findByTypePaged(
-                    "FACTURATION", PageRequest.of(safePage, BL_PAGE_SIZE));
+            demandesPage = fetchBls("FACTURATION", filterDate,
+                    filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut, safePage);
         }
         model.addAttribute("loggedUser", loggedUser);
         model.addAttribute("demandes", demandesPage.getContent());
         model.addAttribute("currentPage", demandesPage.getNumber());
         model.addAttribute("totalPages", demandesPage.getTotalPages());
         model.addAttribute("totalItems", demandesPage.getTotalElements());
+        model.addAttribute("filterDate",   filterDate   != null ? filterDate   : "");
+        model.addAttribute("filterNom",    filterNom    != null ? filterNom    : "");
+        model.addAttribute("filterPrenom", filterPrenom != null ? filterPrenom : "");
+        model.addAttribute("filterEmail",  filterEmail  != null ? filterEmail  : "");
+        model.addAttribute("filterBl",     filterBl     != null ? filterBl     : "");
+        model.addAttribute("filterMaison", filterMaison != null ? filterMaison : "");
+        model.addAttribute("filterStatut", filterStatut != null ? filterStatut : "");
         model.addAttribute("sectionLabel", "Facturation");
         model.addAttribute("parentMenuPath", "/menu/facturation");
         model.addAttribute("currentPagePath", "/menu/facturation/gestion-validations");
@@ -419,6 +465,13 @@ public class MenuController {
     public String adminSupprimerTiers(@PathVariable long id, RedirectAttributes ra) {
         tiersUnifyRepository.deleteById(id);
         ra.addFlashAttribute("successMsg", "Tiers supprime.");
+        return "redirect:/menu/facturation/unify?tab=admin";
+    }
+
+    @PostMapping("/menu/facturation/unify/admin/purger-invalides")
+    public String purgerTiersInvalides(RedirectAttributes ra) {
+        int count = tiersUnifyRepository.deleteInvalidCompteIpaki();
+        ra.addFlashAttribute("successMsg", count + " tiers avec compte Ipaki invalide supprime" + (count > 1 ? "s" : "") + ".");
         return "redirect:/menu/facturation/unify?tab=admin";
     }
 
@@ -902,6 +955,32 @@ public class MenuController {
         return "redirect:" + target;
     }
 
+    private Page<RattachementBl> fetchBls(String type, String filterDate,
+                                          String nom, String prenom, String email,
+                                          String bl, String maison, String statut,
+                                          int safePage) {
+        java.time.LocalDateTime dateStart = null;
+        java.time.LocalDateTime dateEnd   = null;
+        if (filterDate != null && !filterDate.isBlank()) {
+            try {
+                LocalDate date = LocalDate.parse(filterDate);
+                dateStart = date.atStartOfDay();
+                dateEnd   = date.plusDays(1).atStartOfDay();
+            } catch (Exception ignored) {
+            }
+        }
+        String sNom    = nom    != null ? nom.trim()    : "";
+        String sPrenom = prenom != null ? prenom.trim() : "";
+        String sEmail  = email  != null ? email.trim()  : "";
+        String sBl     = bl     != null ? bl.trim()     : "";
+        String sMaison = maison != null ? maison.trim() : "";
+        String sStatut = statut != null ? statut.trim() : "";
+
+        return rattachementBlRepository.findByTypeWithFilters(
+                type, dateStart, dateEnd, sNom, sPrenom, sEmail, sBl, sMaison, sStatut,
+                PageRequest.of(safePage, BL_PAGE_SIZE));
+    }
+
     private boolean isDirection(Set<String> roles) {
         return roles.contains("ROLE_ADMIN")
                 || roles.contains("ROLE_DIRECTION_GENERALE")
@@ -913,25 +992,39 @@ public class MenuController {
                                      Authentication auth,
                                      String sectionLabel,
                                      String parentMenuPath,
-                                     int page) {
+                                     int page,
+                                     String filterDate,
+                                     String filterNom,
+                                     String filterPrenom,
+                                     String filterEmail,
+                                     String filterBl,
+                                     String filterMaison,
+                                     String filterStatut) {
         User loggedUser = userRepository.findByEmail(auth.getName()).orElseThrow();
         Set<String> roles = auth.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority).collect(Collectors.toSet());
         boolean admin = roles.contains("ROLE_ADMIN");
         String currentPagePath = parentMenuPath + "/gestion-remises";
         int safePage = Math.max(page, 0);
-        Page<RattachementBl> demandesPage = rattachementBlRepository.findByTypePaged(
-                "REMISE", PageRequest.of(safePage, BL_PAGE_SIZE));
+        Page<RattachementBl> demandesPage = fetchBls("REMISE", filterDate,
+                filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut, safePage);
         if (safePage > 0 && safePage >= demandesPage.getTotalPages() && demandesPage.getTotalPages() > 0) {
             safePage = demandesPage.getTotalPages() - 1;
-            demandesPage = rattachementBlRepository.findByTypePaged(
-                    "REMISE", PageRequest.of(safePage, BL_PAGE_SIZE));
+            demandesPage = fetchBls("REMISE", filterDate,
+                    filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut, safePage);
         }
         model.addAttribute("loggedUser", loggedUser);
         model.addAttribute("demandes", demandesPage.getContent());
         model.addAttribute("currentPage", demandesPage.getNumber());
         model.addAttribute("totalPages", demandesPage.getTotalPages());
         model.addAttribute("totalItems", demandesPage.getTotalElements());
+        model.addAttribute("filterDate",   filterDate   != null ? filterDate   : "");
+        model.addAttribute("filterNom",    filterNom    != null ? filterNom    : "");
+        model.addAttribute("filterPrenom", filterPrenom != null ? filterPrenom : "");
+        model.addAttribute("filterEmail",  filterEmail  != null ? filterEmail  : "");
+        model.addAttribute("filterBl",     filterBl     != null ? filterBl     : "");
+        model.addAttribute("filterMaison", filterMaison != null ? filterMaison : "");
+        model.addAttribute("filterStatut", filterStatut != null ? filterStatut : "");
         model.addAttribute("sectionLabel", sectionLabel);
         model.addAttribute("parentMenuPath", parentMenuPath);
         model.addAttribute("currentPagePath", currentPagePath);

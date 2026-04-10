@@ -1,0 +1,5 @@
+Au niveau de /menu/facturation/gestion-validations je souhaite que 
+tu remettes tous les autres filtres des autres colonnes le but ici c'était
+d'avoir un seul champ de filtres pour les dates au lieu de deux et pareils
+pour les autres tables avec des filtres sur les dates néanmoins les labels 
+et filtres des autres colonnes ne doivent pas disparaître 

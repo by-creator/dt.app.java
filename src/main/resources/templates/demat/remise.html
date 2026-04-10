@@ -96,6 +96,21 @@
       height: auto;
       background: white;
     }
+    .sel-wrap { position: relative; margin-bottom: 16px; }
+    .sel-input { width: 100%; height: 48px; border-radius: 12px; border: 1px solid #d9e2ef; padding: 0 16px; font-size: 15px; box-sizing: border-box; background: white; color: #0f172a; cursor: pointer; }
+    .sel-input:focus { outline: none; border-color: #3367bf; box-shadow: 0 0 0 3px rgba(51,103,191,0.12); }
+    .sel-dropdown { position: absolute; top: calc(100% + 4px); left: 0; right: 0; border: 1px solid #d9e2ef; border-radius: 12px; background: white; z-index: 999; max-height: 240px; overflow-y: auto; box-shadow: 0 8px 24px rgba(15,23,42,0.12); display: none; }
+    .sel-dropdown.open { display: block; }
+    .sel-option { padding: 11px 16px; font-size: 14px; cursor: pointer; color: #0f172a; border-bottom: 1px solid #f1f5f9; }
+    .sel-option:last-child { border-bottom: none; }
+    .sel-option:hover { background: #eef2ff; }
+    .sel-empty { padding: 12px 16px; color: #94a3b8; font-size: 13px; font-style: italic; }
+    @media (prefers-color-scheme: dark) {
+      .sel-input { background: #1e293b; border-color: rgba(148,163,184,0.2); color: #e2e8f0; }
+      .sel-dropdown { background: #1e293b; border-color: rgba(148,163,184,0.2); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+      .sel-option { color: #e2e8f0; border-color: rgba(148,163,184,0.1); }
+      .sel-option:hover { background: #334155; }
+    }
     .submit {
       width: 100%;
       margin-top: 14px;
@@ -171,8 +186,12 @@
       <label for="bl-number">Numero de BL</label>
       <input id="bl-number" name="bl-number" type="text" placeholder="Votre numero de BL" required>
 
-      <label for="maison-transit">Maison de transit</label>
-      <input id="maison-transit" name="maison-transit" type="text" placeholder="Votre maison de transit">
+      <label for="sel-search-remise">Maison de transit</label>
+      <div class="sel-wrap">
+        <input type="hidden" name="maison-transit" id="maison-transit-hidden">
+        <input type="text" id="sel-search-remise" class="sel-input" placeholder="Rechercher une maison de transit..." autocomplete="off">
+        <div class="sel-dropdown" id="sel-dropdown-remise"></div>
+      </div>
 
       <label for="demande-manuscrite">Demande manuscrite</label>
       <input id="demande-manuscrite" name="demande-manuscrite" type="file">
@@ -196,5 +215,54 @@
     </div>
   </div>
 </div>
+<script th:inline="javascript">
+(function () {
+  const TIERS = /*[[${tiersList}]]*/ [];
+  const searchEl = document.getElementById('sel-search-remise');
+  const hiddenEl = document.getElementById('maison-transit-hidden');
+  const dropEl   = document.getElementById('sel-dropdown-remise');
+
+  function esc(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function render(q) {
+    const query = (q || '').toLowerCase().trim();
+    const filtered = TIERS.filter(t => t.raisonSociale && (!query || t.raisonSociale.toLowerCase().includes(query)));
+    if (filtered.length === 0) {
+      dropEl.innerHTML = '<div class="sel-empty">Aucun resultat</div>';
+    } else {
+      dropEl.innerHTML = filtered.map(function(t) {
+        const label = t.compteIpaki ? esc(t.raisonSociale) + ' - ' + esc(t.compteIpaki) : esc(t.raisonSociale);
+        return '<div class="sel-option" data-value="' + esc(t.raisonSociale) + '">' + label + '</div>';
+      }).join('');
+      dropEl.querySelectorAll('.sel-option').forEach(function(opt) {
+        opt.addEventListener('click', function() {
+          hiddenEl.value = opt.dataset.value;
+          searchEl.value = opt.textContent;
+          dropEl.classList.remove('open');
+        });
+      });
+    }
+  }
+
+  searchEl.addEventListener('focus', function() {
+    render(searchEl.value);
+    dropEl.classList.add('open');
+  });
+
+  searchEl.addEventListener('input', function() {
+    hiddenEl.value = '';
+    render(searchEl.value);
+    dropEl.classList.add('open');
+  });
+
+  document.addEventListener('click', function(e) {
+    if (!searchEl.contains(e.target) && !dropEl.contains(e.target)) {
+      dropEl.classList.remove('open');
+    }
+  });
+})();
+</script>
 </body>
 </html>

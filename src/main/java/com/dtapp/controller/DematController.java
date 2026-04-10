@@ -8,6 +8,7 @@ import com.dtapp.entity.SatisfactionBae;
 import com.dtapp.entity.SatisfactionAccueil;
 import com.dtapp.entity.SatisfactionLivraison;
 import com.dtapp.entity.SatisfactionCommunication;
+import com.dtapp.entity.TiersUnify;
 import com.dtapp.repository.RattachementBlRepository;
 import com.dtapp.repository.SatisfactionInfoRepository;
 import com.dtapp.repository.SatisfactionGeneralRepository;
@@ -16,8 +17,11 @@ import com.dtapp.repository.SatisfactionBaeRepository;
 import com.dtapp.repository.SatisfactionAccueilRepository;
 import com.dtapp.repository.SatisfactionLivraisonRepository;
 import com.dtapp.repository.SatisfactionCommunicationRepository;
+import com.dtapp.repository.TiersUnifyRepository;
 import com.dtapp.service.EmailService;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -30,6 +34,7 @@ import java.util.List;
 public class DematController {
 
     private final RattachementBlRepository rattachementBlRepository;
+    private final TiersUnifyRepository tiersUnifyRepository;
     private final SatisfactionInfoRepository satisfactionInfoRepository;
     private final SatisfactionGeneralRepository satisfactionGeneralRepository;
     private final SatisfactionFacturationRepository satisfactionFacturationRepository;
@@ -40,6 +45,7 @@ public class DematController {
     private final EmailService emailService;
 
     public DematController(RattachementBlRepository rattachementBlRepository,
+                           TiersUnifyRepository tiersUnifyRepository,
                            SatisfactionInfoRepository satisfactionInfoRepository,
                            SatisfactionGeneralRepository satisfactionGeneralRepository,
                            SatisfactionFacturationRepository satisfactionFacturationRepository,
@@ -49,6 +55,7 @@ public class DematController {
                            SatisfactionCommunicationRepository satisfactionCommunicationRepository,
                            EmailService emailService) {
         this.rattachementBlRepository = rattachementBlRepository;
+        this.tiersUnifyRepository = tiersUnifyRepository;
         this.satisfactionInfoRepository = satisfactionInfoRepository;
         this.satisfactionGeneralRepository = satisfactionGeneralRepository;
         this.satisfactionFacturationRepository = satisfactionFacturationRepository;
@@ -65,7 +72,10 @@ public class DematController {
     }
 
     @GetMapping("/demat/validation")
-    public String dematValidation() {
+    public String dematValidation(Model model) {
+        List<TiersUnify> tiersList = tiersUnifyRepository.findAll(
+                Sort.by(Sort.Direction.ASC, "raisonSociale"));
+        model.addAttribute("tiersList", tiersList);
         return "demat/validation";
     }
 
@@ -80,6 +90,14 @@ public class DematController {
             @RequestParam("bad-shipping") MultipartFile badShipping,
             @RequestParam("declaration") MultipartFile declaration) {
 
+        // Rechercher le compte_ipaki associé à la raison sociale sélectionnée
+        String compteIpaki = tiersUnifyRepository.findAll().stream()
+                .filter(t -> maisonTransit != null && maisonTransit.equals(t.getRaisonSociale()))
+                .map(TiersUnify::getCompteIpaki)
+                .filter(c -> c != null && !c.isBlank())
+                .findFirst()
+                .orElse(null);
+
         RattachementBl bl = new RattachementBl();
         bl.setNom(nom);
         bl.setPrenom(prenom);
@@ -91,13 +109,16 @@ public class DematController {
         rattachementBlRepository.save(bl);
 
         List<MultipartFile> attachments = Arrays.asList(blFile, badShipping, declaration);
-        emailService.sendValidationNotification(bl, attachments);
+        emailService.sendValidationNotification(bl, compteIpaki, attachments);
 
         return "redirect:/demat/validation?success=true";
     }
 
     @GetMapping("/demat/remise")
-    public String dematRemise() {
+    public String dematRemise(Model model) {
+        List<TiersUnify> tiersList = tiersUnifyRepository.findAll(
+                Sort.by(Sort.Direction.ASC, "raisonSociale"));
+        model.addAttribute("tiersList", tiersList);
         return "demat/remise";
     }
 
@@ -114,6 +135,13 @@ public class DematController {
             @RequestParam("facture-file") MultipartFile factureFile,
             @RequestParam("declaration-file") MultipartFile declarationFile) {
 
+        String compteIpaki = tiersUnifyRepository.findAll().stream()
+                .filter(t -> maisonTransit != null && maisonTransit.equals(t.getRaisonSociale()))
+                .map(TiersUnify::getCompteIpaki)
+                .filter(c -> c != null && !c.isBlank())
+                .findFirst()
+                .orElse(null);
+
         RattachementBl bl = new RattachementBl();
         bl.setNom(nom);
         bl.setPrenom(prenom);
@@ -126,7 +154,7 @@ public class DematController {
 
         List<MultipartFile> attachments = Arrays.asList(
                 demandeManuscrite, badShipping, blFile, factureFile, declarationFile);
-        emailService.sendRemiseNotification(bl, attachments);
+        emailService.sendRemiseNotification(bl, compteIpaki, attachments);
 
         return "redirect:/demat/remise?success=true";
     }
