@@ -57,7 +57,7 @@ public class EdiParser {
                     byte[] lineBytes = Arrays.copyOfRange(content, start, start + len);
                     String type = new String(lineBytes, 0, Math.min(5, lineBytes.length),
                                             StandardCharsets.US_ASCII).trim();
-                    if (!type.isEmpty() && type.chars().allMatch(Character::isLetterOrDigit)) {
+                    if (!type.isEmpty() && type.chars().allMatch(c -> (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9'))) {
                         records.add(EdiRecord.fromLine(lineBytes, srcCharset));
                     }
                 }

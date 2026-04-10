@@ -1,4 +1,0 @@
-Je souhaites que tu crée des tâches de rappel qui seront déployées par la suite au niveau de heroku.
-
-Il s'agira ici de voir à l'intervalle de 30 minutes vérifier les demandes de validations et les demandes de remises
-EN_ATTENTE / EN_ATTENTE_DIRECTION et de faire un mail de rappel à l'adresse rattachée respectivement selon le type de demande 
