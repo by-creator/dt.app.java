@@ -170,7 +170,6 @@ function detectColumnType(values) {
   if (!nonEmpty.length) return 'text';
 
   if (nonEmpty.every(function (value) { return !!parseTableDate(value); })) return 'date';
-  if (nonEmpty.every(function (value) { return /^-?\d+(?:[.,]\d+)?$/.test(value.replace(/\s/g, '')); })) return 'number';
 
   var distinct = Array.from(new Set(nonEmpty));
   if (distinct.length > 1 && distinct.length <= 10) return 'select';
@@ -209,30 +208,6 @@ function createFilterControl(meta, onChange) {
       onChange();
     });
     wrapper.appendChild(searchInput);
-    return wrapper;
-  }
-
-  if (meta.type === 'number') {
-    var minInput = document.createElement('input');
-    minInput.type = 'number';
-    minInput.className = 'table-filter-control';
-    minInput.placeholder = 'Min';
-    minInput.addEventListener('input', function () {
-      meta.minValue = minInput.value !== '' ? Number(minInput.value) : null;
-      onChange();
-    });
-
-    var maxInput = document.createElement('input');
-    maxInput.type = 'number';
-    maxInput.className = 'table-filter-control';
-    maxInput.placeholder = 'Max';
-    maxInput.addEventListener('input', function () {
-      meta.maxValue = maxInput.value !== '' ? Number(maxInput.value) : null;
-      onChange();
-    });
-
-    wrapper.appendChild(minInput);
-    wrapper.appendChild(maxInput);
     return wrapper;
   }
 
@@ -315,14 +290,6 @@ function applyTableFilters(table, rows, filters, emptyState) {
         return !filterMeta.currentValue || normalizedValue.indexOf(filterMeta.currentValue) !== -1;
       }
 
-      if (filterMeta.type === 'number') {
-        var parsedNumber = Number(rawValue.replace(',', '.'));
-        if (Number.isNaN(parsedNumber)) return filterMeta.minValue === null && filterMeta.maxValue === null;
-        if (filterMeta.minValue !== null && parsedNumber < filterMeta.minValue) return false;
-        if (filterMeta.maxValue !== null && parsedNumber > filterMeta.maxValue) return false;
-        return true;
-      }
-
       if (filterMeta.type === 'date') {
         var parsedDate = parseTableDate(rawValue);
         if (!parsedDate) return !filterMeta.fromValue && !filterMeta.toValue;
@@ -357,6 +324,11 @@ function initColumnFilters(table) {
 
   hideLegacyTableSearch(table);
 
+  // Detect server-side search: a form with .table-search-input in the same card
+  var card = table.closest('.page-section-card');
+  var searchInput = card ? card.querySelector('.table-search-input') : null;
+  var searchForm = searchInput ? searchInput.closest('form') : null;
+
   var filters = [];
   headerCells.forEach(function (headerCell, index) {
     var cells = rows.map(function (row) { return row.children[index]; }).filter(Boolean);
@@ -369,8 +341,6 @@ function initColumnFilters(table) {
       label: headerCell.textContent.trim(),
       type: type,
       currentValue: '',
-      minValue: null,
-      maxValue: null,
       fromValue: '',
       toValue: ''
     };
@@ -418,13 +388,48 @@ function initColumnFilters(table) {
   panel.appendChild(body);
 
   var emptyState = createNoResultMessage(table);
-  var rerender = function () {
-    applyTableFilters(table, rows, filters, emptyState);
-  };
+
+  // Server-side: onChange is a no-op (meta values are kept up-to-date by
+  // createFilterControl; submission is triggered explicitly by Enter key).
+  var rerender = searchForm
+    ? function () { /* submit on Enter only — see keydown listener below */ }
+    : function () { applyTableFilters(table, rows, filters, emptyState); };
 
   filters.forEach(function (meta) {
     body.appendChild(createFilterControl(meta, rerender));
   });
+
+  if (searchForm) {
+    // Submit the server search when the user presses Enter inside any filter input
+    panel.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      var val = '';
+      for (var i = 0; i < filters.length; i++) {
+        var v = filters[i].currentValue || filters[i].fromValue || '';
+        if (v) { val = v; break; }
+      }
+      searchInput.value = val;
+      searchForm.submit();
+    });
+
+    // Update placeholders so the user knows to press Enter
+    panel.querySelectorAll('input').forEach(function (input) {
+      if (!input.dataset.filterManaged) return;
+      input.placeholder = 'Filtrer… (Entrée)';
+    });
+
+    // Pre-fill the first text filter if a search value is already in the URL
+    var urlSearch = new URLSearchParams(window.location.search).get(searchInput.name || 'search') || '';
+    if (urlSearch) {
+      var firstInput = panel.querySelector('input[data-filter-managed="1"]');
+      if (firstInput) {
+        firstInput.value = urlSearch;
+        var firstMeta = filters.find(function (m) { return m.type !== 'date'; });
+        if (firstMeta) firstMeta.currentValue = normalizeFilterText(urlSearch);
+      }
+    }
+  }
 
   resetButton.addEventListener('click', function () {
     panel.querySelectorAll('input, select').forEach(function (control) {
@@ -432,17 +437,22 @@ function initColumnFilters(table) {
     });
     filters.forEach(function (meta) {
       meta.currentValue = '';
-      meta.minValue = null;
-      meta.maxValue = null;
       meta.fromValue = '';
       meta.toValue = '';
     });
-    rerender();
+    if (searchForm) {
+      searchInput.value = '';
+      searchForm.submit();
+    } else {
+      applyTableFilters(table, rows, filters, emptyState);
+    }
   });
 
   var insertionTarget = table.closest('.table-wrapper') || table;
   insertionTarget.insertAdjacentElement('beforebegin', panel);
-  rerender();
+  if (!searchForm) {
+    applyTableFilters(table, rows, filters, emptyState);
+  }
 }
 
 function initSmartTableFilters() {

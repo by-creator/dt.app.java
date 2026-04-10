@@ -96,6 +96,12 @@
         </svg>
         Conversion
       </a>
+      <a id="tab-routes" href="javascript:void(0)" onclick="showTab('routes')" class="subpage-tab">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12h18"/><path d="M3 6h18"/><path d="M3 18h18"/>
+        </svg>
+        Routes
+      </a>
     </div>
 
     <div style="padding:32px 36px;">
@@ -725,6 +731,75 @@
 
       </div>
 
+      <!-- ======================================================= -->
+      <!-- PANE ROUTES                                              -->
+      <!-- ======================================================= -->
+      <div id="pane-routes" class="tab-pane" style="display:none;">
+
+        <div class="page-section-card" style="padding:24px; margin-bottom:28px;">
+          <div class="menu-header-row">
+            <div>
+              <div class="page-badge"><span class="page-badge-dot"></span> ROUTES DE L'APPLICATION</div>
+              <h1 class="page-title" style="font-size:22px; margin-bottom:4px;">Routes exposées</h1>
+              <p class="page-subtitle">Liste de l'ensemble des routes exposées par l'application.</p>
+            </div>
+            <div style="display:flex; align-items:center; gap:12px;">
+              <div class="menu-search-wrap">
+                <input type="search" id="routesSearch" class="menu-search"
+                       placeholder="Rechercher..."
+                       oninput="routesCurrentPage=0; routesFilter()">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="page-section-card" style="padding:0; overflow:hidden;">
+          <div class="table-toolbar">
+            <span class="toolbar-title">Liste des routes</span>
+            <span id="routesCount" class="pagination-info"
+                  th:text="${#lists.size(routes)} + ' résultat' + (${#lists.size(routes)} > 1 ? 's' : '')"></span>
+          </div>
+          <div class="table-wrapper">
+            <table id="routesTable" class="data-table">
+              <thead>
+                <tr>
+                  <th>NOM</th>
+                  <th>URL</th>
+                  <th>CONTRÔLEUR</th>
+                  <th>MÉTHODE</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="route : ${routes}">
+                  <td th:text="${route.name}"></td>
+                  <td>
+                    <span th:text="${route.httpMethod}"
+                          th:classappend="${route.httpMethod == 'GET'    ? ' badge-get'    :
+                                           route.httpMethod == 'POST'   ? ' badge-post'   :
+                                           route.httpMethod == 'PUT'    ? ' badge-put'    :
+                                           route.httpMethod == 'DELETE' ? ' badge-delete' :
+                                           route.httpMethod == 'PATCH'  ? ' badge-patch'  : ' badge-other'}"
+                          class="http-badge"></span>
+                    <span th:text="${route.url}" style="margin-left:8px; font-family:monospace; font-size:13px;"></span>
+                  </td>
+                  <td th:text="${route.controllerName}"></td>
+                  <td style="font-family:monospace; font-size:13px;" th:text="${route.methodName}"></td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(routes)}">
+                  <td colspan="4" style="text-align:center; color:#94a3b8; padding:32px;">Aucune route trouvée.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="pagination-bar" id="routesPaginationBar" style="display:none;">
+            <span class="pagination-info" id="routesPaginationInfo"></span>
+            <div class="pagination-controls" id="routesPaginationControls"></div>
+          </div>
+        </div>
+
+      </div>
+
     </div><!-- /padding wrapper -->
   </main>
 </div>
@@ -811,6 +886,69 @@
     document.getElementById('compagnieForm').reset();
     document.getElementById('compagnieCancelBtn').style.display = 'none';
   }
+
+  // ===== ROUTES PAGINATION =====
+  var routesPageSize = 20;
+  var routesCurrentPage = 0;
+
+  function routesFilter() {
+    var q = (document.getElementById('routesSearch').value || '').trim().toLowerCase();
+    var rows = Array.from(document.querySelectorAll('#routesTable tbody tr'));
+    var visibleRows = rows.filter(function(row) {
+      var show = row.cells.length > 1 && (!q || row.textContent.toLowerCase().indexOf(q) !== -1);
+      row.style.display = 'none';
+      return show;
+    });
+
+    var countEl = document.getElementById('routesCount');
+    if (countEl) countEl.textContent = visibleRows.length + (visibleRows.length > 1 ? ' résultats' : ' résultat');
+
+    var totalPages = Math.max(1, Math.ceil(visibleRows.length / routesPageSize));
+    if (routesCurrentPage >= totalPages) routesCurrentPage = totalPages - 1;
+
+    visibleRows.forEach(function(row, idx) {
+      row.style.display = Math.floor(idx / routesPageSize) === routesCurrentPage ? '' : 'none';
+    });
+
+    renderRoutesPagination(visibleRows.length, totalPages);
+  }
+
+  function renderRoutesPagination(total, totalPages) {
+    var bar      = document.getElementById('routesPaginationBar');
+    var infoEl   = document.getElementById('routesPaginationInfo');
+    var controls = document.getElementById('routesPaginationControls');
+
+    if (totalPages <= 1) { bar.style.display = 'none'; return; }
+    bar.style.display = '';
+
+    infoEl.textContent = total + ' résultat' + (total > 1 ? 's' : '') +
+      ' · Page ' + (routesCurrentPage + 1) + ' / ' + totalPages;
+
+    controls.innerHTML = '';
+    function mkBtn(text, page, disabled, active) {
+      var a = document.createElement('a');
+      a.className = 'page-btn' + (disabled ? ' disabled' : '') + (active ? ' active' : '');
+      a.href = 'javascript:void(0)';
+      a.textContent = text;
+      if (!disabled) a.onclick = function() { routesCurrentPage = page; routesFilter(); };
+      return a;
+    }
+
+    controls.appendChild(mkBtn('««', 0, routesCurrentPage === 0, false));
+    controls.appendChild(mkBtn('‹', routesCurrentPage - 1, routesCurrentPage === 0, false));
+
+    var startP = Math.max(0, routesCurrentPage - 2);
+    var endP   = Math.min(totalPages - 1, routesCurrentPage + 2);
+    for (var i = startP; i <= endP; i++) {
+      controls.appendChild(mkBtn(i + 1, i, false, i === routesCurrentPage));
+    }
+
+    controls.appendChild(mkBtn('›', routesCurrentPage + 1, routesCurrentPage + 1 >= totalPages, false));
+    controls.appendChild(mkBtn('»»', totalPages - 1, routesCurrentPage + 1 >= totalPages, false));
+  }
+
+  // Init routes pagination on load
+  routesFilter();
 
   // ===== CONVERT FORM =====
   document.getElementById('convertForm').addEventListener('submit', function(e) {

@@ -18,19 +18,24 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/admin")
@@ -45,19 +50,47 @@ public class AdminController {
     private final AuthorityDefinitionRepository authorityDefinitionRepository;
     private final AuditLogRepository auditLogRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RequestMappingHandlerMapping handlerMapping;
 
     public AdminController(UserRepository userRepository,
                            CompagnieRepository compagnieRepository,
                            AuthorityRepository authorityRepository,
                            AuthorityDefinitionRepository authorityDefinitionRepository,
                            AuditLogRepository auditLogRepository,
-                           PasswordEncoder passwordEncoder) {
+                           PasswordEncoder passwordEncoder,
+                           @Qualifier("requestMappingHandlerMapping") RequestMappingHandlerMapping handlerMapping) {
         this.userRepository                 = userRepository;
         this.compagnieRepository            = compagnieRepository;
         this.authorityRepository            = authorityRepository;
         this.authorityDefinitionRepository  = authorityDefinitionRepository;
         this.auditLogRepository             = auditLogRepository;
         this.passwordEncoder                = passwordEncoder;
+        this.handlerMapping                 = handlerMapping;
+    }
+
+    public record RouteInfo(String name, String url, String controllerName, String methodName, String httpMethod) {}
+
+    private static String formatName(String camelCase) {
+        String spaced = camelCase.replaceAll("([a-z])([A-Z])", "$1 $2");
+        return Character.toUpperCase(spaced.charAt(0)) + spaced.substring(1);
+    }
+
+    private List<RouteInfo> buildRoutes() {
+        return handlerMapping.getHandlerMethods().entrySet().stream()
+            .flatMap(entry -> {
+                var info   = entry.getKey();
+                HandlerMethod method = entry.getValue();
+                var patterns    = info.getPatternValues();
+                var httpMethods = info.getMethodsCondition().getMethods();
+                String controller  = method.getBeanType().getSimpleName().replace("Controller", "");
+                String javaMethod  = method.getMethod().getName();
+                String httpStr     = httpMethods.isEmpty() ? "GET"
+                    : httpMethods.stream().map(Enum::name).sorted().collect(Collectors.joining(", "));
+                String name = formatName(javaMethod);
+                return patterns.stream().map(p -> new RouteInfo(name, p, controller, javaMethod, httpStr));
+            })
+            .sorted(Comparator.comparing(RouteInfo::url).thenComparing(RouteInfo::httpMethod))
+            .collect(Collectors.toList());
     }
 
     // ===== INDEX =====
@@ -73,6 +106,7 @@ public class AdminController {
         model.addAttribute("authorities", authorityRepository.findAllWithUser());
         model.addAttribute("authorityDefinitions", authorityDefinitionRepository.findAll(Sort.by("name")));
         model.addAttribute("tab", tab);
+        model.addAttribute("routes", buildRoutes());
 
         int safePage = Math.max(auditPage, 0);
         Page<com.dtapp.entity.AuditLog> auditPageData = auditLogRepository.search(
