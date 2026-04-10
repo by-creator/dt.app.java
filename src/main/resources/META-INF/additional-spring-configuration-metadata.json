@@ -21,6 +21,12 @@
       "description": "Email recipient for remise notifications."
     },
     {
+      "name": "app.rappel.interval-ms",
+      "type": "java.lang.Long",
+      "description": "Interval in milliseconds between automatic reminder emails (default: 1800000 = 30 min).",
+      "defaultValue": 1800000
+    },
+    {
       "name": "app.data-initializer.enabled",
       "type": "java.lang.Boolean",
       "description": "Enable or disable the data initializer on startup.",

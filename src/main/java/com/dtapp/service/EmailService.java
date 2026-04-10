@@ -12,6 +12,7 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
@@ -84,6 +85,96 @@ public class EmailService {
                 }
             }
         }
+    }
+
+    // ==================== RAPPELS AUTOMATIQUES ====================
+
+    public void sendRappelValidation(List<RattachementBl> demandes) {
+        if (demandes == null || demandes.isEmpty()) return;
+        String html = buildRappelHtml(demandes, "Rappel — Demandes de validation en attente",
+                "Les demandes de validation suivantes sont toujours en attente de traitement :", "#f97316");
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setFrom(mailFrom, "DAKAR-TERMINAL");
+            helper.setTo(mailTo);
+            helper.setSubject("Rappel : " + demandes.size() + " demande(s) de validation en attente");
+            helper.setText(html, true);
+            helper.addInline("dtLogo", new ClassPathResource("static/img/image.png"));
+            mailSender.send(message);
+        } catch (Exception e) {
+            // Silent fail
+        }
+    }
+
+    public void sendRappelRemise(List<RattachementBl> demandes) {
+        if (demandes == null || demandes.isEmpty()) return;
+        String html = buildRappelHtml(demandes, "Rappel — Demandes de remise en attente",
+                "Les demandes de remise suivantes (EN_ATTENTE et EN_ATTENTE_DIRECTION) sont toujours en attente de traitement :", "#f97316");
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setFrom(mailFrom, "DAKAR-TERMINAL");
+            helper.setTo(mailToRemise);
+            helper.setSubject("Rappel : " + demandes.size() + " demande(s) de remise en attente");
+            helper.setText(html, true);
+            helper.addInline("dtLogo", new ClassPathResource("static/img/image.png"));
+            mailSender.send(message);
+        } catch (Exception e) {
+            // Silent fail
+        }
+    }
+
+    @NonNull
+    private String buildRappelHtml(List<RattachementBl> demandes, String titre, String intro, String accentColor) {
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+        String loginUrl = baseUrl + "/login";
+        StringBuilder sb = new StringBuilder();
+        sb.append("<!DOCTYPE html><html><body style=\"font-family:Arial,sans-serif;background:#f8fbff;margin:0;padding:20px\">")
+          .append("<div style=\"max-width:680px;margin:0 auto;background:white;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08)\">")
+          .append("  <div style=\"background:#ffffff;padding:28px;text-align:center;border-bottom:1px solid #e2e8f0\">")
+          .append("    <img src=\"cid:dtLogo\" alt=\"Dakar Terminal\" style=\"max-height:50px;max-width:240px\">")
+          .append("  </div>")
+          .append("  <div style=\"padding:36px 40px\">")
+          .append("    <div style=\"display:inline-block;background:").append(accentColor)
+          .append(";color:white;padding:6px 16px;border-radius:999px;font-size:12px;font-weight:700;margin-bottom:20px\">RAPPEL</div>")
+          .append("    <h2 style=\"color:#0f172a;margin:0 0 8px;font-size:20px\">").append(titre).append("</h2>")
+          .append("    <p style=\"color:#64748b;margin:0 0 28px;font-size:14px\">").append(intro).append("</p>")
+          .append("    <table style=\"width:100%;border-collapse:collapse;font-size:13px\">")
+          .append("      <thead>")
+          .append("        <tr style=\"background:#f1f5f9\">")
+          .append("          <th style=\"padding:10px 8px;text-align:left;color:#475569;font-weight:600\">N° BL</th>")
+          .append("          <th style=\"padding:10px 8px;text-align:left;color:#475569;font-weight:600\">Client</th>")
+          .append("          <th style=\"padding:10px 8px;text-align:left;color:#475569;font-weight:600\">Maison de transit</th>")
+          .append("          <th style=\"padding:10px 8px;text-align:left;color:#475569;font-weight:600\">Statut</th>")
+          .append("          <th style=\"padding:10px 8px;text-align:left;color:#475569;font-weight:600\">Soumis le</th>")
+          .append("        </tr>")
+          .append("      </thead>")
+          .append("      <tbody>");
+        for (int i = 0; i < demandes.size(); i++) {
+            RattachementBl d = demandes.get(i);
+            String rowBg = (i % 2 == 0) ? "white" : "#f8fbff";
+            String date = d.getCreatedAt() != null ? d.getCreatedAt().format(fmt) : "-";
+            String statutColor = "EN_ATTENTE_DIRECTION".equals(d.getStatut()) ? "#dc2626" : "#f97316";
+            String statutLabel = "EN_ATTENTE_DIRECTION".equals(d.getStatut()) ? "Attente Direction" : "En attente";
+            sb.append("        <tr style=\"background:").append(rowBg).append("\">")
+              .append("<td style=\"padding:10px 8px;color:#0f172a;font-weight:600\">").append(safe(d.getBl())).append("</td>")
+              .append("<td style=\"padding:10px 8px;color:#334155\">").append(safe(d.getNom())).append(" ").append(safe(d.getPrenom())).append("</td>")
+              .append("<td style=\"padding:10px 8px;color:#334155\">").append(safe(d.getMaison())).append("</td>")
+              .append("<td style=\"padding:10px 8px\"><span style=\"background:").append(statutColor)
+              .append(";color:white;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700\">").append(statutLabel).append("</span></td>")
+              .append("<td style=\"padding:10px 8px;color:#64748b\">").append(date).append("</td>")
+              .append("</tr>");
+        }
+        sb.append("      </tbody>")
+          .append("    </table>")
+          .append("    <div style=\"margin-top:36px;text-align:center\">")
+          .append("      <a href=\"").append(loginUrl).append("\" style=\"display:inline-block;background:#3367bf;color:white;padding:14px 36px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px\">Traiter les demandes</a>")
+          .append("    </div>")
+          .append("  </div>")
+          .append("  <div style=\"padding:16px;text-align:center;background:#f8fbff;color:#94a3b8;font-size:12px\">&copy; 2026 Dakar Terminal. Tous droits reserves.</div>")
+          .append("</div></body></html>");
+        return java.util.Objects.requireNonNull(sb.toString());
     }
 
     // ==================== IES NOTIFICATIONS ====================

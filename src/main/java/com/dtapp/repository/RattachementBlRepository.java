@@ -15,6 +15,8 @@ public interface RattachementBlRepository extends JpaRepository<RattachementBl, 
 
     List<RattachementBl> findByTypeOrderByCreatedAtDesc(String type);
 
+    List<RattachementBl> findByTypeAndStatutOrderByCreatedAtAsc(String type, String statut);
+
     @Query("SELECT r FROM RattachementBl r WHERE r.type = :type ORDER BY r.createdAt DESC")
     Page<RattachementBl> findByTypePaged(@Param("type") String type, Pageable pageable);
 }

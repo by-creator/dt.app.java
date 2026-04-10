@@ -115,20 +115,20 @@ body {
 .form-input {
   width: 100%;
   padding: 14px 16px;
-  border: none;
+  border: 1px solid #6366f1;
   border-radius: 12px;
-  background: #f1f5f9;
+  background: #ffffff;
   font-size: 15px;
   color: #1e293b;
   outline: none;
-  transition: background 0.2s, box-shadow 0.2s;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
 }
 
 .form-input::placeholder { color: #94a3b8; }
 
 .form-input:focus {
   background: #eef0ff;
-  box-shadow: 0 0 0 2px #6366f1;
+  box-shadow: 0 0 0 2px rgba(99,102,241,0.18);
 }
 
 .login-card .form-input {
@@ -969,11 +969,11 @@ body {
 .table-search-input {
   width: 100%;
   padding: 10px 14px 10px 40px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #6366f1;
   border-radius: 10px;
   font-size: 14px;
   color: #1e293b;
-  background: #f8fafc;
+  background: #ffffff;
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
@@ -1031,7 +1031,7 @@ body {
   width: 100%;
   min-height: 40px;
   padding: 10px 12px;
-  border: 1px solid #dbe2ee;
+  border: 1px solid #6366f1;
   border-radius: 10px;
   background: #fff;
   color: #1e293b;
@@ -1397,8 +1397,8 @@ body {
 
 input[type="file"].form-input {
   padding: 0;
-  background: transparent;
-  border: none;
+  background: #ffffff;
+  border: 1px solid #6366f1;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -1426,6 +1426,8 @@ input[type="file"].form-input::file-selector-button:hover {
 }
 
 [data-theme="dark"] input[type="file"].form-input {
+  background: #334155;
+  border-color: #818cf8;
   color: #cbd5e1;
 }
 
