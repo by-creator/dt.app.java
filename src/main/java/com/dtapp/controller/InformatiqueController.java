@@ -32,7 +32,6 @@ import java.util.List;
 @RequestMapping("/menu/informatique/parc")
 public class InformatiqueController {
 
-    private static final int PAGE_SIZE = 10;
     private static final int MAX_TABLE_ROWS = 100000;
 
     private final UserRepository userRepository;

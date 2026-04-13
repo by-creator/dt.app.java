@@ -344,7 +344,7 @@ public class EmailService {
     }
 
     public void notifyClientRemiseEnAttenteDirection(RattachementBl bl) {
-        sendClientMail(bl, bl.getEmail(),
+        sendClientMailWithCc(bl, bl.getEmail(),
                 "Votre demande de remise est en cours de traitement - BL " + bl.getBl(),
                 buildClientStatusHtml(bl, "#f97316", "En attente de la direction",
                         "Votre demande de remise pour le BL <strong>" + safe(bl.getBl()) + "</strong> a ete transmise a la direction pour validation finale.",
@@ -353,7 +353,7 @@ public class EmailService {
 
     public void notifyClientRemiseValide(RattachementBl bl) {
         String pct = bl.getPourcentage() != null ? bl.getPourcentage().stripTrailingZeros().toPlainString() + "%" : "-";
-        sendClientMail(bl, bl.getEmail(),
+        sendClientMailWithCc(bl, bl.getEmail(),
                 "Votre demande de remise a ete approuvee - BL " + bl.getBl(),
                 buildClientStatusHtml(bl, "#16a34a", "Demande approuvee",
                         "Nous avons le plaisir de vous informer que votre demande de remise pour le BL <strong>" + safe(bl.getBl()) + "</strong> a ete approuvee.",
@@ -361,11 +361,28 @@ public class EmailService {
     }
 
     public void notifyClientRemiseRejete(RattachementBl bl) {
-        sendClientMail(bl, bl.getEmail(),
+        sendClientMailWithCc(bl, bl.getEmail(),
                 "Votre demande de remise a ete rejetee - BL " + bl.getBl(),
                 buildClientStatusHtml(bl, "#dc2626", "Demande rejetee",
                         "Nous vous informons que votre demande de remise pour le BL <strong>" + safe(bl.getBl()) + "</strong> a ete rejetee.",
                         "Motif de rejet", safe(bl.getMotifRejet())));
+    }
+
+    private void sendClientMailWithCc(RattachementBl bl, String to, @NonNull String subject, @NonNull String htmlBody) {
+        if (to == null || to.isBlank()) return;
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setFrom(mailFrom, "DAKAR-TERMINAL");
+            helper.setTo(to);
+            helper.addCc("sn004-remise.facturation@dakar-terminal.com");
+            helper.setSubject(subject);
+            helper.setText(htmlBody, true);
+            helper.addInline("dtLogo", new ClassPathResource("static/img/image.png"));
+            mailSender.send(message);
+        } catch (Exception e) {
+            // Silent fail — do not block the action
+        }
     }
 
     private void sendClientMail(RattachementBl bl, String to, @NonNull String subject, @NonNull String htmlBody) {

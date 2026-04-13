@@ -43,7 +43,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public class AdminController {
 
-    private static final int AUDIT_PAGE_SIZE = 10;
     private static final int MAX_TABLE_ROWS = 100000;
 
     private final UserRepository userRepository;

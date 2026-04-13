@@ -270,26 +270,6 @@
           </table>
         </div>
 
-        <div class="pagination-bar" th:if="${totalPages > 0}">
-          <span class="pagination-info"
-                th:text="${totalItems} + ' enregistrement' + (${totalItems} > 1 ? 's' : '') +
-                          ' · Page ' + (${currentPage} + 1) + ' / ' + ${totalPages}"></span>
-          <div class="pagination-controls">
-            <a class="page-btn" th:classappend="${currentPage == 0} ? 'disabled' : ''"
-               th:href="${currentPage == 0} ? '#' : @{/menu/informatique/parc/postes-fixes(page=0, filterAnnuaire=${filterAnnuaire}, filterNom=${filterNom}, filterPrenom=${filterPrenom}, filterType=${filterType})}">««</a>
-            <a class="page-btn" th:classappend="${currentPage == 0} ? 'disabled' : ''"
-               th:href="${currentPage == 0} ? '#' : @{/menu/informatique/parc/postes-fixes(page=${currentPage - 1}, filterAnnuaire=${filterAnnuaire}, filterNom=${filterNom}, filterPrenom=${filterPrenom}, filterType=${filterType})}">‹</a>
-            <th:block th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
-              <a class="page-btn" th:classappend="${i == currentPage} ? 'active' : ''"
-                 th:href="@{/menu/informatique/parc/postes-fixes(page=${i}, filterAnnuaire=${filterAnnuaire}, filterNom=${filterNom}, filterPrenom=${filterPrenom}, filterType=${filterType})}"
-                 th:text="${i + 1}">1</a>
-            </th:block>
-            <a class="page-btn" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled' : ''"
-               th:href="${currentPage + 1 >= totalPages} ? '#' : @{/menu/informatique/parc/postes-fixes(page=${currentPage + 1}, filterAnnuaire=${filterAnnuaire}, filterNom=${filterNom}, filterPrenom=${filterPrenom}, filterType=${filterType})}">›</a>
-            <a class="page-btn" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled' : ''"
-               th:href="${currentPage + 1 >= totalPages} ? '#' : @{/menu/informatique/parc/postes-fixes(page=${totalPages - 1}, filterAnnuaire=${filterAnnuaire}, filterNom=${filterNom}, filterPrenom=${filterPrenom}, filterType=${filterType})}">»»</a>
-          </div>
-        </div>
       </div>
 
     </div>

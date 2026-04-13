@@ -232,53 +232,6 @@
         </table>
         </div>
 
-        <!-- ===== PAGINATION ===== -->
-        <div class="pagination-bar" th:if="${codifications.totalPages > 0}">
-          <span class="pagination-info"
-                th:text="${codifications.totalElements} + ' enregistrement' + (${codifications.totalElements} > 1 ? 's' : '') +
-                          ' · Page ' + (${codifications.number} + 1) + ' / ' + ${codifications.totalPages}">
-          </span>
-
-          <div class="pagination-controls">
-
-            <!-- Première page -->
-            <a class="page-btn"
-               th:classappend="${codifications.first} ? 'disabled' : ''"
-               th:href="${codifications.first} ? '#' : @{/menu/compagnie/upload-manifest(page=0, search=${search})}">
-              ««
-            </a>
-
-            <!-- Précédent -->
-            <a class="page-btn"
-               th:classappend="${codifications.first} ? 'disabled' : ''"
-               th:href="${codifications.first} ? '#' : @{/menu/compagnie/upload-manifest(page=${codifications.number - 1}, search=${search})}">
-              ‹
-            </a>
-
-            <!-- Pages numérotées -->
-            <th:block th:each="i : ${#numbers.sequence(0, codifications.totalPages - 1)}">
-              <a class="page-btn"
-                 th:classappend="${i == codifications.number} ? 'active' : ''"
-                 th:href="@{/menu/compagnie/upload-manifest(page=${i}, search=${search})}"
-                 th:text="${i + 1}">1</a>
-            </th:block>
-
-            <!-- Suivant -->
-            <a class="page-btn"
-               th:classappend="${codifications.last} ? 'disabled' : ''"
-               th:href="${codifications.last} ? '#' : @{/menu/compagnie/upload-manifest(page=${codifications.number + 1}, search=${search})}">
-              ›
-            </a>
-
-            <!-- Dernière page -->
-            <a class="page-btn"
-               th:classappend="${codifications.last} ? 'disabled' : ''"
-               th:href="${codifications.last} ? '#' : @{/menu/compagnie/upload-manifest(page=${codifications.totalPages - 1}, search=${search})}">
-              »»
-            </a>
-
-          </div>
-        </div>
 
       </div>
     </div>

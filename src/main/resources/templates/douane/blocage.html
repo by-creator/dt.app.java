@@ -225,53 +225,6 @@
         </table>
         </div>
 
-        <!-- ===== PAGINATION ===== -->
-        <div class="pagination-bar" th:if="${totalPages > 0}">
-          <span class="pagination-info"
-                th:text="${totalItems} + ' enregistrement' + (${totalItems} > 1 ? 's' : '') +
-                          ' · Page ' + (${currentPage} + 1) + ' / ' + ${totalPages}">
-          </span>
-
-          <div class="pagination-controls">
-
-            <!-- Première page -->
-            <a class="page-btn"
-               th:classappend="${currentPage == 0} ? 'disabled' : ''"
-               th:href="${currentPage == 0} ? '#' : @{/menu/douane/blocage(page=0, filterItem=${filterItem}, filterStatut=${filterStatut}, filterDate=${filterDate})}">
-              ««
-            </a>
-
-            <!-- Précédent -->
-            <a class="page-btn"
-               th:classappend="${currentPage == 0} ? 'disabled' : ''"
-               th:href="${currentPage == 0} ? '#' : @{/menu/douane/blocage(page=${currentPage - 1}, filterItem=${filterItem}, filterStatut=${filterStatut}, filterDate=${filterDate})}">
-              ‹
-            </a>
-
-            <!-- Pages numérotées -->
-            <th:block th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
-              <a class="page-btn"
-                 th:classappend="${i == currentPage} ? 'active' : ''"
-                 th:href="@{/menu/douane/blocage(page=${i}, filterItem=${filterItem}, filterStatut=${filterStatut}, filterDate=${filterDate})}"
-                 th:text="${i + 1}">1</a>
-            </th:block>
-
-            <!-- Suivant -->
-            <a class="page-btn"
-               th:classappend="${currentPage + 1 >= totalPages} ? 'disabled' : ''"
-               th:href="${currentPage + 1 >= totalPages} ? '#' : @{/menu/douane/blocage(page=${currentPage + 1}, filterItem=${filterItem}, filterStatut=${filterStatut}, filterDate=${filterDate})}">
-              ›
-            </a>
-
-            <!-- Dernière page -->
-            <a class="page-btn"
-               th:classappend="${currentPage + 1 >= totalPages} ? 'disabled' : ''"
-               th:href="${currentPage + 1 >= totalPages} ? '#' : @{/menu/douane/blocage(page=${totalPages - 1}, filterItem=${filterItem}, filterStatut=${filterStatut}, filterDate=${filterDate})}">
-              »»
-            </a>
-
-          </div>
-        </div>
 
       </div>
     </div>

@@ -324,9 +324,6 @@ public class MenuController {
         return "facturation/reports";
     }
 
-    private static final int UNIFY_PAGE_SIZE = 10;
-    private static final int BL_PAGE_SIZE    = 15;
-    private static final int SAT_PAGE_SIZE   = 20;
     private static final int MAX_TABLE_ROWS  = 100000;
 
     @GetMapping("/menu/facturation/unify")

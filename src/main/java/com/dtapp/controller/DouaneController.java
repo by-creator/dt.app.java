@@ -16,7 +16,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @RequestMapping("/menu/douane")
 public class DouaneController {
 
-    private static final int PAGE_SIZE = 4;
     private static final int MAX_TABLE_ROWS = 100000;
 
     private final UserRepository userRepository;

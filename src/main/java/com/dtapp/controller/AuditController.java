@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 @RequestMapping("/menu/audit")
 public class AuditController {
 
-    private static final int PAGE_SIZE = 10;
     private static final int MAX_TABLE_ROWS = 100000;
 
     private final AuditLogRepository auditLogRepository;
