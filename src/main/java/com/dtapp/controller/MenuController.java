@@ -251,18 +251,12 @@ public class MenuController {
         Set<String> roles = auth.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority).collect(Collectors.toSet());
         boolean admin = roles.contains("ROLE_ADMIN");
-        int safePage = Math.max(page, 0);
         Page<RattachementBl> demandesPage = fetchBls("FACTURATION", filterDate,
-                filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut, safePage);
-        if (safePage > 0 && safePage >= demandesPage.getTotalPages() && demandesPage.getTotalPages() > 0) {
-            safePage = demandesPage.getTotalPages() - 1;
-            demandesPage = fetchBls("FACTURATION", filterDate,
-                    filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut, safePage);
-        }
+                filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut, 0);
         model.addAttribute("loggedUser", loggedUser);
         model.addAttribute("demandes", demandesPage.getContent());
-        model.addAttribute("currentPage", demandesPage.getNumber());
-        model.addAttribute("totalPages", demandesPage.getTotalPages());
+        model.addAttribute("currentPage", 0);
+        model.addAttribute("totalPages", 0);
         model.addAttribute("totalItems", demandesPage.getTotalElements());
         model.addAttribute("filterDate",   filterDate   != null ? filterDate   : "");
         model.addAttribute("filterNom",    filterNom    != null ? filterNom    : "");
@@ -333,6 +327,7 @@ public class MenuController {
     private static final int UNIFY_PAGE_SIZE = 10;
     private static final int BL_PAGE_SIZE    = 15;
     private static final int SAT_PAGE_SIZE   = 20;
+    private static final int MAX_TABLE_ROWS  = 100000;
 
     @GetMapping("/menu/facturation/unify")
     public String facturationUnifyWizard(@RequestParam(defaultValue = "formulaire-creation") String tab,
@@ -345,18 +340,10 @@ public class MenuController {
         boolean isAdmin = auth.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
-        int safePage = Math.max(page, 0);
         Page<TiersUnify> tiersPage = tiersUnifyRepository.search(
                 search,
-                PageRequest.of(safePage, UNIFY_PAGE_SIZE, Sort.by(Sort.Direction.DESC, "createdAt"))
+                PageRequest.of(0, MAX_TABLE_ROWS, Sort.by(Sort.Direction.DESC, "createdAt"))
         );
-        if (safePage > 0 && safePage >= tiersPage.getTotalPages() && tiersPage.getTotalPages() > 0) {
-            safePage = tiersPage.getTotalPages() - 1;
-            tiersPage = tiersUnifyRepository.search(
-                    search,
-                    PageRequest.of(safePage, UNIFY_PAGE_SIZE, Sort.by(Sort.Direction.DESC, "createdAt"))
-            );
-        }
 
         model.addAttribute("loggedUser", loggedUser);
         model.addAttribute("activeTab", normalizeUnifyTab(tab));
@@ -364,8 +351,8 @@ public class MenuController {
         model.addAttribute("isAdmin", isAdmin);
         model.addAttribute("tiers", tiersPage.getContent());
         model.addAttribute("search", search != null ? search : "");
-        model.addAttribute("currentPage", tiersPage.getNumber());
-        model.addAttribute("totalPages", tiersPage.getTotalPages());
+        model.addAttribute("currentPage", 0);
+        model.addAttribute("totalPages", 0);
         model.addAttribute("totalItems", tiersPage.getTotalElements());
         model.addAttribute("sidebarMenuUrl", isAdmin ? "/menu" : "/menu/facturation");
         return "facturation/unify";
@@ -709,21 +696,15 @@ public class MenuController {
                 .findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
         int total = reponses.size();
 
-        int safePage = Math.max(page, 0);
         org.springframework.data.domain.Page<SatisfactionReponse> reponsesPage =
                 satisfactionReponseRepository.findAll(
-                        PageRequest.of(safePage, SAT_PAGE_SIZE, Sort.by(Sort.Direction.DESC, "createdAt")));
-        if (safePage > 0 && safePage >= reponsesPage.getTotalPages() && reponsesPage.getTotalPages() > 0) {
-            safePage = reponsesPage.getTotalPages() - 1;
-            reponsesPage = satisfactionReponseRepository.findAll(
-                    PageRequest.of(safePage, SAT_PAGE_SIZE, Sort.by(Sort.Direction.DESC, "createdAt")));
-        }
+                        PageRequest.of(0, MAX_TABLE_ROWS, Sort.by(Sort.Direction.DESC, "createdAt")));
 
         model.addAttribute("loggedUser", loggedUser);
         model.addAttribute("currentDate", formatDate());
         model.addAttribute("reponses", reponsesPage.getContent());
-        model.addAttribute("currentPage", reponsesPage.getNumber());
-        model.addAttribute("totalPages", reponsesPage.getTotalPages());
+        model.addAttribute("currentPage", 0);
+        model.addAttribute("totalPages", 0);
         model.addAttribute("totalItems", reponsesPage.getTotalElements());
         model.addAttribute("total", total);
 
@@ -978,7 +959,7 @@ public class MenuController {
 
         return rattachementBlRepository.findByTypeWithFilters(
                 type, dateStart, dateEnd, sNom, sPrenom, sEmail, sBl, sMaison, sStatut,
-                PageRequest.of(safePage, BL_PAGE_SIZE));
+                PageRequest.of(0, MAX_TABLE_ROWS));
     }
 
     private boolean isDirection(Set<String> roles) {
@@ -1005,18 +986,12 @@ public class MenuController {
                 .map(GrantedAuthority::getAuthority).collect(Collectors.toSet());
         boolean admin = roles.contains("ROLE_ADMIN");
         String currentPagePath = parentMenuPath + "/gestion-remises";
-        int safePage = Math.max(page, 0);
         Page<RattachementBl> demandesPage = fetchBls("REMISE", filterDate,
-                filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut, safePage);
-        if (safePage > 0 && safePage >= demandesPage.getTotalPages() && demandesPage.getTotalPages() > 0) {
-            safePage = demandesPage.getTotalPages() - 1;
-            demandesPage = fetchBls("REMISE", filterDate,
-                    filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut, safePage);
-        }
+                filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut, 0);
         model.addAttribute("loggedUser", loggedUser);
         model.addAttribute("demandes", demandesPage.getContent());
-        model.addAttribute("currentPage", demandesPage.getNumber());
-        model.addAttribute("totalPages", demandesPage.getTotalPages());
+        model.addAttribute("currentPage", 0);
+        model.addAttribute("totalPages", 0);
         model.addAttribute("totalItems", demandesPage.getTotalElements());
         model.addAttribute("filterDate",   filterDate   != null ? filterDate   : "");
         model.addAttribute("filterNom",    filterNom    != null ? filterNom    : "");

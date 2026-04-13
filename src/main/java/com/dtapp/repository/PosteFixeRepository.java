@@ -19,4 +19,18 @@ public interface PosteFixeRepository extends JpaRepository<PosteFixe, Long> {
         ORDER BY p.createdAt DESC
         """)
     Page<PosteFixe> searchPaged(@Param("search") String search, Pageable pageable);
+
+    @Query("""
+        SELECT p FROM PosteFixe p
+        WHERE (:annuaire IS NULL OR :annuaire = '' OR LOWER(p.annuaire) LIKE LOWER(CONCAT('%', :annuaire, '%')))
+          AND (:nom      IS NULL OR :nom      = '' OR LOWER(p.nom)      LIKE LOWER(CONCAT('%', :nom,      '%')))
+          AND (:prenom   IS NULL OR :prenom   = '' OR LOWER(p.prenom)   LIKE LOWER(CONCAT('%', :prenom,   '%')))
+          AND (:type     IS NULL OR :type     = '' OR LOWER(p.type)     LIKE LOWER(CONCAT('%', :type,     '%')))
+        ORDER BY p.createdAt DESC
+        """)
+    Page<PosteFixe> filterByColumns(@Param("annuaire") String annuaire,
+                                    @Param("nom") String nom,
+                                    @Param("prenom") String prenom,
+                                    @Param("type") String type,
+                                    Pageable pageable);
 }

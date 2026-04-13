@@ -17,6 +17,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class DouaneController {
 
     private static final int PAGE_SIZE = 4;
+    private static final int MAX_TABLE_ROWS = 100000;
 
     private final UserRepository userRepository;
     private final BlocageItemRepository blocageItemRepository;
@@ -35,28 +36,33 @@ public class DouaneController {
 
     @GetMapping("/blocage")
     public String blocage(@RequestParam(required = false) String search,
+                          @RequestParam(required = false) String filterItem,
+                          @RequestParam(required = false) String filterStatut,
+                          @RequestParam(required = false) String filterDate,
                           @RequestParam(defaultValue = "0") int page,
                           Model model, Authentication auth) {
 
-        if (page < 0) page = 0;
+        boolean hasColumnFilter = hasText(filterItem) || hasText(filterStatut) || hasText(filterDate);
 
-        Page<BlocageItem> itemsPage = blocageItemRepository.searchPaged(
-                search, PageRequest.of(page, PAGE_SIZE));
-
-        /* Clamp page if out of range after a deletion */
-        if (page > 0 && page >= itemsPage.getTotalPages()) {
-            page = itemsPage.getTotalPages() - 1;
-            itemsPage = blocageItemRepository.searchPaged(
-                    search, PageRequest.of(Math.max(page, 0), PAGE_SIZE));
+        Page<BlocageItem> itemsPage;
+        if (hasColumnFilter) {
+            itemsPage = blocageItemRepository.filterByColumns(
+                    emptyNull(filterItem), emptyNull(filterStatut), emptyNull(filterDate),
+                    PageRequest.of(0, MAX_TABLE_ROWS));
+        } else {
+            itemsPage = blocageItemRepository.searchPaged(search, PageRequest.of(0, MAX_TABLE_ROWS));
         }
 
-        model.addAttribute("loggedUser",  loggedUser(auth));
-        model.addAttribute("blocageItems", itemsPage.getContent());
-        model.addAttribute("search",       search != null ? search : "");
-        model.addAttribute("currentPage",  itemsPage.getNumber());
-        model.addAttribute("totalPages",   itemsPage.getTotalPages());
-        model.addAttribute("totalItems",   itemsPage.getTotalElements());
-        model.addAttribute("pageSize",     PAGE_SIZE);
+        model.addAttribute("loggedUser",    loggedUser(auth));
+        model.addAttribute("blocageItems",  itemsPage.getContent());
+        model.addAttribute("search",        search       != null ? search       : "");
+        model.addAttribute("filterItem",    filterItem   != null ? filterItem   : "");
+        model.addAttribute("filterStatut",  filterStatut != null ? filterStatut : "");
+        model.addAttribute("filterDate",    filterDate   != null ? filterDate   : "");
+        model.addAttribute("currentPage",   0);
+        model.addAttribute("totalPages",    0);
+        model.addAttribute("totalItems",    itemsPage.getTotalElements());
+        model.addAttribute("pageSize",      itemsPage.getContent().size());
         return "douane/blocage";
     }
 
@@ -105,19 +111,31 @@ public class DouaneController {
     public String tableAction(@RequestParam int id,
                               @RequestParam String action,
                               @RequestParam(defaultValue = "0") int page,
-                              @RequestParam(required = false) String search,
+                              @RequestParam(required = false) String filterItem,
+                              @RequestParam(required = false) String filterStatut,
+                              @RequestParam(required = false) String filterDate,
                               RedirectAttributes ra) {
         blocageItemRepository.findById(id).ifPresent(entry -> {
             entry.setStatut("bloquer".equals(action) ? "BLOQUE" : "DEBLOQUE");
             blocageItemRepository.save(entry);
             ra.addFlashAttribute("success", "Statut de « " + entry.getItem() + " » mis à jour.");
         });
-        String redirect = "redirect:/menu/douane/blocage?page=" + page;
-        if (search != null && !search.isBlank()) redirect += "&search=" + search;
-        return redirect;
+        StringBuilder redirect = new StringBuilder("redirect:/menu/douane/blocage");
+        if (filterItem   != null && !filterItem.isBlank())   redirect.append("&filterItem=").append(filterItem);
+        if (filterStatut != null && !filterStatut.isBlank()) redirect.append("&filterStatut=").append(filterStatut);
+        if (filterDate   != null && !filterDate.isBlank())   redirect.append("&filterDate=").append(filterDate);
+        return redirect.toString();
     }
 
     private User loggedUser(Authentication auth) {
         return userRepository.findByEmail(auth.getName()).orElseThrow();
+    }
+
+    private boolean hasText(String s) {
+        return s != null && !s.isBlank();
+    }
+
+    private String emptyNull(String s) {
+        return (s == null || s.isBlank()) ? "" : s.trim();
     }
 }

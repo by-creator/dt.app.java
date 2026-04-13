@@ -102,6 +102,12 @@
         </svg>
         Routes
       </a>
+      <a id="tab-commandes" href="javascript:void(0)" onclick="showTab('commandes')" class="subpage-tab">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/>
+        </svg>
+        Commandes
+      </a>
     </div>
 
     <div style="padding:32px 36px;">
@@ -747,7 +753,7 @@
               <div class="menu-search-wrap">
                 <input type="search" id="routesSearch" class="menu-search"
                        placeholder="Rechercher..."
-                       oninput="routesCurrentPage=0; routesFilter()">
+                       oninput="routesFilter()">
               </div>
             </div>
           </div>
@@ -795,6 +801,73 @@
           <div class="pagination-bar" id="routesPaginationBar" style="display:none;">
             <span class="pagination-info" id="routesPaginationInfo"></span>
             <div class="pagination-controls" id="routesPaginationControls"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ======================================================= -->
+      <!-- PANE COMMANDES                                           -->
+      <!-- ======================================================= -->
+      <div id="pane-commandes" class="tab-pane" style="display:none;">
+
+        <div class="page-section-card" style="padding:24px; margin-bottom:28px;">
+          <div class="menu-header-row">
+            <div>
+              <div class="page-badge"><span class="page-badge-dot"></span> TÂCHES PLANIFIÉES</div>
+              <h1 class="page-title" style="font-size:22px; margin-bottom:4px;">Commandes &amp; Tâches</h1>
+              <p class="page-subtitle">Liste de toutes les commandes et tâches automatiques planifiées par l'application (présentes et futures).</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="page-section-card" style="padding:0; overflow:hidden;">
+          <div class="table-toolbar">
+            <span class="toolbar-title">Tâches planifiées</span>
+            <span class="pagination-info" th:text="${#lists.size(commandes)} + ' tâche' + (${#lists.size(commandes)} > 1 ? 's' : '')"></span>
+          </div>
+          <div class="table-wrapper">
+            <table class="data-table" id="commandesTable">
+              <thead>
+                <tr>
+                  <th>NOM</th>
+                  <th>DESCRIPTION</th>
+                  <th>TYPE</th>
+                  <th>PLANIFICATION</th>
+                  <th>JOURS</th>
+                  <th>DESTINATAIRE</th>
+                  <th>TYPES SURVEILLÉS</th>
+                  <th>STATUT</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="cmd : ${commandes}">
+                  <td style="font-weight:600;" th:text="${cmd.nom}"></td>
+                  <td style="font-size:13px;color:#64748b;" th:text="${cmd.description}"></td>
+                  <td>
+                    <span class="http-badge badge-get" th:text="${cmd.type}"></span>
+                  </td>
+                  <td style="font-family:monospace;font-size:13px;" th:text="${cmd.planification}"></td>
+                  <td>
+                    <span style="display:inline-flex;align-items:center;gap:5px;background:#dcfce7;color:#16a34a;border-radius:999px;padding:3px 10px;font-size:11px;font-weight:700;">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2z"/><path d="M16 2v4M8 2v4M2 10h20"/></svg>
+                      <span th:text="${cmd.jourExecution}"></span>
+                    </span>
+                  </td>
+                  <td style="font-size:12px;font-family:monospace;" th:text="${cmd.destinataire}"></td>
+                  <td style="font-size:12px;" th:text="${cmd.typesSurveilles}"></td>
+                  <td>
+                    <span th:if="${cmd.statut == 'Actif'}"
+                          style="background:#dcfce7;color:#16a34a;border-radius:999px;padding:3px 10px;font-size:11px;font-weight:700;" th:text="${cmd.statut}"></span>
+                    <span th:if="${cmd.statut != 'Actif'}"
+                          style="background:#f1f5f9;color:#64748b;border-radius:999px;padding:3px 10px;font-size:11px;font-weight:700;" th:text="${cmd.statut}"></span>
+                  </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(commandes)}">
+                  <td colspan="8" style="text-align:center;color:#94a3b8;padding:32px;">Aucune tâche planifiée.</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
 

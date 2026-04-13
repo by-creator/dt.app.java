@@ -165,7 +165,7 @@
             </div>
             <div style="display:flex; flex-direction:column; gap:3px;">
               <label style="font-size:11px; font-weight:600; color:#64748b; text-transform:uppercase;">Statut</label>
-              <select name="filterStatut" class="table-search-input" style="width:150px; height:36px;">
+              <select name="filterStatut" class="table-search-input" style="width:150px;">
                 <option value="" th:selected="${filterStatut == ''}">Tous</option>
                 <option value="EN_ATTENTE"           th:selected="${filterStatut == 'EN_ATTENTE'}">En attente</option>
                 <option value="EN_ATTENTE_DIRECTION" th:selected="${filterStatut == 'EN_ATTENTE_DIRECTION'}">Att. Direction</option>

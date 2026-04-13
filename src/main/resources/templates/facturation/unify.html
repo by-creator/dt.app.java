@@ -226,7 +226,6 @@
           <form th:action="@{/menu/facturation/unify}" method="get" style="display:flex; align-items:center; gap:8px;">
             <input type="hidden" name="tab" value="liste-tiers">
             <input type="search" name="search" class="table-search-input" placeholder="Rechercher un tiers..." th:value="${search}">
-            <button type="submit" class="btn-actualiser" style="white-space:nowrap;">Rechercher</button>
           </form>
         </div>
         <div class="table-wrapper">
@@ -356,7 +355,6 @@
             <form th:action="@{/menu/facturation/unify}" method="get" style="display:flex; align-items:center; gap:8px;">
               <input type="hidden" name="tab" value="admin">
               <input type="search" name="search" class="table-search-input" placeholder="Rechercher..." th:value="${search}">
-              <button type="submit" class="btn-actualiser" style="white-space:nowrap;">Rechercher</button>
             </form>
             <form th:action="@{/menu/facturation/unify/admin/purger-invalides}" method="post"
                   onsubmit="return confirm('Supprimer tous les tiers dont le compte Ipaki ne commence pas par SN00, ND ou un chiffre ? Cette action est irreversible.')">

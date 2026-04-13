@@ -33,6 +33,7 @@ import java.util.List;
 public class InformatiqueController {
 
     private static final int PAGE_SIZE = 10;
+    private static final int MAX_TABLE_ROWS = 100000;
 
     private final UserRepository userRepository;
     private final MachineRepository machineRepository;
@@ -65,24 +66,42 @@ public class InformatiqueController {
 
     @GetMapping("/machines")
     public String machines(@RequestParam(required = false) String search,
+                           @RequestParam(required = false) String filterNom,
+                           @RequestParam(required = false) String filterAjow,
+                           @RequestParam(required = false) String filterType,
+                           @RequestParam(required = false) String filterUser,
+                           @RequestParam(required = false) String filterModel,
+                           @RequestParam(required = false) String filterService,
+                           @RequestParam(required = false) String filterSite,
                            @RequestParam(defaultValue = "0") int page,
                            Model model, Authentication auth) {
-        if (page < 0) page = 0;
+        boolean hasColumnFilter = hasText(filterNom) || hasText(filterAjow) || hasText(filterType)
+                || hasText(filterUser) || hasText(filterModel) || hasText(filterService) || hasText(filterSite);
 
-        Page<Machine> machinesPage = machineRepository.searchPaged(search, PageRequest.of(page, PAGE_SIZE));
-
-        if (page > 0 && page >= machinesPage.getTotalPages()) {
-            page = Math.max(machinesPage.getTotalPages() - 1, 0);
-            machinesPage = machineRepository.searchPaged(search, PageRequest.of(page, PAGE_SIZE));
+        Page<Machine> machinesPage;
+        if (hasColumnFilter) {
+            machinesPage = machineRepository.filterByColumns(
+                    emptyNull(filterNom), emptyNull(filterAjow), emptyNull(filterType),
+                    emptyNull(filterUser), emptyNull(filterModel), emptyNull(filterService),
+                    emptyNull(filterSite), PageRequest.of(0, MAX_TABLE_ROWS));
+        } else {
+            machinesPage = machineRepository.searchPaged(search, PageRequest.of(0, MAX_TABLE_ROWS));
         }
 
-        model.addAttribute("loggedUser",   loggedUser(auth));
-        model.addAttribute("machines",     machinesPage.getContent());
-        model.addAttribute("search",       search != null ? search : "");
-        model.addAttribute("currentPage",  machinesPage.getNumber());
-        model.addAttribute("totalPages",   machinesPage.getTotalPages());
-        model.addAttribute("totalItems",   machinesPage.getTotalElements());
-        model.addAttribute("pageSize",     PAGE_SIZE);
+        model.addAttribute("loggedUser",    loggedUser(auth));
+        model.addAttribute("machines",      machinesPage.getContent());
+        model.addAttribute("search",        search != null ? search : "");
+        model.addAttribute("filterNom",     filterNom     != null ? filterNom     : "");
+        model.addAttribute("filterAjow",    filterAjow    != null ? filterAjow    : "");
+        model.addAttribute("filterType",    filterType    != null ? filterType    : "");
+        model.addAttribute("filterUser",    filterUser    != null ? filterUser    : "");
+        model.addAttribute("filterModel",   filterModel   != null ? filterModel   : "");
+        model.addAttribute("filterService", filterService != null ? filterService : "");
+        model.addAttribute("filterSite",    filterSite    != null ? filterSite    : "");
+        model.addAttribute("currentPage",   0);
+        model.addAttribute("totalPages",    0);
+        model.addAttribute("totalItems",    machinesPage.getTotalElements());
+        model.addAttribute("pageSize",      machinesPage.getContent().size());
         return "informatique/machines";
     }
 
@@ -174,7 +193,7 @@ public class InformatiqueController {
             machineRepository.delete(m);
             ra.addFlashAttribute("success", "Machine « " + m.getName() + " » supprimée.");
         }
-        String redirect = "redirect:/menu/informatique/parc/machines?page=" + page;
+        String redirect = "redirect:/menu/informatique/parc/machines";
         if (search != null && !search.isBlank()) redirect += "&search=" + search;
         return redirect;
     }
@@ -314,24 +333,36 @@ public class InformatiqueController {
 
     @GetMapping("/postes-fixes")
     public String postesFixes(@RequestParam(required = false) String search,
+                              @RequestParam(required = false) String filterAnnuaire,
+                              @RequestParam(required = false) String filterNom,
+                              @RequestParam(required = false) String filterPrenom,
+                              @RequestParam(required = false) String filterType,
                               @RequestParam(defaultValue = "0") int page,
                               Model model, Authentication auth) {
-        if (page < 0) page = 0;
+        boolean hasColumnFilter = hasText(filterAnnuaire) || hasText(filterNom)
+                || hasText(filterPrenom) || hasText(filterType);
 
-        Page<PosteFixe> postesPage = posteFixeRepository.searchPaged(search, PageRequest.of(page, PAGE_SIZE));
-
-        if (page > 0 && page >= postesPage.getTotalPages()) {
-            page = Math.max(postesPage.getTotalPages() - 1, 0);
-            postesPage = posteFixeRepository.searchPaged(search, PageRequest.of(page, PAGE_SIZE));
+        Page<PosteFixe> postesPage;
+        if (hasColumnFilter) {
+            postesPage = posteFixeRepository.filterByColumns(
+                    emptyNull(filterAnnuaire), emptyNull(filterNom),
+                    emptyNull(filterPrenom), emptyNull(filterType),
+                    PageRequest.of(0, MAX_TABLE_ROWS));
+        } else {
+            postesPage = posteFixeRepository.searchPaged(search, PageRequest.of(0, MAX_TABLE_ROWS));
         }
 
-        model.addAttribute("loggedUser",  loggedUser(auth));
-        model.addAttribute("postes",      postesPage.getContent());
-        model.addAttribute("search",      search != null ? search : "");
-        model.addAttribute("currentPage", postesPage.getNumber());
-        model.addAttribute("totalPages",  postesPage.getTotalPages());
-        model.addAttribute("totalItems",  postesPage.getTotalElements());
-        model.addAttribute("pageSize",    PAGE_SIZE);
+        model.addAttribute("loggedUser",     loggedUser(auth));
+        model.addAttribute("postes",         postesPage.getContent());
+        model.addAttribute("search",         search != null ? search : "");
+        model.addAttribute("filterAnnuaire", filterAnnuaire != null ? filterAnnuaire : "");
+        model.addAttribute("filterNom",      filterNom      != null ? filterNom      : "");
+        model.addAttribute("filterPrenom",   filterPrenom   != null ? filterPrenom   : "");
+        model.addAttribute("filterType",     filterType     != null ? filterType     : "");
+        model.addAttribute("currentPage",    0);
+        model.addAttribute("totalPages",     0);
+        model.addAttribute("totalItems",     postesPage.getTotalElements());
+        model.addAttribute("pageSize",       postesPage.getContent().size());
         return "informatique/postes-fixes";
     }
 
@@ -387,7 +418,7 @@ public class InformatiqueController {
             posteFixeRepository.delete(p);
             ra.addFlashAttribute("success", "Poste fixe supprimé.");
         }
-        String redirect = "redirect:/menu/informatique/parc/postes-fixes?page=" + page;
+        String redirect = "redirect:/menu/informatique/parc/postes-fixes";
         if (search != null && !search.isBlank()) redirect += "&search=" + search;
         return redirect;
     }
@@ -515,6 +546,14 @@ public class InformatiqueController {
     private String blank(String s) {
         if (s == null || s.isBlank()) return null;
         return s.trim();
+    }
+
+    private boolean hasText(String s) {
+        return s != null && !s.isBlank();
+    }
+
+    private String emptyNull(String s) {
+        return (s == null || s.isBlank()) ? "" : s.trim();
     }
 
     private String cellStr(Row row, int col) {

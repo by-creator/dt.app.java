@@ -7,6 +7,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,6 +32,12 @@ public class RappelScheduler {
      */
     @Scheduled(fixedDelayString = "${app.rappel.interval-ms:1800000}")
     public void envoyerRappels() {
+        DayOfWeek day = LocalDate.now().getDayOfWeek();
+        if (day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY) {
+            log.info("Rappels ignorés le weekend ({})", day);
+            return;
+        }
+
         List<RattachementBl> validationsEnAttente =
                 rattachementBlRepository.findByTypeAndStatutOrderByCreatedAtAsc("FACTURATION", "EN_ATTENTE");
 

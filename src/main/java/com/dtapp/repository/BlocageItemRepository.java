@@ -19,4 +19,14 @@ public interface BlocageItemRepository extends JpaRepository<BlocageItem, Intege
            "(:search IS NULL OR :search = '' OR LOWER(b.item) LIKE LOWER(CONCAT('%', :search, '%'))) " +
            "ORDER BY b.createdAt DESC")
     Page<BlocageItem> searchPaged(@Param("search") String search, Pageable pageable);
+
+    @Query("SELECT b FROM BlocageItem b WHERE " +
+           "(:filterItem   IS NULL OR :filterItem   = '' OR LOWER(b.item)   LIKE LOWER(CONCAT('%', :filterItem, '%'))) AND " +
+           "(:filterStatut IS NULL OR :filterStatut = '' OR b.statut = :filterStatut) AND " +
+           "(:filterDate   IS NULL OR :filterDate   = '' OR CAST(b.createdAt AS string) LIKE CONCAT('%', :filterDate, '%')) " +
+           "ORDER BY b.createdAt DESC")
+    Page<BlocageItem> filterByColumns(@Param("filterItem") String filterItem,
+                                      @Param("filterStatut") String filterStatut,
+                                      @Param("filterDate") String filterDate,
+                                      Pageable pageable);
 }

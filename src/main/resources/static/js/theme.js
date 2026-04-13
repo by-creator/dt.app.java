@@ -107,11 +107,29 @@ function normalizeFilterText(value) {
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
+    .replace(/_/g, ' ')
+    .replace(/n[°º]/g, 'numero ')
+    .replace(/\bndeg\b/g, 'numero')
+    .replace(/\bno\b/g, 'numero')
+    .replace(/\s+/g, ' ')
     .trim();
 }
 
 function normalizeHeaderLabel(value) {
   return normalizeFilterText(value).replace(/\s+/g, ' ');
+}
+
+function resolveHeaderIndex(label, headerCells) {
+  var normalizedLabel = normalizeHeaderLabel(label);
+  if (!normalizedLabel) return -1;
+
+  for (var i = 0; i < headerCells.length; i++) {
+    var normalizedHeader = normalizeHeaderLabel(headerCells[i].textContent);
+    if (normalizedHeader === normalizedLabel) return i;
+    if (normalizedHeader.indexOf(normalizedLabel) !== -1 || normalizedLabel.indexOf(normalizedHeader) !== -1) return i;
+  }
+
+  return -1;
 }
 
 function parseTableDate(value) {
@@ -212,28 +230,17 @@ function createFilterControl(meta, onChange) {
   }
 
   if (meta.type === 'date') {
-    var fromInput = document.createElement('input');
-    fromInput.type = 'date';
-    fromInput.className = 'table-filter-control';
-    fromInput.min = meta.minDate;
-    fromInput.max = meta.maxDate;
-    fromInput.addEventListener('input', function () {
-      meta.fromValue = fromInput.value || '';
+    var dateInput = document.createElement('input');
+    dateInput.type = 'date';
+    dateInput.className = 'table-filter-control';
+    dateInput.min = meta.minDate;
+    dateInput.max = meta.maxDate;
+    dateInput.addEventListener('input', function () {
+      meta.currentValue = dateInput.value || '';
       onChange();
     });
 
-    var toInput = document.createElement('input');
-    toInput.type = 'date';
-    toInput.className = 'table-filter-control';
-    toInput.min = meta.minDate;
-    toInput.max = meta.maxDate;
-    toInput.addEventListener('input', function () {
-      meta.toValue = toInput.value || '';
-      onChange();
-    });
-
-    wrapper.appendChild(fromInput);
-    wrapper.appendChild(toInput);
+    wrapper.appendChild(dateInput);
     return wrapper;
   }
 
@@ -278,6 +285,102 @@ function updateTableCount(table, visibleCount, totalCount) {
     : visibleCount + ' / ' + totalCount + ' lignes';
 }
 
+function hideLegacyFilterActions(searchForm) {
+  if (!searchForm) return;
+
+  searchForm.querySelectorAll('button[type="submit"], a.btn-actualiser').forEach(function (node) {
+    node.style.display = 'none';
+  });
+}
+
+function initLegacyLiveFilters(table, searchForm, searchInput) {
+  if (!searchForm || searchForm.dataset.liveFilterInit === '1') return;
+  searchForm.dataset.liveFilterInit = '1';
+
+  var headerCells = Array.from(table.querySelectorAll('thead th'));
+  var rows = collectDataRows(table);
+  if (!headerCells.length || !rows.length) return;
+
+  var controls = Array.from(searchForm.querySelectorAll('.table-search-input'));
+  if (!controls.length) return;
+
+  hideLegacyFilterActions(searchForm);
+
+  var metas = controls.map(function (control) {
+    var field = control.closest('div');
+    var labelNode = field ? field.querySelector('label') : null;
+    var label = labelNode ? labelNode.textContent.trim() : (control.name || control.id || '');
+    var normalizedLabel = normalizeHeaderLabel(label);
+    var type = control.type === 'date' ? 'date' : (control.tagName === 'SELECT' ? 'select' : 'text');
+    var selectedOption = control.tagName === 'SELECT' ? control.options[control.selectedIndex] : null;
+    var currentValue = type === 'select'
+      ? normalizeFilterText((selectedOption && selectedOption.textContent) || control.value || '')
+      : normalizeFilterText(control.value || '');
+
+    return {
+      control: control,
+      index: /recherche|search/.test(normalizedLabel) ? -1 : resolveHeaderIndex(label, headerCells),
+      type: type,
+      currentValue: currentValue
+    };
+  });
+
+  function applyLegacyFilters() {
+    var visible = 0;
+
+    rows.forEach(function (row) {
+      var matches = metas.every(function (meta) {
+        if (!meta.currentValue) return true;
+
+        if (meta.index === -1) {
+          return normalizeFilterText(row.textContent).indexOf(meta.currentValue) !== -1;
+        }
+
+        var cell = row.children[meta.index];
+        var rawValue = cell ? cell.textContent.trim() : '';
+        var normalizedValue = normalizeFilterText(rawValue);
+
+        if (meta.type === 'date') {
+          var parsedDate = parseTableDate(rawValue);
+          if (!parsedDate) return false;
+          return formatDateInputValue(parsedDate) === meta.currentValue;
+        }
+
+        return normalizedValue.indexOf(meta.currentValue) !== -1;
+      });
+
+      row.style.display = matches ? '' : 'none';
+      if (matches) visible++;
+    });
+
+    updateTableCount(table, visible, rows.length);
+  }
+
+  controls.forEach(function (control, index) {
+    var handler = function () {
+      var selectedOption = control.tagName === 'SELECT' ? control.options[control.selectedIndex] : null;
+      metas[index].currentValue = control.tagName === 'SELECT'
+        ? normalizeFilterText((selectedOption && selectedOption.textContent) || control.value || '')
+        : normalizeFilterText(control.value || '');
+      applyLegacyFilters();
+    };
+
+    control.addEventListener('input', handler);
+    control.addEventListener('change', handler);
+
+    control.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') e.preventDefault();
+    });
+  });
+
+  searchForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    applyLegacyFilters();
+  });
+
+  applyLegacyFilters();
+}
+
 function applyTableFilters(table, rows, filters, emptyState) {
   var visible = 0;
 
@@ -292,12 +395,10 @@ function applyTableFilters(table, rows, filters, emptyState) {
 
       if (filterMeta.type === 'date') {
         var parsedDate = parseTableDate(rawValue);
-        if (!parsedDate) return !filterMeta.fromValue && !filterMeta.toValue;
+        if (!parsedDate) return !filterMeta.currentValue;
 
         var currentValue = formatDateInputValue(parsedDate);
-        if (filterMeta.fromValue && currentValue < filterMeta.fromValue) return false;
-        if (filterMeta.toValue && currentValue > filterMeta.toValue) return false;
-        return true;
+        return !filterMeta.currentValue || currentValue === filterMeta.currentValue;
       }
 
       return !filterMeta.currentValue || normalizedValue.indexOf(filterMeta.currentValue) !== -1;
@@ -316,6 +417,28 @@ function initColumnFilters(table) {
   if (table.dataset.disableColumnFilters === 'true') return;
   table.dataset.columnFiltersInit = '1';
 
+  var card = table.closest('.page-section-card');
+  var searchInput = card ? card.querySelector('.table-search-input') : null;
+  var searchForm = searchInput ? searchInput.closest('form') : null;
+  var legacyManagedInputs = searchForm ? searchForm.querySelectorAll('.table-search-input').length : 0;
+  var hasInlineLegacyFiltering = searchForm && Array.from(searchForm.querySelectorAll('.table-search-input')).some(function (control) {
+    return control.hasAttribute('oninput') || control.hasAttribute('onchange');
+  });
+
+  // Preserve pages that already define a full table-filter toolbar so they all
+  // keep the same shared appearance as the validation screen.
+  if (legacyManagedInputs > 1) {
+    if (!hasInlineLegacyFiltering) {
+      initLegacyLiveFilters(table, searchForm, searchInput);
+    }
+    return;
+  }
+
+  if (legacyManagedInputs === 1 && searchForm && !hasInlineLegacyFiltering) {
+    initLegacyLiveFilters(table, searchForm, searchInput);
+    return;
+  }
+
   var headerCells = Array.from(table.querySelectorAll('thead th'));
   if (!headerCells.length) return;
 
@@ -323,11 +446,6 @@ function initColumnFilters(table) {
   if (!rows.length) return;
 
   hideLegacyTableSearch(table);
-
-  // Detect server-side search: a form with .table-search-input in the same card
-  var card = table.closest('.page-section-card');
-  var searchInput = card ? card.querySelector('.table-search-input') : null;
-  var searchForm = searchInput ? searchInput.closest('form') : null;
 
   var filters = [];
   headerCells.forEach(function (headerCell, index) {
@@ -340,9 +458,7 @@ function initColumnFilters(table) {
       index: index,
       label: headerCell.textContent.trim(),
       type: type,
-      currentValue: '',
-      fromValue: '',
-      toValue: ''
+      currentValue: ''
     };
 
     if (type === 'select') {
@@ -406,7 +522,7 @@ function initColumnFilters(table) {
       e.preventDefault();
       var val = '';
       for (var i = 0; i < filters.length; i++) {
-        var v = filters[i].currentValue || filters[i].fromValue || '';
+        var v = filters[i].currentValue || '';
         if (v) { val = v; break; }
       }
       searchInput.value = val;
@@ -437,8 +553,6 @@ function initColumnFilters(table) {
     });
     filters.forEach(function (meta) {
       meta.currentValue = '';
-      meta.fromValue = '';
-      meta.toValue = '';
     });
     if (searchForm) {
       searchInput.value = '';
@@ -456,7 +570,15 @@ function initColumnFilters(table) {
 }
 
 function initSmartTableFilters() {
-  document.querySelectorAll('table.data-table').forEach(initColumnFilters);
+  document.querySelectorAll('table').forEach(function (table) {
+    if (table.dataset.tableTheme === 'off') return;
+    if (!table.classList.contains('data-table') && table.querySelector('thead th') && table.querySelector('tbody')) {
+      table.classList.add('data-table');
+    }
+    if (table.classList.contains('data-table')) {
+      initColumnFilters(table);
+    }
+  });
 }
 
 window.addEventListener('DOMContentLoaded', function () {
@@ -467,8 +589,8 @@ window.addEventListener('DOMContentLoaded', function () {
     var shouldRefresh = mutations.some(function (mutation) {
       return Array.from(mutation.addedNodes).some(function (node) {
         return node.nodeType === 1 && (
-          (node.matches && node.matches('table.data-table')) ||
-          (node.querySelector && node.querySelector('table.data-table'))
+          (node.matches && node.matches('table')) ||
+          (node.querySelector && node.querySelector('table'))
         );
       });
     });

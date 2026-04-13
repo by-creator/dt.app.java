@@ -228,7 +228,9 @@
 
   function render(q) {
     const query = (q || '').toLowerCase().trim();
-    const filtered = TIERS.filter(t => t.raisonSociale && (!query || t.raisonSociale.toLowerCase().includes(query)));
+    const filtered = TIERS.filter(t => t.raisonSociale && (!query ||
+      t.raisonSociale.toLowerCase().includes(query) ||
+      (t.compteIpaki && t.compteIpaki.toLowerCase().includes(query))));
     if (filtered.length === 0) {
       dropEl.innerHTML = '<div class="sel-empty">Aucun resultat</div>';
     } else {

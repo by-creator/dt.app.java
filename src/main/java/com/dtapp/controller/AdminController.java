@@ -19,6 +19,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
@@ -43,6 +44,7 @@ import java.util.stream.Collectors;
 public class AdminController {
 
     private static final int AUDIT_PAGE_SIZE = 10;
+    private static final int MAX_TABLE_ROWS = 100000;
 
     private final UserRepository userRepository;
     private final CompagnieRepository compagnieRepository;
@@ -68,11 +70,41 @@ public class AdminController {
         this.handlerMapping                 = handlerMapping;
     }
 
-    public record RouteInfo(String name, String url, String controllerName, String methodName, String httpMethod) {}
+    public record RouteInfo(String name, String description, String url, String controllerName, String methodName, String httpMethod) {}
+
+    public record CommandeInfo(String nom, String description, String type,
+                                String planification, String jourExecution,
+                                String destinataire, String typesSurveilles, String statut) {}
+
+    @Value("${app.rappel.interval-ms:1800000}")
+    private long rappelIntervalMs;
+
+    @Value("${app.mail.to:}")
+    private String mailToValidation;
+
+    @Value("${app.mail.to.remise:}")
+    private String mailToRemise;
 
     private static String formatName(String camelCase) {
         String spaced = camelCase.replaceAll("([a-z])([A-Z])", "$1 $2");
         return Character.toUpperCase(spaced.charAt(0)) + spaced.substring(1);
+    }
+
+    private static String buildRouteDescription(String httpMethod, String javaMethod, String pattern) {
+        String action = formatName(javaMethod);
+        if (javaMethod.startsWith("get") || javaMethod.startsWith("show") || javaMethod.startsWith("view") || javaMethod.startsWith("index")) {
+            return "Affiche ou consulte la ressource exposee sur " + pattern + ".";
+        }
+        if (javaMethod.startsWith("create") || javaMethod.startsWith("add") || javaMethod.startsWith("save")) {
+            return "Permet de creer une ressource via " + pattern + ".";
+        }
+        if (javaMethod.startsWith("update") || javaMethod.startsWith("edit") || javaMethod.startsWith("modifier")) {
+            return "Permet de mettre a jour une ressource via " + pattern + ".";
+        }
+        if (javaMethod.startsWith("delete") || javaMethod.startsWith("remove") || javaMethod.startsWith("supprimer")) {
+            return "Permet de supprimer une ressource via " + pattern + ".";
+        }
+        return "Endpoint " + httpMethod + " utilise pour " + action.toLowerCase() + " sur " + pattern + ".";
     }
 
     private List<RouteInfo> buildRoutes() {
@@ -87,7 +119,13 @@ public class AdminController {
                 String httpStr     = httpMethods.isEmpty() ? "GET"
                     : httpMethods.stream().map(Enum::name).sorted().collect(Collectors.joining(", "));
                 String name = formatName(javaMethod);
-                return patterns.stream().map(p -> new RouteInfo(name, p, controller, javaMethod, httpStr));
+                return patterns.stream().map(p -> new RouteInfo(
+                        name,
+                        buildRouteDescription(httpStr, javaMethod, p),
+                        p,
+                        controller,
+                        javaMethod,
+                        httpStr));
             })
             .sorted(Comparator.comparing(RouteInfo::url).thenComparing(RouteInfo::httpMethod))
             .collect(Collectors.toList());
@@ -108,15 +146,37 @@ public class AdminController {
         model.addAttribute("tab", tab);
         model.addAttribute("routes", buildRoutes());
 
-        int safePage = Math.max(auditPage, 0);
+        long intervalMin = rappelIntervalMs / 60000;
+        String planification = "Toutes les " + intervalMin + " minute" + (intervalMin > 1 ? "s" : "");
+        model.addAttribute("commandes", List.of(
+            new CommandeInfo(
+                "Rappel Validations",
+                "Envoie des e-mails de rappel pour les demandes de validation toujours en attente",
+                "Scheduled",
+                planification,
+                "Lundi – Vendredi",
+                mailToValidation,
+                "FACTURATION / EN_ATTENTE",
+                "Actif"),
+            new CommandeInfo(
+                "Rappel Remises",
+                "Envoie des e-mails de rappel pour les demandes de remise toujours en attente",
+                "Scheduled",
+                planification,
+                "Lundi – Vendredi",
+                mailToRemise,
+                "REMISE / EN_ATTENTE, EN_ATTENTE_DIRECTION",
+                "Actif")
+        ));
+
         Page<com.dtapp.entity.AuditLog> auditPageData = auditLogRepository.search(
                 auditSearch,
-                PageRequest.of(safePage, AUDIT_PAGE_SIZE, Sort.by(Sort.Direction.DESC, "createdAt"))
+                PageRequest.of(0, MAX_TABLE_ROWS, Sort.by(Sort.Direction.DESC, "createdAt"))
         );
         model.addAttribute("auditLogs",        auditPageData.getContent());
         model.addAttribute("auditSearch",      auditSearch != null ? auditSearch : "");
-        model.addAttribute("auditCurrentPage", auditPageData.getNumber());
-        model.addAttribute("auditTotalPages",  auditPageData.getTotalPages());
+        model.addAttribute("auditCurrentPage", 0);
+        model.addAttribute("auditTotalPages",  0);
         model.addAttribute("auditTotalItems",  auditPageData.getTotalElements());
 
         return "admin/index";

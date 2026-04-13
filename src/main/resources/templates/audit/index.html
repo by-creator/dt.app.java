@@ -78,12 +78,6 @@
             <h1 class="page-title" style="font-size:26px; margin-bottom:4px;">Audit des acces et operations</h1>
             <p class="page-subtitle">Consultez les requetes enregistrees par l'application.</p>
           </div>
-          <form th:action="@{/menu/audit}" method="get" style="display:flex; align-items:center; gap:12px;">
-            <div class="menu-search-wrap">
-              <input type="search" name="search" class="menu-search" placeholder="Rechercher un audit..." th:value="${search}">
-            </div>
-            <button type="submit" class="btn-actualiser" style="white-space:nowrap;">Actualiser</button>
-          </form>
         </div>
       </div>
 
@@ -93,6 +87,36 @@
           <span class="pagination-info" th:if="${totalItems > 0}"
                 th:text="${totalItems} + ' enregistrement' + (${totalItems} > 1 ? 's' : '')"></span>
         </div>
+
+        <!-- Column filter bar -->
+        <div style="padding:10px 16px; background:#f8fafc; border-bottom:1px solid rgba(148,163,184,0.15);">
+          <form th:action="@{/menu/audit}" method="get" style="display:flex; flex-wrap:wrap; gap:8px; align-items:flex-end;">
+            <div style="display:flex; flex-direction:column; gap:3px;">
+              <label style="font-size:11px; font-weight:600; color:#64748b; text-transform:uppercase;">Recherche</label>
+              <input type="text" name="search" class="table-search-input" style="width:200px;" placeholder="Utilisateur, URL, IP..." th:value="${search}">
+            </div>
+            <div style="display:flex; flex-direction:column; gap:3px;">
+              <label style="font-size:11px; font-weight:600; color:#64748b; text-transform:uppercase;">Date</label>
+              <input type="date" name="filterDate" class="table-search-input" style="width:150px;" th:value="${filterDate}">
+            </div>
+            <div style="display:flex; flex-direction:column; gap:3px;">
+              <label style="font-size:11px; font-weight:600; color:#64748b; text-transform:uppercase;">Methode</label>
+              <select name="filterMethode" class="table-search-input" style="width:120px;">
+                <option value="" th:selected="${filterMethode == '' or filterMethode == null}">Toutes</option>
+                <option value="GET"    th:selected="${filterMethode == 'GET'}">GET</option>
+                <option value="POST"   th:selected="${filterMethode == 'POST'}">POST</option>
+                <option value="PUT"    th:selected="${filterMethode == 'PUT'}">PUT</option>
+                <option value="DELETE" th:selected="${filterMethode == 'DELETE'}">DELETE</option>
+                <option value="PATCH"  th:selected="${filterMethode == 'PATCH'}">PATCH</option>
+              </select>
+            </div>
+            <div style="display:flex; gap:6px; align-items:flex-end;">
+              <button type="submit" class="btn-actualiser" style="height:36px; white-space:nowrap;">Filtrer</button>
+              <a th:href="@{/menu/audit}" class="btn-actualiser" style="text-decoration:none; height:36px; display:inline-flex; align-items:center;">Effacer</a>
+            </div>
+          </form>
+        </div>
+
                 <div class="table-wrapper">
 <table class="data-table">
           <thead>
@@ -146,26 +170,26 @@
           <div class="pagination-controls">
             <a class="page-btn"
                th:classappend="${currentPage == 0} ? 'disabled' : ''"
-               th:href="${currentPage == 0} ? '#' : @{/menu/audit(page=0, search=${search})}">««</a>
+               th:href="${currentPage == 0} ? '#' : @{/menu/audit(page=0, search=${search}, filterDate=${filterDate}, filterMethode=${filterMethode})}">««</a>
 
             <a class="page-btn"
                th:classappend="${currentPage == 0} ? 'disabled' : ''"
-               th:href="${currentPage == 0} ? '#' : @{/menu/audit(page=${currentPage - 1}, search=${search})}">‹</a>
+               th:href="${currentPage == 0} ? '#' : @{/menu/audit(page=${currentPage - 1}, search=${search}, filterDate=${filterDate}, filterMethode=${filterMethode})}">‹</a>
 
             <th:block th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
               <a class="page-btn"
                  th:classappend="${i == currentPage} ? 'active' : ''"
-                 th:href="@{/menu/audit(page=${i}, search=${search})}"
+                 th:href="@{/menu/audit(page=${i}, search=${search}, filterDate=${filterDate}, filterMethode=${filterMethode})}"
                  th:text="${i + 1}">1</a>
             </th:block>
 
             <a class="page-btn"
                th:classappend="${currentPage + 1 >= totalPages} ? 'disabled' : ''"
-               th:href="${currentPage + 1 >= totalPages} ? '#' : @{/menu/audit(page=${currentPage + 1}, search=${search})}">›</a>
+               th:href="${currentPage + 1 >= totalPages} ? '#' : @{/menu/audit(page=${currentPage + 1}, search=${search}, filterDate=${filterDate}, filterMethode=${filterMethode})}">›</a>
 
             <a class="page-btn"
                th:classappend="${currentPage + 1 >= totalPages} ? 'disabled' : ''"
-               th:href="${currentPage + 1 >= totalPages} ? '#' : @{/menu/audit(page=${totalPages - 1}, search=${search})}">»»</a>
+               th:href="${currentPage + 1 >= totalPages} ? '#' : @{/menu/audit(page=${totalPages - 1}, search=${search}, filterDate=${filterDate}, filterMethode=${filterMethode})}">»»</a>
           </div>
         </div>
       </div>

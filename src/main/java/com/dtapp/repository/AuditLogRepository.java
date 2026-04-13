@@ -23,4 +23,24 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
             ORDER BY a.createdAt DESC
             """)
     Page<AuditLog> search(@Param("search") String search, Pageable pageable);
+
+    @Query("""
+            SELECT a FROM AuditLog a
+            WHERE (:search        IS NULL OR :search        = '' OR
+                   LOWER(COALESCE(a.userName, ''))         LIKE LOWER(CONCAT('%', :search, '%')) OR
+                   LOWER(COALESCE(a.userEmail, ''))        LIKE LOWER(CONCAT('%', :search, '%')) OR
+                   LOWER(COALESCE(a.userRole, ''))         LIKE LOWER(CONCAT('%', :search, '%')) OR
+                   LOWER(COALESCE(a.method, ''))           LIKE LOWER(CONCAT('%', :search, '%')) OR
+                   LOWER(COALESCE(a.url, ''))              LIKE LOWER(CONCAT('%', :search, '%')) OR
+                   LOWER(COALESCE(a.routeName, ''))        LIKE LOWER(CONCAT('%', :search, '%')) OR
+                   LOWER(COALESCE(a.controllerAction, '')) LIKE LOWER(CONCAT('%', :search, '%')) OR
+                   LOWER(COALESCE(a.ipAddress, ''))        LIKE LOWER(CONCAT('%', :search, '%')))
+              AND (:filterMethode IS NULL OR :filterMethode = '' OR UPPER(COALESCE(a.method, '')) = UPPER(:filterMethode))
+              AND (:filterDate    IS NULL OR :filterDate    = '' OR CAST(a.createdAt AS string) LIKE CONCAT(:filterDate, '%'))
+            ORDER BY a.createdAt DESC
+            """)
+    Page<AuditLog> searchWithFilters(@Param("search") String search,
+                                     @Param("filterMethode") String filterMethode,
+                                     @Param("filterDate") String filterDate,
+                                     Pageable pageable);
 }

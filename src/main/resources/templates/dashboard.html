@@ -7,13 +7,80 @@
   <th:block th:replace="~{fragments/pwa-head :: pwaMeta}"></th:block>
   <script th:src="@{/js/theme.js}"></script>
   <link rel="stylesheet" th:href="@{/css/style.css}">
+  <style>
+    /* ===== DASHBOARD RESPONSIVE MOBILE ===== */
+    @media (max-width: 768px) {
+      .sidebar {
+        position: fixed;
+        left: -210px;
+        transition: left 0.3s ease;
+        z-index: 200;
+      }
+      .sidebar.open { left: 0; }
+      .sidebar-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.4);
+        z-index: 199;
+      }
+      .sidebar-overlay.open { display: block; }
+      .main-content {
+        margin-left: 0 !important;
+        padding: 16px !important;
+      }
+      .mobile-topbar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+      .hamburger-btn {
+        background: #1a2a4a;
+        border: none;
+        color: white;
+        border-radius: 10px;
+        padding: 10px 12px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .page-header-card {
+        flex-direction: column;
+        gap: 12px;
+      }
+      .date-chip { align-self: flex-start; }
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px !important;
+      }
+      .stat-value { font-size: 32px !important; }
+      .bottom-grid {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+      }
+      .right-panel { display: flex; flex-direction: column; gap: 16px; }
+    }
+    @media (max-width: 480px) {
+      .stats-grid { grid-template-columns: 1fr !important; }
+    }
+    /* hidden by default on desktop */
+    .mobile-topbar { display: none; }
+    .sidebar-overlay { display: none; }
+    @media (max-width: 768px) {
+      .mobile-topbar { display: flex; }
+    }
+  </style>
 </head>
 <body>
+
+<div id="sidebarOverlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
 
 <div class="app-layout">
 
   <!-- ===== SIDEBAR ===== -->
-  <aside class="sidebar">
+  <aside class="sidebar" id="mobileSidebar">
     <div class="sidebar-logo">
       <div class="sidebar-logo-box">
         <img th:src="@{/img/image.png}" alt="Dakar Terminal" style="max-height: 40px; width: 150px;">
@@ -58,6 +125,16 @@
 
   <!-- ===== MAIN ===== -->
   <main class="main-content">
+
+    <!-- Mobile top bar (hamburger) -->
+    <div class="mobile-topbar">
+      <button class="hamburger-btn" onclick="openSidebar()" aria-label="Menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+      <span style="font-weight:700; font-size:16px; color:#0f172a;">Tableau de bord</span>
+    </div>
 
     <!-- Page header -->
     <div class="page-header-card">
@@ -240,5 +317,15 @@
   </main>
 </div>
 
+<script>
+  function openSidebar() {
+    document.getElementById('mobileSidebar').classList.add('open');
+    document.getElementById('sidebarOverlay').classList.add('open');
+  }
+  function closeSidebar() {
+    document.getElementById('mobileSidebar').classList.remove('open');
+    document.getElementById('sidebarOverlay').classList.remove('open');
+  }
+</script>
 </body>
 </html>

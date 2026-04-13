@@ -48,6 +48,7 @@ public class MenuCompagnieController {
     private final CodificationRepository codificationRepository;
     private final UserRepository userRepository;
     private final BulkInsertService bulkInsertService;
+    private static final int MAX_TABLE_ROWS = 100000;
 
     public MenuCompagnieController(
             EdiParser parser,
@@ -75,7 +76,7 @@ public class MenuCompagnieController {
         var loggedUser = userRepository.findByEmail(auth.getName()).orElseThrow();
         var compagnie = loggedUser.getCompagnie();
 
-        Pageable pageable = PageRequest.of(page, 10);
+        Pageable pageable = PageRequest.of(0, MAX_TABLE_ROWS);
         Page<Codification> codifications;
 
         if (compagnie == null) {
