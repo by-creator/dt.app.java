@@ -234,9 +234,9 @@
           <table class="data-table">
             <thead>
               <tr>
+                <th>Raison sociale</th>
                 <th>Compte Ipaki</th>
                 <th>Compte Neptune</th>
-                <th>Raison sociale</th>
                 <th>Date creation</th>
               </tr>
             </thead>
@@ -245,9 +245,9 @@
                 <td colspan="4" style="text-align:center; color:#94a3b8; font-style:italic;">Aucun tiers enregistre.</td>
               </tr>
               <tr th:each="t : ${tiers}">
+                <td th:text="${t.raisonSociale != null ? t.raisonSociale : '—'}">—</td>
                 <td th:text="${t.compteIpaki != null ? t.compteIpaki : '—'}">—</td>
                 <td th:text="${t.compteNeptune != null ? t.compteNeptune : '—'}">—</td>
-                <td th:text="${t.raisonSociale != null ? t.raisonSociale : '—'}">—</td>
                 <td th:text="${t.createdAt != null ? #temporals.format(t.createdAt, 'dd/MM/yyyy') : '—'}">—</td>
               </tr>
             </tbody>
