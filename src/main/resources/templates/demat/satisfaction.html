@@ -319,9 +319,7 @@
       <button type="button" class="wizard-step" data-step="6" onclick="showSurveyStep(6)">Communication</button>
     </div>
 
-    <div th:if="${param.success}" class="alert-success">
-      &#10003; Vos réponses ont été enregistrées avec succès. Merci pour votre participation !
-    </div>
+    <span th:if="${param.success}" id="_flashSuccess" style="display:none">Vos réponses ont été enregistrées avec succès. Merci pour votre participation !</span>
 
     <form th:action="@{/demat/satisfaction}" method="post">
       <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">

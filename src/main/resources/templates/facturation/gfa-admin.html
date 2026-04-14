@@ -84,8 +84,8 @@
       <th:block th:if="${isAdmin}"><a th:href="@{/menu}">Menu</a><span>&#8250;</span><a th:href="@{/menu/dt}">Menu DT</a><span>&#8250;</span></th:block>
       <a th:href="@{/menu/facturation}">Facturation</a><span>&#8250;</span><span class="topbar-title">Gfa Admin</span>
     </div>
-    <div th:if="${successMsg}" class="alert-success" th:text="${successMsg}" style="margin:18px 0;"></div>
-    <div th:if="${errorMsg}" class="alert-error" th:text="${errorMsg}" style="margin:18px 0;"></div>
+    <span th:if="${successMsg}" id="_flashSuccess" th:text="${successMsg}" style="display:none"></span>
+    <span th:if="${errorMsg}"   id="_flashError"   th:text="${errorMsg}"   style="display:none"></span>
 
     <section th:if="${activeTab == 'vue-globale'}">
       <div class="rt-header">

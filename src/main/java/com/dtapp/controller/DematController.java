@@ -90,6 +90,11 @@ public class DematController {
             @RequestParam("bad-shipping") MultipartFile badShipping,
             @RequestParam("declaration") MultipartFile declaration) {
 
+        List<String> pendingStatuts = Arrays.asList("EN_ATTENTE", "EN_ATTENTE_DIRECTION");
+        if (rattachementBlRepository.existsByBlAndTypeAndStatutIn(blNumber, "FACTURATION", pendingStatuts)) {
+            return "redirect:/demat/validation?duplicate=true";
+        }
+
         // Rechercher le compte_ipaki associé à la raison sociale sélectionnée
         String compteIpaki = tiersUnifyRepository.findAll().stream()
                 .filter(t -> maisonTransit != null && maisonTransit.equals(t.getRaisonSociale()))
@@ -134,6 +139,11 @@ public class DematController {
             @RequestParam("bl-file") MultipartFile blFile,
             @RequestParam("facture-file") MultipartFile factureFile,
             @RequestParam("declaration-file") MultipartFile declarationFile) {
+
+        List<String> pendingStatuts = Arrays.asList("EN_ATTENTE", "EN_ATTENTE_DIRECTION");
+        if (rattachementBlRepository.existsByBlAndTypeAndStatutIn(blNumber, "REMISE", pendingStatuts)) {
+            return "redirect:/demat/remise?duplicate=true";
+        }
 
         String compteIpaki = tiersUnifyRepository.findAll().stream()
                 .filter(t -> maisonTransit != null && maisonTransit.equals(t.getRaisonSociale()))

@@ -80,8 +80,8 @@
         <h3 class="settings-card-title">Informations du profil</h3>
         <p class="settings-card-subtitle">Modifiez votre nom d'affichage.</p>
 
-        <div th:if="${profilSuccess}" class="alert-success" style="margin-bottom:16px; font-size:13px;" th:text="${profilSuccess}"></div>
-        <div th:if="${profilError}"   class="alert-error"   style="margin-bottom:16px; font-size:13px;" th:text="${profilError}"></div>
+        <span th:if="${profilSuccess}" id="_flashSuccess" th:text="${profilSuccess}" style="display:none"></span>
+        <span th:if="${profilError}"   id="_flashError"   th:text="${profilError}"   style="display:none"></span>
 
         <form th:action="@{/parametres/profil}" method="post">
           <div class="form-group">
@@ -116,8 +116,8 @@
         <h3 class="settings-card-title">Modifier le mot de passe</h3>
         <p class="settings-card-subtitle">Choisissez un mot de passe fort d'au moins 8 caractères.</p>
 
-        <div th:if="${passwordSuccess}" class="alert-success" style="margin-bottom:16px; font-size:13px;" th:text="${passwordSuccess}"></div>
-        <div th:if="${passwordError}"   class="alert-error"   style="margin-bottom:16px; font-size:13px;" th:text="${passwordError}"></div>
+        <span th:if="${passwordSuccess}" id="_flashSuccess" th:text="${passwordSuccess}" style="display:none"></span>
+        <span th:if="${passwordError}"   id="_flashError"   th:text="${passwordError}"   style="display:none"></span>
 
         <form th:action="@{/parametres/password}" method="post">
           <div class="form-group">

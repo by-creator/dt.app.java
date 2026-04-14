@@ -114,7 +114,7 @@
         <p class="page-subtitle">Traitez les demandes de validation des dossiers de rattachement</p>
       </div>
 
-      <div th:if="${successMsg}" class="alert-success" th:text="${successMsg}"></div>
+      <span th:if="${successMsg}" id="_flashSuccess" th:text="${successMsg}" style="display:none"></span>
 
       <div class="page-section-card" style="padding:0; overflow:hidden;">
         <div class="table-toolbar">

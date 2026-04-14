@@ -1,2 +1,0 @@
-Au niveau de la route /gestion-remises si le statut de la demande est EN_ATTENTE_DIRECTION je souhaite 
-que le champ date de validité s'alligne sur la mise en forme css 

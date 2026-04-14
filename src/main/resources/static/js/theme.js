@@ -579,9 +579,67 @@ function initSmartTableFilters() {
   });
 }
 
+/* ── Mobile sidebar ────────────────────────────────────────────────────── */
+function openSidebar() {
+  var s = document.getElementById('mobileSidebar') || document.querySelector('.sidebar');
+  var o = document.getElementById('sidebarOverlay');
+  if (s) s.classList.add('open');
+  if (o) o.classList.add('open');
+}
+function closeSidebar() {
+  var s = document.getElementById('mobileSidebar') || document.querySelector('.sidebar');
+  var o = document.getElementById('sidebarOverlay');
+  if (s) s.classList.remove('open');
+  if (o) o.classList.remove('open');
+}
+
 window.addEventListener('DOMContentLoaded', function () {
   initWindowedPagination();
   initSmartTableFilters();
+
+  /* ── Auto-inject sidebar overlay + hamburger (all post-login pages) ── */
+  var appLayout = document.querySelector('.app-layout');
+  if (appLayout) {
+    var sidebar = appLayout.querySelector('.sidebar');
+    if (sidebar && !sidebar.id) sidebar.id = 'mobileSidebar';
+
+    if (!document.getElementById('sidebarOverlay')) {
+      var overlay = document.createElement('div');
+      overlay.id = 'sidebarOverlay';
+      overlay.className = 'sidebar-overlay';
+      overlay.setAttribute('onclick', 'closeSidebar()');
+      appLayout.parentNode.insertBefore(overlay, appLayout);
+    }
+
+    var main = appLayout.querySelector('.main-content');
+    if (main && !main.querySelector('.mobile-topbar')) {
+      var topbar = document.createElement('div');
+      topbar.className = 'mobile-topbar';
+      topbar.innerHTML =
+        '<button class="hamburger-btn" onclick="openSidebar()" aria-label="Menu">' +
+        '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+        '<line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>' +
+        '</svg></button>';
+      main.insertBefore(topbar, main.firstChild);
+    }
+  }
+
+  /* ── SweetAlert auto-trigger from hidden flash spans ─────────────────── */
+  if (typeof Swal !== 'undefined') {
+    var flashSuccess = document.getElementById('_flashSuccess');
+    var flashError   = document.getElementById('_flashError');
+    var flashWarn    = document.getElementById('_flashWarning');
+    var msg = flashSuccess ? (flashSuccess.textContent || flashSuccess.dataset.msg || '').trim() : '';
+    var err = flashError   ? (flashError.textContent   || flashError.dataset.msg   || '').trim() : '';
+    var warn = flashWarn   ? (flashWarn.textContent    || flashWarn.dataset.msg    || '').trim() : '';
+    if (msg) {
+      Swal.fire({ icon: 'success', title: 'Succès', text: msg, confirmButtonColor: '#3367bf', confirmButtonText: 'OK' });
+    } else if (err) {
+      Swal.fire({ icon: 'error', title: 'Erreur', text: err, confirmButtonColor: '#ef4444', confirmButtonText: 'OK' });
+    } else if (warn) {
+      Swal.fire({ icon: 'warning', title: 'Attention', text: warn, confirmButtonColor: '#f59e0b', confirmButtonText: 'Compris' });
+    }
+  }
 
   var observer = new MutationObserver(function (mutations) {
     var shouldRefresh = mutations.some(function (mutation) {

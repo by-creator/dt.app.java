@@ -81,9 +81,7 @@
         <span class="topbar-title">Gestion des rapports</span>
       </div>
 
-      <div th:if="${success}" class="alert-success" style="margin-bottom:20px;">
-        <span th:text="${success}"></span>
-      </div>
+      <span th:if="${success}" id="_flashSuccess" th:text="${success}" style="display:none"></span>
 
       <div class="page-section-card" th:if="${activeTab == 'suivi-vides'}" style="padding:0; overflow:hidden;">
         <div class="table-toolbar">

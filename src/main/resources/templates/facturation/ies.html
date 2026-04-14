@@ -94,9 +94,7 @@
         <span class="topbar-title">Gestion IES</span>
       </div>
 
-      <div th:if="${success}" class="alert-success" style="margin-bottom:20px;">
-        <span th:text="${success}"></span>
-      </div>
+      <span th:if="${success}" id="_flashSuccess" th:text="${success}" style="display:none"></span>
 
       <div class="page-section-card" style="max-width:760px;">
         <div class="blocage-card-header">

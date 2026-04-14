@@ -7,10 +7,12 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  font-family: var(--dt-font-sans);
   background: #f0f2ff;
   color: #1e293b;
 }
+
+input, select, textarea, button { font-family: inherit; }
 
 /* ===================== LOGIN ===================== */
 
@@ -1567,3 +1569,72 @@ input[type="file"].form-input::file-selector-button:hover {
 [data-theme="dark"] .settings-card-icon.purple { background: #312e81; color: #a5b4fc; }
 [data-theme="dark"] .settings-card-icon.orange { background: #431407; color: #fb923c; }
 [data-theme="dark"] .settings-card-icon.teal   { background: #042f2e; color: #2dd4bf; }
+
+/* =====================================================
+   RESPONSIVE — Mobile sidebar & layout
+   ===================================================== */
+
+.mobile-topbar {
+  display: none;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background: #fff;
+  border-bottom: 1px solid rgba(148,163,184,0.2);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+[data-theme="dark"] .mobile-topbar {
+  background: #0f172a;
+  border-bottom-color: rgba(148,163,184,0.12);
+}
+
+.hamburger-btn {
+  background: #1e3a5f;
+  border: none;
+  color: white;
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 199;
+}
+.sidebar-overlay.open { display: block; }
+
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed !important;
+    left: -220px;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    transition: left 0.3s ease;
+    z-index: 200;
+  }
+  .sidebar.open { left: 0 !important; }
+  .main-content { margin-left: 0 !important; }
+  .mobile-topbar { display: flex; }
+  .subpage-topbar { display: none; }
+}
+
+/* =====================================================
+   LOGIN — Mobile responsive
+   ===================================================== */
+@media (max-width: 640px) {
+  .login-card {
+    padding: 32px 22px;
+    border-radius: 16px;
+  }
+  .login-title { font-size: 24px; }
+}

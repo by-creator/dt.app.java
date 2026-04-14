@@ -119,13 +119,8 @@
         <span class="topbar-title">Administration</span>
       </div>
 
-      <!-- Flash messages -->
-      <div th:if="${success}" class="alert-success" style="margin-bottom:20px;">
-        <span th:text="${success}"></span>
-      </div>
-      <div th:if="${error}" class="alert-error" style="margin-bottom:20px;">
-        <span th:text="${error}"></span>
-      </div>
+      <span th:if="${success}" id="_flashSuccess" th:text="${success}" style="display:none"></span>
+      <span th:if="${error}"   id="_flashError"   th:text="${error}"   style="display:none"></span>
 
       <!-- ======================================================= -->
       <!-- PANE UTILISATEURS                                        -->
@@ -809,7 +804,16 @@
                   <td style="font-weight:600;" th:text="${cmd.nom}"></td>
                   <td style="font-size:13px;color:#64748b;" th:text="${cmd.description}"></td>
                   <td>
-                    <span class="http-badge badge-get" th:text="${cmd.type}"></span>
+                    <span th:if="${cmd.type == 'Scheduled'}"
+                          style="background:#ede9fe;color:#6d28d9;border-radius:6px;padding:3px 10px;font-size:11px;font-weight:700;font-family:monospace;">
+                      ⏱ Scheduled
+                    </span>
+                    <span th:if="${cmd.type == 'Cron'}"
+                          style="background:#fff7ed;color:#c2410c;border-radius:6px;padding:3px 10px;font-size:11px;font-weight:700;font-family:monospace;">
+                      ⏰ Cron
+                    </span>
+                    <span th:if="${cmd.type != 'Scheduled' and cmd.type != 'Cron'}"
+                          class="http-badge badge-get" th:text="${cmd.type}"></span>
                   </td>
                   <td style="font-family:monospace;font-size:13px;" th:text="${cmd.planification}"></td>
                   <td>
@@ -818,7 +822,10 @@
                       <span th:text="${cmd.jourExecution}"></span>
                     </span>
                   </td>
-                  <td style="font-size:12px;font-family:monospace;" th:text="${cmd.destinataire}"></td>
+                  <td style="font-size:12px;font-family:monospace;">
+                    <span th:if="${cmd.destinataire != '—'}" th:text="${cmd.destinataire}"></span>
+                    <span th:if="${cmd.destinataire == '—'}" style="color:#94a3b8;">—</span>
+                  </td>
                   <td style="font-size:12px;" th:text="${cmd.typesSurveilles}"></td>
                   <td>
                     <span th:if="${cmd.statut == 'Actif'}"

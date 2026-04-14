@@ -21,13 +21,8 @@
     <h1 class="login-title">Bonjour, commençons</h1>
     <p class="login-subtitle">Connectez-vous pour accéder à la plateforme Dakar Terminal.</p>
 
-    <!-- Error / logout messages -->
-    <div th:if="${param.error}" class="alert-error">
-      Adresse email ou mot de passe incorrect.
-    </div>
-    <div th:if="${param.logout}" class="alert-success">
-      Vous avez été déconnecté avec succès.
-    </div>
+    <span th:if="${param.error}"  id="_flashError"   style="display:none">Adresse email ou mot de passe incorrect.</span>
+    <span th:if="${param.logout}" id="_flashSuccess" style="display:none">Vous avez été déconnecté avec succès.</span>
 
     <form th:action="@{/login}" method="post">
 

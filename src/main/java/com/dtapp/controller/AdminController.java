@@ -146,7 +146,8 @@ public class AdminController {
         model.addAttribute("routes", buildRoutes());
 
         long intervalMin = rappelIntervalMs / 60000;
-        String planification = "Toutes les " + intervalMin + " minute" + (intervalMin > 1 ? "s" : "");
+        String planification = "Toutes les " + intervalMin + " minute" + (intervalMin > 1 ? "s" : "")
+                + " (entre 8h00 et 17h00)";
         model.addAttribute("commandes", List.of(
             new CommandeInfo(
                 "Rappel Validations",
@@ -165,6 +166,15 @@ public class AdminController {
                 "Lundi – Vendredi",
                 mailToRemise,
                 "REMISE / EN_ATTENTE, EN_ATTENTE_DIRECTION",
+                "Actif"),
+            new CommandeInfo(
+                "Vidange Tickets GFA",
+                "Supprime tous les tickets GFA en début de journée pour remettre la file d'attente à zéro",
+                "Cron",
+                "Tous les jours à 08h00",
+                "Lundi – Vendredi",
+                "—",
+                "Table tickets (DELETE ALL)",
                 "Actif")
         ));
 

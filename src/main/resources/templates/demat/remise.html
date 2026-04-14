@@ -169,10 +169,6 @@
     <a th:href="@{/demat}" class="back">&#8592; Retour</a>
     <h1>Formulaire de demande de remise</h1>
 
-    <div th:if="${param.success}" class="alert-success">
-      &#10003; Votre demande de remise a ete envoyee avec succes. Vous serez contacte(e) sous peu.
-    </div>
-
     <form th:action="@{/demat/remise}" method="post" enctype="multipart/form-data">
       <label for="nom">Nom</label>
       <input id="nom" name="nom" type="text" placeholder="Votre nom" required>
@@ -215,7 +211,32 @@
     </div>
   </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script th:inline="javascript">
+(function () {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('success') === 'true') {
+    Swal.fire({
+      icon: 'success',
+      title: 'Demande transmise !',
+      html: 'Votre demande de remise a bien été transmise.<br>Un mail de réponse vous sera envoyé après traitement.',
+      confirmButtonColor: '#3367bf',
+      confirmButtonText: 'OK'
+    }).then(function() {
+      window.history.replaceState({}, document.title, window.location.pathname);
+    });
+  } else if (params.get('duplicate') === 'true') {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Dossier en cours de traitement',
+      html: 'Une demande de remise pour ce BL est déjà en cours de traitement.<br>Veuillez patienter le temps que votre dossier soit traité.',
+      confirmButtonColor: '#f59e0b',
+      confirmButtonText: 'Compris'
+    }).then(function() {
+      window.history.replaceState({}, document.title, window.location.pathname);
+    });
+  }
+})();
 (function () {
   const TIERS = /*[[${tiersList}]]*/ [];
   const searchEl = document.getElementById('sel-search-remise');

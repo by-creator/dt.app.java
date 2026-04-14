@@ -101,13 +101,8 @@
         <span>Machines</span>
       </div>
 
-      <!-- Flash messages -->
-      <div th:if="${success}" class="alert-success" style="margin-bottom:20px;">
-        <span th:text="${success}"></span>
-      </div>
-      <div th:if="${error}" class="alert-error" style="margin-bottom:20px;">
-        <span th:text="${error}"></span>
-      </div>
+      <span th:if="${success}" id="_flashSuccess" th:text="${success}" style="display:none"></span>
+      <span th:if="${error}"   id="_flashError"   th:text="${error}"   style="display:none"></span>
 
       <!-- ── Formulaire ajout / édition ── -->
       <div class="page-section-card" style="margin-bottom:28px;">
