@@ -7,6 +7,8 @@
   <th:block th:replace="~{fragments/pwa-head :: pwaMeta}"></th:block>
   <script th:src="@{/js/theme.js}"></script>
   <link rel="stylesheet" th:href="@{/css/style.css}">
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px; }
     @media (max-width: 640px) { .form-grid-2 { grid-template-columns: 1fr; } }
@@ -334,10 +336,10 @@
               <input type="hidden" name="tab" value="admin">
               <input type="search" name="search" class="table-search-input" placeholder="Rechercher..." th:value="${search}">
             </form>
-            <form th:action="@{/menu/facturation/unify/admin/purger-invalides}" method="post"
-                  onsubmit="return confirm('Supprimer tous les tiers dont le compte Ipaki ne commence pas par SN00, ND ou un chiffre ? Cette action est irreversible.')">
+            <form id="formPurgerInvalides" th:action="@{/menu/facturation/unify/admin/purger-invalides}" method="post">
               <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-              <button type="submit" class="btn-table-action bloquer" style="white-space:nowrap;">Supprimer comptes invalides</button>
+              <button type="button" class="btn-table-action bloquer" style="white-space:nowrap;"
+                      onclick="confirmerPurgeInvalides()">Supprimer comptes invalides</button>
             </form>
           </div>
         </div>
@@ -591,6 +593,23 @@
     ['admin-raison', 'admin-ipaki', 'admin-neptune'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.value = '';
+    });
+  }
+
+  function confirmerPurgeInvalides() {
+    Swal.fire({
+      title: 'Supprimer les comptes invalides ?',
+      text: 'Tous les tiers dont le compte Ipaki ne commence pas par SN00, ND ou un chiffre seront supprimés. Cette action est irréversible.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Oui, supprimer',
+      cancelButtonText: 'Annuler'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        document.getElementById('formPurgerInvalides').submit();
+      }
     });
   }
 </script>
