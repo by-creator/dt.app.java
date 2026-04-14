@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -48,6 +49,9 @@ public class RattachementBl {
 
     @Column(name = "pourcentage", precision = 8, scale = 2)
     private BigDecimal pourcentage;
+
+    @Column(name = "date_validite_remise")
+    private LocalDate dateValiditeRemise;
 
     @Column(name = "time_elapsed")
     private Long timeElapsed;

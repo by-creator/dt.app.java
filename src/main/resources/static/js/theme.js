@@ -312,9 +312,8 @@ function initLegacyLiveFilters(table, searchForm, searchInput) {
     var label = labelNode ? labelNode.textContent.trim() : (control.name || control.id || '');
     var normalizedLabel = normalizeHeaderLabel(label);
     var type = control.type === 'date' ? 'date' : (control.tagName === 'SELECT' ? 'select' : 'text');
-    var selectedOption = control.tagName === 'SELECT' ? control.options[control.selectedIndex] : null;
     var currentValue = type === 'select'
-      ? normalizeFilterText((selectedOption && selectedOption.textContent) || control.value || '')
+      ? normalizeFilterText(control.value || '')
       : normalizeFilterText(control.value || '');
 
     return {
@@ -358,9 +357,8 @@ function initLegacyLiveFilters(table, searchForm, searchInput) {
 
   controls.forEach(function (control, index) {
     var handler = function () {
-      var selectedOption = control.tagName === 'SELECT' ? control.options[control.selectedIndex] : null;
       metas[index].currentValue = control.tagName === 'SELECT'
-        ? normalizeFilterText((selectedOption && selectedOption.textContent) || control.value || '')
+        ? normalizeFilterText(control.value || '')
         : normalizeFilterText(control.value || '');
       applyLegacyFilters();
     };

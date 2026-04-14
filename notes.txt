@@ -1,10 +1,2 @@
-Je souhaite que tu supprimes la pagination de toutes les tables qui ont une pagination car c'est cela qui 
-empêche la recherche sur toute la table de façon dynamique et tu gardes l'affichage des données de la même 
-manière que cela est fait au niveau de la route /admin?tab=users
-
-Ensuite a niveau de la table qui se trouve sur la route /admin?tab=routes je souhaite que tu rajouutes une colonne
-Description juste après la colonne Nom qui va décrire la route de manière plus explicite comme cela est fait au niveau
-de la route /admin?tab=commandes
-
-Je souhaite que pour la route /gestion-remises une fois que le client reçoit sa réponse par mail que le même mail soit envoyé à l'adresse ci-dessous : 
-sn004-remise.facturation@dakar-terminal.com
+Au niveau de la route /gestion-remises si le statut de la demande est EN_ATTENTE_DIRECTION je souhaite 
+que le champ date de validité s'alligne sur la mise en forme css 

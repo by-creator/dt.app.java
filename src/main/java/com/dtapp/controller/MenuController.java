@@ -17,6 +17,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Controller;
@@ -885,6 +886,7 @@ public class MenuController {
     @PostMapping("/menu/gestion-remises/{id}/valider")
     public String validerRemise(@PathVariable long id,
                                 @RequestParam(required = false) BigDecimal pourcentage,
+                                @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateValiditeRemise,
                                 @RequestParam String returnTo,
                                 Authentication auth, RedirectAttributes ra) {
         RattachementBl bl = rattachementBlRepository.findById(id).orElseThrow();
@@ -894,6 +896,7 @@ public class MenuController {
         if (isDirection(roles)) {
             bl.setStatut("VALIDE");
             bl.setPourcentage(pourcentage);
+            bl.setDateValiditeRemise(dateValiditeRemise);
             emailService.notifyClientRemiseValide(bl);
         } else {
             bl.setStatut("EN_ATTENTE_DIRECTION");
@@ -1000,6 +1003,7 @@ public class MenuController {
         model.addAttribute("sectionLabel", sectionLabel);
         model.addAttribute("parentMenuPath", parentMenuPath);
         model.addAttribute("currentPagePath", currentPagePath);
+        model.addAttribute("actionBasePath", "/menu/gestion-remises");
         model.addAttribute("isDirection", isDirection(roles));
         model.addAttribute("isAdmin", admin);
         model.addAttribute("sidebarMenuUrl", admin ? "/menu" : parentMenuPath);

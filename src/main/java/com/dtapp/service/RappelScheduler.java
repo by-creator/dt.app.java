@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,12 +30,19 @@ public class RappelScheduler {
      * Toutes les 30 minutes, envoie des rappels pour les demandes toujours en attente :
      * - Validation (FACTURATION / EN_ATTENTE) → sn004-proforma@dakar-terminal.com
      * - Remise (REMISE / EN_ATTENTE + EN_ATTENTE_DIRECTION) → sn004-remise.facturation@dakar-terminal.com
+     * Exécution uniquement du lundi au vendredi, entre 8h00 et 17h00.
      */
     @Scheduled(fixedDelayString = "${app.rappel.interval-ms:1800000}")
     public void envoyerRappels() {
         DayOfWeek day = LocalDate.now().getDayOfWeek();
         if (day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY) {
             log.info("Rappels ignorés le weekend ({})", day);
+            return;
+        }
+
+        LocalTime now = LocalTime.now();
+        if (now.isBefore(LocalTime.of(8, 0)) || !now.isBefore(LocalTime.of(17, 0))) {
+            log.info("Rappels ignorés en dehors des heures de travail ({})", now);
             return;
         }
 

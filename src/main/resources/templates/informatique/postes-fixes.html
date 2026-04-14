@@ -215,7 +215,6 @@
           <table id="tablePostes" class="data-table">
             <thead>
               <tr>
-                <th>#</th>
                 <th>ANNUAIRE</th>
                 <th>NOM</th>
                 <th>PRÉNOM</th>
@@ -227,7 +226,7 @@
             </thead>
             <tbody>
               <tr th:if="${#lists.isEmpty(postes)}">
-                <td colspan="8" style="text-align:center; color:#94a3b8; padding:32px;">Aucun poste fixe trouvé.</td>
+                <td colspan="7" style="text-align:center; color:#94a3b8; padding:32px;">Aucun poste fixe trouvé.</td>
               </tr>
               <tr th:each="p, stat : ${postes}"
                   th:data-id="${p.id}"
@@ -236,7 +235,6 @@
                   th:data-prenom="${p.prenom}"
                   th:data-ptype="${p.type}"
                   th:data-commentaire="${p.commentaire}">
-                <td th:text="${(currentPage * pageSize) + stat.index + 1}">1</td>
                 <td class="td-item" th:text="${p.annuaire ?: '—'}">—</td>
                 <td th:text="${p.nom ?: '—'}">—</td>
                 <td th:text="${p.prenom ?: '—'}">—</td>
@@ -285,11 +283,24 @@
     if (this.files.length > 0) document.getElementById('importPostesForm').submit();
   });
 
+  // ===== TOAST =====
+  function showToast(msg, type) {
+    const d = document.createElement('div');
+    d.className = (type === 'error') ? 'alert-error' : 'alert-success';
+    d.style.cssText = 'position:fixed;top:20px;right:20px;z-index:9999;min-width:260px;box-shadow:0 4px 16px rgba(0,0,0,.2);border-radius:8px;';
+    d.textContent = msg;
+    document.body.appendChild(d);
+    setTimeout(() => { d.style.transition = 'opacity 0.4s'; d.style.opacity = '0'; setTimeout(() => d.remove(), 400); }, 3000);
+  }
+
+  let editingPosteRow = null;
+
   // Édition — délégation sur tbody
   document.getElementById('tablePostes').addEventListener('click', function(e) {
     const btn = e.target.closest('.js-edit-poste');
     if (!btn) return;
-    const d = btn.closest('tr').dataset;
+    editingPosteRow = btn.closest('tr');
+    const d = editingPosteRow.dataset;
     document.getElementById('posteFormTitle').textContent   = 'Modifier le poste fixe';
     document.getElementById('posteSubmitLabel').textContent = 'Mettre à jour';
     document.getElementById('posteForm').action = '/menu/informatique/parc/postes-fixes/' + d.id + '/edit';
@@ -303,11 +314,49 @@
     document.getElementById('posteForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 
-  // Suppression — confirmation via délégation
+  // Suppression — AJAX via délégation
   document.getElementById('tablePostes').addEventListener('submit', function(e) {
-    if (e.target.classList.contains('js-delete-form')) {
-      if (!confirm('Supprimer ce poste fixe ?')) e.preventDefault();
-    }
+    if (!e.target.classList.contains('js-delete-form')) return;
+    e.preventDefault();
+    if (!confirm('Supprimer ce poste fixe ?')) return;
+    const form = e.target;
+    const tr = form.closest('tr');
+    fetch(form.action, { method: 'POST', body: new FormData(form) })
+      .then(r => {
+        if (r.ok) {
+          tr.style.transition = 'opacity 0.3s'; tr.style.opacity = '0';
+          setTimeout(() => tr.remove(), 300);
+          showToast('Poste fixe supprimé');
+        } else { showToast('Erreur lors de la suppression', 'error'); }
+      })
+      .catch(() => showToast('Erreur réseau', 'error'));
+  });
+
+  // Édition — AJAX soumission
+  document.getElementById('posteForm').addEventListener('submit', function(e) {
+    if (!this.action.includes('/edit')) return;
+    e.preventDefault();
+    const form = this; const row = editingPosteRow; const fd = new FormData(form);
+    fetch(form.action, { method: 'POST', body: fd })
+      .then(r => {
+        if (r.ok) {
+          if (row) {
+            row.cells[0].textContent = fd.get('annuaire') || '—';
+            row.cells[1].textContent = fd.get('nom') || '—';
+            row.cells[2].textContent = fd.get('prenom') || '—';
+            row.cells[3].textContent = fd.get('type') || '—';
+            row.cells[4].textContent = fd.get('commentaire') || '—';
+            row.dataset.annuaire    = fd.get('annuaire') || '';
+            row.dataset.nom         = fd.get('nom') || '';
+            row.dataset.prenom      = fd.get('prenom') || '';
+            row.dataset.ptype       = fd.get('type') || '';
+            row.dataset.commentaire = fd.get('commentaire') || '';
+          }
+          resetPosteForm();
+          showToast('Poste fixe mis à jour');
+        } else { showToast('Erreur lors de la mise à jour', 'error'); }
+      })
+      .catch(() => showToast('Erreur réseau', 'error'));
   });
 
   function resetPosteForm() {
@@ -317,6 +366,7 @@
     document.getElementById('posteForm').reset();
     document.getElementById('posteId').value = '';
     document.getElementById('posteCancelBtn').style.display = 'none';
+    editingPosteRow = null;
   }
 </script>
 </body>

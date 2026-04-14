@@ -276,7 +276,6 @@
           <table id="tableMachines" class="data-table">
             <thead>
               <tr>
-                <th>#</th>
                 <th>NOM</th>
                 <th>NOM AJOW</th>
                 <th>TYPE</th>
@@ -290,7 +289,7 @@
             </thead>
             <tbody>
               <tr th:if="${#lists.isEmpty(machines)}">
-                <td colspan="10" style="text-align:center; color:#94a3b8; padding:32px;">Aucune machine trouvée.</td>
+                <td colspan="9" style="text-align:center; color:#94a3b8; padding:32px;">Aucune machine trouvée.</td>
               </tr>
               <tr th:each="m, stat : ${machines}"
                   th:data-id="${m.id}"
@@ -308,7 +307,6 @@
                   th:data-dateacquisition="${m.dateAcquisition}"
                   th:data-datedeploiement="${m.dateDeploiement}"
                   th:data-commentaire="${m.commentaire}">
-                <td th:text="${(currentPage * pageSize) + stat.index + 1}">1</td>
                 <td class="td-item" th:text="${m.name}">—</td>
                 <td th:text="${m.ajowName ?: '—'}">—</td>
                 <td th:text="${m.type ?: '—'}">—</td>
@@ -358,11 +356,24 @@
     if (this.files.length > 0) document.getElementById('importMachinesForm').submit();
   });
 
+  // ===== TOAST =====
+  function showToast(msg, type) {
+    const d = document.createElement('div');
+    d.className = (type === 'error') ? 'alert-error' : 'alert-success';
+    d.style.cssText = 'position:fixed;top:20px;right:20px;z-index:9999;min-width:260px;box-shadow:0 4px 16px rgba(0,0,0,.2);border-radius:8px;';
+    d.textContent = msg;
+    document.body.appendChild(d);
+    setTimeout(() => { d.style.transition = 'opacity 0.4s'; d.style.opacity = '0'; setTimeout(() => d.remove(), 400); }, 3000);
+  }
+
+  let editingMachineRow = null;
+
   // Édition — délégation sur tbody
   document.getElementById('tableMachines').addEventListener('click', function(e) {
     const btn = e.target.closest('.js-edit-machine');
     if (!btn) return;
-    const d = btn.closest('tr').dataset;
+    editingMachineRow = btn.closest('tr');
+    const d = editingMachineRow.dataset;
     document.getElementById('machineFormTitle').textContent   = 'Modifier la machine';
     document.getElementById('machineSubmitLabel').textContent = 'Mettre à jour';
     document.getElementById('machineForm').action = '/menu/informatique/parc/machines/' + d.id + '/edit';
@@ -385,11 +396,60 @@
     document.getElementById('machineForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 
-  // Suppression — confirmation via délégation
+  // Suppression — AJAX via délégation
   document.getElementById('tableMachines').addEventListener('submit', function(e) {
-    if (e.target.classList.contains('js-delete-form')) {
-      if (!confirm('Supprimer cette machine ?')) e.preventDefault();
-    }
+    if (!e.target.classList.contains('js-delete-form')) return;
+    e.preventDefault();
+    if (!confirm('Supprimer cette machine ?')) return;
+    const form = e.target;
+    const tr = form.closest('tr');
+    fetch(form.action, { method: 'POST', body: new FormData(form) })
+      .then(r => {
+        if (r.ok) {
+          tr.style.transition = 'opacity 0.3s'; tr.style.opacity = '0';
+          setTimeout(() => tr.remove(), 300);
+          showToast('Machine supprimée');
+        } else { showToast('Erreur lors de la suppression', 'error'); }
+      })
+      .catch(() => showToast('Erreur réseau', 'error'));
+  });
+
+  // Édition — AJAX soumission
+  document.getElementById('machineForm').addEventListener('submit', function(e) {
+    if (!this.action.includes('/edit')) return;
+    e.preventDefault();
+    const form = this; const row = editingMachineRow; const fd = new FormData(form);
+    fetch(form.action, { method: 'POST', body: fd })
+      .then(r => {
+        if (r.ok) {
+          if (row) {
+            row.cells[0].textContent = fd.get('name') || '—';
+            row.cells[1].textContent = fd.get('ajowName') || '—';
+            row.cells[2].textContent = fd.get('type') || '—';
+            row.cells[3].textContent = fd.get('username') || '—';
+            row.cells[4].textContent = fd.get('model') || '—';
+            row.cells[5].textContent = fd.get('service') || '—';
+            row.cells[6].textContent = fd.get('sites') || '—';
+            row.dataset.name           = fd.get('name') || '';
+            row.dataset.mtype          = fd.get('type') || '';
+            row.dataset.ajowname       = fd.get('ajowName') || '';
+            row.dataset.username       = fd.get('username') || '';
+            row.dataset.servicetag     = fd.get('serviceTag') || '';
+            row.dataset.versionos      = fd.get('versionOs') || '';
+            row.dataset.model          = fd.get('model') || '';
+            row.dataset.societe        = fd.get('societe') || '';
+            row.dataset.service        = fd.get('service') || '';
+            row.dataset.emplacement    = fd.get('emplacement') || '';
+            row.dataset.sites          = fd.get('sites') || '';
+            row.dataset.dateacquisition  = fd.get('dateAcquisition') || '';
+            row.dataset.datedeploiement  = fd.get('dateDeploiement') || '';
+            row.dataset.commentaire    = fd.get('commentaire') || '';
+          }
+          resetMachineForm();
+          showToast('Machine mise à jour');
+        } else { showToast('Erreur lors de la mise à jour', 'error'); }
+      })
+      .catch(() => showToast('Erreur réseau', 'error'));
   });
 
   function resetMachineForm() {
@@ -399,6 +459,7 @@
     document.getElementById('machineForm').reset();
     document.getElementById('machineId').value = '';
     document.getElementById('machineCancelBtn').style.display = 'none';
+    editingMachineRow = null;
   }
 </script>
 </body>

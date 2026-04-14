@@ -7,8 +7,11 @@ import com.dtapp.repository.UserRepository;
 import com.dtapp.service.EmailService;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,13 +21,14 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 @Controller
 public class FacturationController {
+
+    private static final int MAX_TABLE_ROWS = 100000;
 
     private final RattachementBlRepository rattachementBlRepository;
     private final UserRepository userRepository;
@@ -56,12 +60,42 @@ public class FacturationController {
     // ==================== GESTION VALIDATIONS ====================
 
     @GetMapping("/facturation/gestion-validations")
-    public String gestionValidations(Model model, Authentication auth) {
+    public String gestionValidations(@RequestParam(defaultValue = "0") int page,
+                                     @RequestParam(required = false) String filterDate,
+                                     @RequestParam(required = false) String filterNom,
+                                     @RequestParam(required = false) String filterPrenom,
+                                     @RequestParam(required = false) String filterEmail,
+                                     @RequestParam(required = false) String filterBl,
+                                     @RequestParam(required = false) String filterMaison,
+                                     @RequestParam(required = false) String filterStatut,
+                                     Model model,
+                                     Authentication auth) {
         User loggedUser = userRepository.findByEmail(auth.getName()).orElseThrow();
-        List<RattachementBl> demandes = rattachementBlRepository.findByTypeOrderByCreatedAtDesc("FACTURATION");
+        Set<String> roles = auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toSet());
+        boolean admin = roles.contains("ROLE_ADMIN");
+        Page<RattachementBl> demandesPage = fetchBls("FACTURATION", filterDate,
+                filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut, page);
+
         model.addAttribute("loggedUser", loggedUser);
-        model.addAttribute("demandes", demandes);
-        return "facturation/gestion-validations";
+        model.addAttribute("demandes", demandesPage.getContent());
+        model.addAttribute("currentPage", 0);
+        model.addAttribute("totalPages", 0);
+        model.addAttribute("totalItems", demandesPage.getTotalElements());
+        model.addAttribute("filterDate", filterDate != null ? filterDate : "");
+        model.addAttribute("filterNom", filterNom != null ? filterNom : "");
+        model.addAttribute("filterPrenom", filterPrenom != null ? filterPrenom : "");
+        model.addAttribute("filterEmail", filterEmail != null ? filterEmail : "");
+        model.addAttribute("filterBl", filterBl != null ? filterBl : "");
+        model.addAttribute("filterMaison", filterMaison != null ? filterMaison : "");
+        model.addAttribute("filterStatut", filterStatut != null ? filterStatut : "");
+        model.addAttribute("sectionLabel", "Facturation");
+        model.addAttribute("parentMenuPath", "/menu/facturation");
+        model.addAttribute("currentPagePath", "/facturation/gestion-validations");
+        model.addAttribute("isAdmin", admin);
+        model.addAttribute("sidebarMenuUrl", admin ? "/menu" : "/menu/facturation");
+        return "validations/index";
     }
 
     @PostMapping("/facturation/gestion-validations/{id}/valider")
@@ -107,22 +141,24 @@ public class FacturationController {
     // ==================== GESTION REMISES ====================
 
     @GetMapping("/facturation/gestion-remises")
-    public String gestionRemises(Model model, Authentication auth) {
-        User loggedUser = userRepository.findByEmail(auth.getName()).orElseThrow();
-        List<RattachementBl> demandes = rattachementBlRepository.findByTypeOrderByCreatedAtDesc("REMISE");
-        Set<String> roles = auth.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.toSet());
-        model.addAttribute("loggedUser", loggedUser);
-        model.addAttribute("demandes", demandes);
-        model.addAttribute("isDirection", isDirection(roles));
-        model.addAttribute("isFacturation", roles.contains("ROLE_FACTURATION") || roles.contains("ROLE_ADMIN"));
-        return "facturation/gestion-remises";
+    public String gestionRemises(@RequestParam(defaultValue = "0") int page,
+                                 @RequestParam(required = false) String filterDate,
+                                 @RequestParam(required = false) String filterNom,
+                                 @RequestParam(required = false) String filterPrenom,
+                                 @RequestParam(required = false) String filterEmail,
+                                 @RequestParam(required = false) String filterBl,
+                                 @RequestParam(required = false) String filterMaison,
+                                 @RequestParam(required = false) String filterStatut,
+                                 Model model,
+                                 Authentication auth) {
+        return renderRemisesPage(model, auth, "Facturation", "/menu/facturation", "/facturation/gestion-remises",
+                "/facturation/gestion-remises", page, filterDate, filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut);
     }
 
     @PostMapping("/facturation/gestion-remises/{id}/valider")
     public String validerRemise(@PathVariable long id,
                                 @RequestParam(required = false) BigDecimal pourcentage,
+                                @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateValiditeRemise,
                                 Authentication auth,
                                 RedirectAttributes ra) {
         RattachementBl bl = rattachementBlRepository.findById(id).orElseThrow();
@@ -134,6 +170,7 @@ public class FacturationController {
         if (isDirection(roles)) {
             bl.setStatut("VALIDE");
             bl.setPourcentage(pourcentage);
+            bl.setDateValiditeRemise(dateValiditeRemise);
         } else {
             bl.setStatut("EN_ATTENTE_DIRECTION");
         }
@@ -185,5 +222,81 @@ public class FacturationController {
                 || roles.contains("ROLE_DIRECTION_GENERALE")
                 || roles.contains("ROLE_DIRECTION_FINANCIERE")
                 || roles.contains("ROLE_DIRECTION_EXPLOITATION");
+    }
+
+    private Page<RattachementBl> fetchBls(String type,
+                                          String filterDate,
+                                          String nom,
+                                          String prenom,
+                                          String email,
+                                          String bl,
+                                          String maison,
+                                          String statut,
+                                          int page) {
+        java.time.LocalDateTime dateStart = null;
+        java.time.LocalDateTime dateEnd = null;
+        if (filterDate != null && !filterDate.isBlank()) {
+            try {
+                LocalDate date = LocalDate.parse(filterDate);
+                dateStart = date.atStartOfDay();
+                dateEnd = date.plusDays(1).atStartOfDay();
+            } catch (Exception ignored) {
+            }
+        }
+
+        String sNom = nom != null ? nom.trim() : "";
+        String sPrenom = prenom != null ? prenom.trim() : "";
+        String sEmail = email != null ? email.trim() : "";
+        String sBl = bl != null ? bl.trim() : "";
+        String sMaison = maison != null ? maison.trim() : "";
+        String sStatut = statut != null ? statut.trim() : "";
+
+        return rattachementBlRepository.findByTypeWithFilters(
+                type, dateStart, dateEnd, sNom, sPrenom, sEmail, sBl, sMaison, sStatut,
+                PageRequest.of(0, MAX_TABLE_ROWS));
+    }
+
+    private String renderRemisesPage(Model model,
+                                     Authentication auth,
+                                     String sectionLabel,
+                                     String parentMenuPath,
+                                     String currentPagePath,
+                                     String actionBasePath,
+                                     int page,
+                                     String filterDate,
+                                     String filterNom,
+                                     String filterPrenom,
+                                     String filterEmail,
+                                     String filterBl,
+                                     String filterMaison,
+                                     String filterStatut) {
+        User loggedUser = userRepository.findByEmail(auth.getName()).orElseThrow();
+        Set<String> roles = auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toSet());
+        boolean admin = roles.contains("ROLE_ADMIN");
+        Page<RattachementBl> demandesPage = fetchBls("REMISE", filterDate,
+                filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut, page);
+
+        model.addAttribute("loggedUser", loggedUser);
+        model.addAttribute("demandes", demandesPage.getContent());
+        model.addAttribute("currentPage", 0);
+        model.addAttribute("totalPages", 0);
+        model.addAttribute("totalItems", demandesPage.getTotalElements());
+        model.addAttribute("filterDate", filterDate != null ? filterDate : "");
+        model.addAttribute("filterNom", filterNom != null ? filterNom : "");
+        model.addAttribute("filterPrenom", filterPrenom != null ? filterPrenom : "");
+        model.addAttribute("filterEmail", filterEmail != null ? filterEmail : "");
+        model.addAttribute("filterBl", filterBl != null ? filterBl : "");
+        model.addAttribute("filterMaison", filterMaison != null ? filterMaison : "");
+        model.addAttribute("filterStatut", filterStatut != null ? filterStatut : "");
+        model.addAttribute("sectionLabel", sectionLabel);
+        model.addAttribute("parentMenuPath", parentMenuPath);
+        model.addAttribute("currentPagePath", currentPagePath);
+        model.addAttribute("actionBasePath", actionBasePath);
+        model.addAttribute("isDirection", isDirection(roles));
+        model.addAttribute("isAdmin", admin);
+        model.addAttribute("sidebarMenuUrl", admin ? "/menu" : parentMenuPath);
+        return "remises/index";
     }
 }

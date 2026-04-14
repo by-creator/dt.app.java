@@ -353,11 +353,15 @@ public class EmailService {
 
     public void notifyClientRemiseValide(RattachementBl bl) {
         String pct = bl.getPourcentage() != null ? bl.getPourcentage().stripTrailingZeros().toPlainString() + "%" : "-";
+        String dateValidite = bl.getDateValiditeRemise() != null
+                ? bl.getDateValiditeRemise().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                : "-";
         sendClientMailWithCc(bl, bl.getEmail(),
                 "Votre demande de remise a ete approuvee - BL " + bl.getBl(),
                 buildClientStatusHtml(bl, "#16a34a", "Demande approuvee",
                         "Nous avons le plaisir de vous informer que votre demande de remise pour le BL <strong>" + safe(bl.getBl()) + "</strong> a ete approuvee.",
-                        "Pourcentage accorde", pct));
+                        "Pourcentage accorde", pct,
+                        "Date de validite de la remise", dateValidite));
     }
 
     public void notifyClientRemiseRejete(RattachementBl bl) {
@@ -405,6 +409,14 @@ public class EmailService {
     private String buildClientStatusHtml(RattachementBl bl, String accentColor,
                                          String statusLabel, String message,
                                          String extraLabel, String extraValue) {
+        return buildClientStatusHtml(bl, accentColor, statusLabel, message, extraLabel, extraValue, null, null);
+    }
+
+    @NonNull
+    private String buildClientStatusHtml(RattachementBl bl, String accentColor,
+                                         String statusLabel, String message,
+                                         String extraLabel, String extraValue,
+                                         String extraLabel2, String extraValue2) {
         String dematUrl = baseUrl + "/demat";
         StringBuilder sb = new StringBuilder();
         sb.append("<!DOCTYPE html><html><body style=\"font-family:Arial,sans-serif;background:#f8fbff;margin:0;padding:20px\">")
@@ -427,6 +439,10 @@ public class EmailService {
         if (extraLabel != null && extraValue != null) {
             sb.append("      <tr><td style=\"padding:10px 0;color:#94a3b8\">").append(extraLabel).append("</td>")
               .append("<td style=\"padding:10px 0;font-weight:600;color:").append(accentColor).append("\">").append(extraValue).append("</td></tr>");
+        }
+        if (extraLabel2 != null && extraValue2 != null) {
+            sb.append("      <tr><td style=\"padding:10px 0;color:#94a3b8\">").append(extraLabel2).append("</td>")
+              .append("<td style=\"padding:10px 0;font-weight:600;color:").append(accentColor).append("\">").append(extraValue2).append("</td></tr>");
         }
         sb.append("    </table>")
           .append("    <div style=\"margin-top:36px;text-align:center\">")

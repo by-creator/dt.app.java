@@ -212,7 +212,7 @@
                 <td style="font-size:12px; color:#94a3b8;" th:text="${d.motifRejet != null ? d.motifRejet : '-'}"></td>
                 <td>
                   <div th:if="${d.statut == 'EN_ATTENTE'}" class="row-actions">
-                    <form th:action="@{${currentPagePath} + '/' + ${d.id} + '/valider'}" method="post" th:id="'fv-' + ${d.id}"></form>
+                    <form th:action="|${currentPagePath}/${d.id}/valider|" method="post" th:id="'fv-' + ${d.id}"></form>
                     <button type="button" class="btn-valider" th:onclick="'confirmVal(' + ${d.id} + ')'">Valider</button>
                     <button type="button" class="btn-rejeter" th:onclick="'openRejet(' + ${d.id} + ')'">Rejeter</button>
                   </div>

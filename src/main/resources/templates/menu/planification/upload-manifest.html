@@ -168,7 +168,6 @@
 <table class="data-table">
           <thead>
             <tr>
-              <th>#</th>
               <th>COMPAGNIE</th>
               <th>CALL NUMBER</th>
               <th>MANIFESTE</th>
@@ -180,12 +179,11 @@
           </thead>
           <tbody>
             <tr th:if="${codifications.isEmpty()}">
-              <td colspan="8" style="text-align:center; color:#94a3b8; padding:32px;">
+              <td colspan="7" style="text-align:center; color:#94a3b8; padding:32px;">
                 Aucun manifeste importé pour l'instant.
               </td>
             </tr>
             <tr th:each="cod, stat : ${codifications}">
-              <td th:text="${codifications.number * codifications.size + stat.index + 1}">1</td>
               <td th:text="${cod.compagnie != null ? cod.compagnie.name : '—'}">—</td>
               <td class="td-item" th:text="${cod.callNumber}">CALL123</td>
               <td>

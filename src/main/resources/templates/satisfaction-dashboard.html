@@ -309,7 +309,6 @@
               <table class="data-table" style="min-width:1400px;">
                 <thead>
                   <tr>
-                    <th>#</th>
                     <th>Date</th>
                     <th>Nom</th>
                     <th>Email</th>
@@ -329,7 +328,6 @@
                 </thead>
                 <tbody>
                   <tr th:each="r : ${reponses}">
-                    <td th:text="${r.id}">—</td>
                     <td th:text="${r.createdAt != null ? #temporals.format(r.createdAt, 'dd/MM/yyyy') : '—'}">—</td>
                     <td th:text="${r.nom != null ? r.nom : '—'}">—</td>
                     <td th:text="${r.email != null ? r.email : '—'}">—</td>

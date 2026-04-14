@@ -25,7 +25,7 @@
     .modal-box h3 { margin: 0 0 6px; font-size: 17px; font-weight: 800; color: #0f172a; }
     .modal-box p { margin: 0 0 20px; font-size: 13px; color: #64748b; }
     .modal-box label { display: block; font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 6px; }
-    .modal-box select, .modal-box input[type="number"] { width: 100%; height: 44px; border-radius: 10px; border: 1px solid #d9e2ef; padding: 0 14px; font-size: 14px; margin-bottom: 20px; background: white; color: #0f172a; }
+    .modal-box select, .modal-box input[type="number"], .modal-box input[type="date"] { width: 100%; height: 44px; border-radius: 10px; border: 1px solid #d9e2ef; padding: 0 14px; font-size: 14px; margin-bottom: 20px; background: white; color: #0f172a; box-sizing: border-box; }
     .modal-box textarea { width: 100%; border-radius: 10px; border: 1px solid #d9e2ef; padding: 10px 14px; font-size: 14px; margin-bottom: 20px; background: white; color: #0f172a; resize: vertical; min-height: 90px; box-sizing: border-box; font-family: inherit; }
     .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
     .btn-cancel   { padding: 10px 18px; border: none; border-radius: 10px; background: #f1f5f9; color: #334155; font-weight: 700; font-size: 13px; cursor: pointer; }
@@ -36,7 +36,7 @@
       .modal-box h3 { color: #e2e8f0; }
       .modal-box p { color: #94a3b8; }
       .modal-box label { color: #94a3b8; }
-      .modal-box select, .modal-box input[type="number"] { background: #0f172a; border-color: rgba(148,163,184,0.2); color: #e2e8f0; }
+      .modal-box select, .modal-box input[type="number"], .modal-box input[type="date"] { background: #0f172a; border-color: rgba(148,163,184,0.2); color: #e2e8f0; }
       .btn-cancel { background: #334155; color: #cbd5e1; }
       .alert-flash { background: #14532d; border-color: #166534; color: #4ade80; }
     }
@@ -220,11 +220,12 @@
                 <td style="font-size:12px; color:#94a3b8;" th:text="${d.motifRejet != null ? d.motifRejet : '-'}"></td>
                 <td>
                   <div th:if="${d.statut == 'EN_ATTENTE' or d.statut == 'EN_ATTENTE_DIRECTION'}" class="row-actions">
-                    <form th:action="@{/menu/gestion-remises/{id}/valider(id=${d.id})}" method="post" th:id="'fv-' + ${d.id}">
+                    <form th:action="|${actionBasePath}/${d.id}/valider|" method="post" th:id="'fv-' + ${d.id}">
                       <input type="hidden" name="returnTo" th:value="${currentPagePath}">
+                      <input type="hidden" name="dateValiditeRemise" th:id="'validite-' + ${d.id}" value="">
                       <input type="hidden" name="pourcentage" th:id="'pct-' + ${d.id}" value="">
                     </form>
-                    <button type="button" class="btn-valider" th:onclick="'gererVal(' + ${d.id} + ')'">Valider</button>
+                    <button type="button" class="btn-valider" th:attr="data-statut=${d.statut}" th:onclick="|gererVal(${d.id}, this.dataset.statut)|">Valider</button>
                     <button type="button" class="btn-rejeter" th:onclick="'openRejet(' + ${d.id} + ')'">Rejeter</button>
                   </div>
                 </td>
@@ -242,6 +243,10 @@
   <div class="modal-box">
     <h3>Valider la remise</h3>
     <p>Saisissez le pourcentage de remise a accorder.</p>
+    <div id="validiteField" style="display:none;">
+      <label>Date de validite de la remise</label>
+      <input type="date" id="inputValiditeRemise">
+    </div>
     <label>Pourcentage (%)</label>
     <input type="number" id="inputPct" min="0" max="100" step="0.01" placeholder="Ex : 10.00">
     <div class="modal-actions">
@@ -281,9 +286,11 @@
   </div>
 </div>
 
-<script>
+<script th:inline="javascript">
   const isDir = document.getElementById('dirFlag').dataset.direction === 'true';
+  const actionBasePath = /*[[${actionBasePath}]]*/ '/menu/gestion-remises';
   let curId = null;
+  let curStatut = null;
 
   const darkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
   const mySwal = Swal.mixin({
@@ -292,9 +299,20 @@
     customClass: { popup: darkMode ? 'swal-dark' : '' }
   });
 
-  function gererVal(id) {
+  function gererVal(id, statut) {
     curId = id;
+    curStatut = statut;
     if (isDir) {
+      const validiteField = document.getElementById('validiteField');
+      const validiteInput = document.getElementById('inputValiditeRemise');
+      if (statut === 'EN_ATTENTE_DIRECTION') {
+        validiteField.style.display = 'block';
+        validiteInput.required = true;
+      } else {
+        validiteField.style.display = 'none';
+        validiteInput.required = false;
+      }
+      validiteInput.value = '';
       document.getElementById('inputPct').value = '';
       document.getElementById('modalPct').classList.add('open');
     } else {
@@ -313,10 +331,16 @@
 
   function confirmDirection() {
     const pct = document.getElementById('inputPct').value;
+    const validite = document.getElementById('inputValiditeRemise').value;
+    if (curStatut === 'EN_ATTENTE_DIRECTION' && !validite) {
+      mySwal.fire('Erreur', 'Veuillez renseigner la date de validite de la remise.', 'error');
+      return;
+    }
     if (!pct || isNaN(pct) || pct < 0 || pct > 100) {
       mySwal.fire('Erreur', 'Veuillez saisir un pourcentage valide (0-100).', 'error');
       return;
     }
+    document.getElementById('validite-' + curId).value = validite;
     document.getElementById('pct-' + curId).value = pct;
     closeModals();
     document.getElementById('fv-' + curId).submit();
@@ -335,7 +359,7 @@
   }
 
   function openRejet(id) {
-    document.getElementById('formRejet').action = '/menu/gestion-remises/' + id + '/rejeter';
+    document.getElementById('formRejet').action = actionBasePath + '/' + id + '/rejeter';
     document.getElementById('selectMotif').value = '';
     document.getElementById('zoneAutre').style.display = 'none';
     document.getElementById('texteAutre').value = '';
