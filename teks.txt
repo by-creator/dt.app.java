@@ -1,0 +1,15 @@
+ Impression via le navigateur mobile
+C’est la solution la plus simple et la plus réaliste.
+
+Principe :
+
+depuis /teks, on ouvre le fichier ou la vue d’impression
+on déclenche window.print()
+le téléphone affiche la feuille de partage/impression native
+si l’imprimante Bluetooth est déjà reconnue par le téléphone, l’utilisateur peut l’utiliser
+Faisabilité :
+
+très élevée
+peu de développement
+fonctionne bien surtout pour PDF et images
+dépend du système du téléphone et de l’app d’impression installée
