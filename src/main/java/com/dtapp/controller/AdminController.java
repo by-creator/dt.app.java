@@ -9,6 +9,7 @@ import com.dtapp.repository.AuthorityDefinitionRepository;
 import com.dtapp.repository.AuthorityRepository;
 import com.dtapp.repository.CompagnieRepository;
 import com.dtapp.repository.UserRepository;
+import com.dtapp.service.B2StorageService;
 import com.dtapp.util.PaginationUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
@@ -36,6 +37,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Controller
@@ -48,6 +50,7 @@ public class AdminController {
     private final AuthorityRepository authorityRepository;
     private final AuthorityDefinitionRepository authorityDefinitionRepository;
     private final AuditLogRepository auditLogRepository;
+    private final B2StorageService b2StorageService;
     private final PasswordEncoder passwordEncoder;
     private final RequestMappingHandlerMapping handlerMapping;
 
@@ -56,6 +59,7 @@ public class AdminController {
                            AuthorityRepository authorityRepository,
                            AuthorityDefinitionRepository authorityDefinitionRepository,
                            AuditLogRepository auditLogRepository,
+                           B2StorageService b2StorageService,
                            PasswordEncoder passwordEncoder,
                            @Qualifier("requestMappingHandlerMapping") RequestMappingHandlerMapping handlerMapping) {
         this.userRepository                 = userRepository;
@@ -63,6 +67,7 @@ public class AdminController {
         this.authorityRepository            = authorityRepository;
         this.authorityDefinitionRepository  = authorityDefinitionRepository;
         this.auditLogRepository             = auditLogRepository;
+        this.b2StorageService               = b2StorageService;
         this.passwordEncoder                = passwordEncoder;
         this.handlerMapping                 = handlerMapping;
     }
@@ -138,12 +143,15 @@ public class AdminController {
                         @RequestParam(required = false) String assignedAuthoritySearch,
                         @RequestParam(required = false) String routeSearch,
                         @RequestParam(required = false) String commandeSearch,
+                        @RequestParam(required = false) String fileSearch,
+                        @RequestParam(required = false, defaultValue = "") String filePrefix,
                         @RequestParam(defaultValue = "0") int userPage,
                         @RequestParam(defaultValue = "0") int compagniePage,
                         @RequestParam(defaultValue = "0") int authorityDefinitionPage,
                         @RequestParam(defaultValue = "0") int assignedAuthorityPage,
                         @RequestParam(defaultValue = "0") int routePage,
                         @RequestParam(defaultValue = "0") int commandePage,
+                        @RequestParam(defaultValue = "0") int filePage,
                         @RequestParam(required = false) String auditSearch,
                         @RequestParam(defaultValue = "0") int auditPage,
                         @RequestParam(defaultValue = "25") int auditSize,
@@ -242,6 +250,19 @@ public class AdminController {
         model.addAttribute("commandeSearch", defaultString(commandeSearch));
         PaginationUtils.addPageAttributes(model, commandesPageData, "commandes");
 
+        B2StorageService.FolderView folderView = b2StorageService.listFolder(filePrefix);
+        var filesPageData = PaginationUtils.fromList(filterList(folderView.files(), fileSearch,
+                B2StorageService.S3FileItem::key,
+                B2StorageService.S3FileItem::fileName,
+                B2StorageService.S3FileItem::lastModifiedLabel),
+                filePage, PaginationUtils.DEFAULT_PAGE_SIZE);
+        model.addAttribute("folderView", folderView);
+        model.addAttribute("folderFiles", filesPageData.getContent());
+        model.addAttribute("fileSearch", defaultString(fileSearch));
+        model.addAttribute("filePrefix", filePrefix);
+        model.addAttribute("fileBreadcrumb", buildBreadcrumb(filePrefix));
+        PaginationUtils.addPageAttributes(model, filesPageData, "files");
+
         Page<com.dtapp.entity.AuditLog> auditPageData = auditLogRepository.search(
                 auditSearch,
                 PaginationUtils.pageable(auditPage, auditSize, Sort.by(Sort.Direction.DESC, "createdAt"))
@@ -281,6 +302,68 @@ public class AdminController {
                 .replaceAll("\\p{M}", "")
                 .toLowerCase()
                 .trim();
+    }
+
+    /** Builds breadcrumb segments for the files tab. Each entry: {label, prefix}. */
+    private List<Map<String, String>> buildBreadcrumb(String prefix) {
+        List<Map<String, String>> crumbs = new ArrayList<>();
+        crumbs.add(Map.of("label", "Racine", "prefix", ""));
+        if (prefix != null && !prefix.isBlank()) {
+            String normalized = prefix.endsWith("/") ? prefix : prefix + "/";
+            String[] parts = normalized.split("/");
+            StringBuilder cumulative = new StringBuilder();
+            for (String part : parts) {
+                if (!part.isEmpty()) {
+                    cumulative.append(part).append("/");
+                    crumbs.add(Map.of("label", part, "prefix", cumulative.toString()));
+                }
+            }
+        }
+        return crumbs;
+    }
+
+    // ===== FILES : UPLOAD & MKDIR =====
+
+    @PostMapping("/files/upload")
+    public String uploadFile(@RequestParam MultipartFile file,
+                             @RequestParam(defaultValue = "") String filePrefix,
+                             RedirectAttributes ra) {
+        if (file.isEmpty()) {
+            ra.addFlashAttribute("error", "Aucun fichier sélectionné.");
+            return "redirect:/admin?tab=files&filePrefix=" + filePrefix;
+        }
+        String filename = file.getOriginalFilename() != null
+                ? file.getOriginalFilename().replaceAll("[^\\w.\\-]", "_")
+                : "fichier";
+        String key = filePrefix.isBlank() ? filename : (filePrefix.endsWith("/") ? filePrefix + filename : filePrefix + "/" + filename);
+        try {
+            b2StorageService.uploadFile(key, file);
+            ra.addFlashAttribute("success", "Fichier « " + filename + " » uploadé avec succès.");
+        } catch (Exception e) {
+            log.error("Erreur upload B2", e);
+            ra.addFlashAttribute("error", "Erreur lors de l'upload : " + e.getMessage());
+        }
+        return "redirect:/admin?tab=files&filePrefix=" + filePrefix;
+    }
+
+    @PostMapping("/files/mkdir")
+    public String createFolder(@RequestParam String folderName,
+                               @RequestParam(defaultValue = "") String filePrefix,
+                               RedirectAttributes ra) {
+        String trimmed = folderName.trim().replaceAll("[^\\w\\-]", "_");
+        if (trimmed.isEmpty()) {
+            ra.addFlashAttribute("error", "Le nom du dossier est requis.");
+            return "redirect:/admin?tab=files&filePrefix=" + filePrefix;
+        }
+        String key = filePrefix.isBlank() ? trimmed : (filePrefix.endsWith("/") ? filePrefix + trimmed : filePrefix + "/" + trimmed);
+        try {
+            b2StorageService.createFolder(key);
+            ra.addFlashAttribute("success", "Dossier « " + trimmed + " » créé.");
+        } catch (Exception e) {
+            log.error("Erreur création dossier B2", e);
+            ra.addFlashAttribute("error", "Erreur lors de la création : " + e.getMessage());
+        }
+        return "redirect:/admin?tab=files&filePrefix=" + filePrefix;
     }
 
     // ===== CONVERSION XLSX / CSV =====

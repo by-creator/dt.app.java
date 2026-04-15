@@ -58,6 +58,28 @@
       "type": "java.lang.String",
       "description": "Pusher connection scheme (https or http).",
       "defaultValue": "https"
+    },
+    {
+      "name": "app.storage.b2.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable or disable Backblaze B2 storage.",
+      "defaultValue": true
+    },
+    {
+      "name": "app.storage.b2.bucket-name",
+      "type": "java.lang.String",
+      "description": "Backblaze B2 bucket name."
+    },
+    {
+      "name": "app.storage.b2.endpoint",
+      "type": "java.lang.String",
+      "description": "Backblaze B2 S3-compatible endpoint URL."
+    },
+    {
+      "name": "app.storage.b2.presign-duration-minutes",
+      "type": "java.lang.Integer",
+      "description": "Duration in minutes for pre-signed URL validity.",
+      "defaultValue": 15
     }
   ]
 }

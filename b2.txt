@@ -1,0 +1,37 @@
+Voici les informations concernant Backblaze B2
+
+Nom : dt-app
+
+Créé :April 15, 2026
+ID du Bucket:62e553d6fae4992c9edd031c
+Type :Private
+Cycle de vie des fichiers :Keep all versions
+Instantanés :0
+Fichiers actuels :0
+Taille actuelle :0 bytes
+Point de terminaison:s3.us-east-005.backblazeb2.com
+Chiffrement:Enabled
+Charger/télécharger
+Bucket Settings Paramètres du Bucket
+Lifecycle Settings Paramètres de cycle de vie
+CORS Rules Règles CORS
+Object Lock Object Lock: enabled
+Access Logs Journaux d’accès
+Event Notifications Event Notifications
+
+
+Je souhaite qu'au niveau de la route /admin tu rajoutes un onglet gestion de fichiers qui va afficher 
+le contenu de la bucket.
+
+La gestion des fichiers se fera selon les infos ci-dessous :
+
+Stockage : Backblaze B2 (pour le coût).
+
+Backend : Spring Boot avec Spring Cloud AWS S3.
+
+Affichage : Utilisation des URLs pré-signées pour éviter de surcharger votre application Heroku.
+
+
+
+Si tu veux, je peux maintenant faire l’étape suivante: ajouter aussi l’upload 
+d’objets directement depuis cet onglet Gestion de fichiers
