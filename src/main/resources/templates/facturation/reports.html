@@ -113,8 +113,6 @@
           <div class="table-filter-panel">
             <div class="table-filter-panel-header">
               <span>Filtres par colonnes</span>
-              <a th:href="@{/menu/facturation/gestion-rapports(tab='suivi-vides')}"
-                 class="table-filter-reset" style="text-decoration:none;">Reinitialiser</a>
             </div>
             <div class="table-filter-grid">
               <label class="table-filter-item">
@@ -172,7 +170,12 @@
               </label>
               <div class="table-filter-item" style="justify-content:flex-end;">
                 <span class="table-filter-label" style="visibility:hidden;">Action</span>
-                <button type="submit" class="btn-actualiser" style="height:36px;">Filtrer</button>
+                <div style="display:flex; gap:6px; align-items:center;">
+                  <button type="submit" class="btn-actualiser" style="height:36px;">Filtrer</button>
+                  <a th:href="@{/menu/facturation/gestion-rapports(tab='suivi-vides')}"
+                     class="btn-actualiser"
+                     style="text-decoration:none; height:36px; display:inline-flex; align-items:center;">Effacer</a>
+                </div>
               </div>
             </div>
           </div>

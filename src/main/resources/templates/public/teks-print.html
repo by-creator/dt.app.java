@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="'Impression - ' + ${teks.bl}">Impression teks</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .print-topbar {
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: rgba(15,23,42,0.92);
+      border-bottom: 1px solid rgba(148,163,184,0.22);
+    }
+    .print-topbar h1 {
+      margin: 0;
+      font-size: 16px;
+    }
+    .print-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .print-actions a,
+    .print-actions button {
+      border: none;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .print-actions button {
+      background: #2563eb;
+      color: #fff;
+    }
+    .print-actions a {
+      background: #1e293b;
+      color: #e2e8f0;
+    }
+    iframe, img {
+      flex: 1;
+      width: 100%;
+      border: none;
+      background: #fff;
+    }
+    .print-fallback {
+      padding: 28px 20px;
+      max-width: 720px;
+    }
+    .print-fallback p {
+      color: #cbd5e1;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="print-topbar">
+    <h1 th:text="'BL ' + ${teks.bl} + ' - ' + ${teks.chassis}">BL</h1>
+    <div class="print-actions">
+      <button th:if="${printable}" type="button" onclick="window.print()">Imprimer</button>
+      <a th:href="@{/teks/files/{id}(id=${teks.id}, download=true)}">Telecharger le fichier</a>
+      <a th:href="@{/teks}">Retour</a>
+    </div>
+  </div>
+
+  <iframe th:if="${printable and teks.fileContentType == 'application/pdf'}"
+          th:src="@{|${fileUrl}#toolbar=0&navpanes=0|}"
+          onload="setTimeout(function(){ window.print(); }, 500)"></iframe>
+
+  <img th:if="${printable and teks.fileContentType != 'application/pdf'}"
+       th:src="@{${fileUrl}}"
+       alt="Apercu du teks"
+       onload="setTimeout(function(){ window.print(); }, 500)">
+
+  <div th:if="${!printable}" class="print-fallback">
+    <h2>Impression automatique non disponible</h2>
+    <p>Ce type de fichier n'est pas pris en charge directement par le navigateur pour l'impression automatique. Utilisez le bouton de telechargement ci-dessus pour l'ouvrir puis l'imprimer.</p>
+  </div>
+</body>
+</html>
