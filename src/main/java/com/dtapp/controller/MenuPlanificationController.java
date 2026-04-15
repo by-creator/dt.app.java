@@ -8,6 +8,7 @@ import com.dtapp.service.EdiExporter;
 import com.dtapp.service.EdiParser;
 import com.dtapp.service.EdiRecord;
 import com.dtapp.service.XlsExporter;
+import com.dtapp.util.PaginationUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
@@ -16,7 +17,6 @@ import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -56,8 +56,6 @@ public class MenuPlanificationController {
     private final CodificationRepository codificationRepository;
     private final UserRepository userRepository;
     private final BulkInsertService bulkInsertService;
-    private static final int MAX_TABLE_ROWS = 100000;
-
     public MenuPlanificationController(EdiParser parser,
                                        EdiExporter exporter,
                                        XlsExporter xlsExporter,
@@ -75,11 +73,12 @@ public class MenuPlanificationController {
     @GetMapping("/upload-manifest")
     public String showUpload(@RequestParam(required = false) String search,
                              @RequestParam(defaultValue = "0") int page,
+                             @RequestParam(defaultValue = "25") int size,
                              Model model,
                              Authentication auth) {
         var loggedUser = userRepository.findByEmail(auth.getName()).orElseThrow();
         var compagnie = loggedUser.getCompagnie();
-        Pageable pageable = PageRequest.of(0, MAX_TABLE_ROWS);
+        Pageable pageable = PaginationUtils.pageable(page, size);
         Page<Codification> codifications;
 
         if (compagnie == null) {
@@ -90,9 +89,10 @@ public class MenuPlanificationController {
             codifications = codificationRepository.findByCompagnie(compagnie, pageable);
         }
 
-        model.addAttribute("codifications", codifications);
+        model.addAttribute("codifications", codifications.getContent());
         model.addAttribute("search", search);
         model.addAttribute("loggedUser", loggedUser);
+        PaginationUtils.addPageAttributes(model, codifications);
         return "menu/planification/upload-manifest";
     }
 

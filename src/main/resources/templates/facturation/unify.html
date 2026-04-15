@@ -228,6 +228,8 @@
           <form th:action="@{/menu/facturation/unify}" method="get" style="display:flex; align-items:center; gap:8px;">
             <input type="hidden" name="tab" value="liste-tiers">
             <input type="search" name="search" class="table-search-input" placeholder="Rechercher un tiers..." th:value="${search}">
+            <button type="submit" class="btn-actualiser">Filtrer</button>
+            <a th:href="@{/menu/facturation/unify(tab='liste-tiers')}" class="btn-actualiser" style="text-decoration:none;">Effacer</a>
           </form>
         </div>
         <div class="table-wrapper">
@@ -253,6 +255,7 @@
             </tbody>
           </table>
         </div>
+        <th:block th:replace="~{fragments/pagination :: server('/menu/facturation/unify', 'page')}"></th:block>
       </div>
 
       <!-- ── Tutoriel ───────────────────────────────────────────────────── -->
@@ -335,6 +338,8 @@
             <form th:action="@{/menu/facturation/unify}" method="get" style="display:flex; align-items:center; gap:8px;">
               <input type="hidden" name="tab" value="admin">
               <input type="search" name="search" class="table-search-input" placeholder="Rechercher..." th:value="${search}">
+              <button type="submit" class="btn-actualiser">Filtrer</button>
+              <a th:href="@{/menu/facturation/unify(tab='admin')}" class="btn-actualiser" style="text-decoration:none;">Effacer</a>
             </form>
             <form id="formPurgerInvalides" th:action="@{/menu/facturation/unify/admin/purger-invalides}" method="post">
               <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
@@ -382,6 +387,7 @@
             </tbody>
           </table>
         </div>
+        <th:block th:replace="~{fragments/pagination :: server('/menu/facturation/unify', 'page')}"></th:block>
 
       </div>
     </div>

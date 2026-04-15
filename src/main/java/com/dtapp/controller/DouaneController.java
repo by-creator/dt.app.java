@@ -4,8 +4,8 @@ import com.dtapp.entity.BlocageItem;
 import com.dtapp.entity.User;
 import com.dtapp.repository.BlocageItemRepository;
 import com.dtapp.repository.UserRepository;
+import com.dtapp.util.PaginationUtils;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -15,8 +15,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @Controller
 @RequestMapping("/menu/douane")
 public class DouaneController {
-
-    private static final int MAX_TABLE_ROWS = 100000;
 
     private final UserRepository userRepository;
     private final BlocageItemRepository blocageItemRepository;
@@ -39,6 +37,7 @@ public class DouaneController {
                           @RequestParam(required = false) String filterStatut,
                           @RequestParam(required = false) String filterDate,
                           @RequestParam(defaultValue = "0") int page,
+                          @RequestParam(defaultValue = "25") int size,
                           Model model, Authentication auth) {
 
         boolean hasColumnFilter = hasText(filterItem) || hasText(filterStatut) || hasText(filterDate);
@@ -47,9 +46,9 @@ public class DouaneController {
         if (hasColumnFilter) {
             itemsPage = blocageItemRepository.filterByColumns(
                     emptyNull(filterItem), emptyNull(filterStatut), emptyNull(filterDate),
-                    PageRequest.of(0, MAX_TABLE_ROWS));
+                    PaginationUtils.pageable(page, size));
         } else {
-            itemsPage = blocageItemRepository.searchPaged(search, PageRequest.of(0, MAX_TABLE_ROWS));
+            itemsPage = blocageItemRepository.searchPaged(search, PaginationUtils.pageable(page, size));
         }
 
         model.addAttribute("loggedUser",    loggedUser(auth));
@@ -58,10 +57,7 @@ public class DouaneController {
         model.addAttribute("filterItem",    filterItem   != null ? filterItem   : "");
         model.addAttribute("filterStatut",  filterStatut != null ? filterStatut : "");
         model.addAttribute("filterDate",    filterDate   != null ? filterDate   : "");
-        model.addAttribute("currentPage",   0);
-        model.addAttribute("totalPages",    0);
-        model.addAttribute("totalItems",    itemsPage.getTotalElements());
-        model.addAttribute("pageSize",      itemsPage.getContent().size());
+        PaginationUtils.addPageAttributes(model, itemsPage);
         return "douane/blocage";
     }
 

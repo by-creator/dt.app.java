@@ -1,6 +1,8 @@
 package com.dtapp.repository;
 
 import com.dtapp.entity.RapportSuiviVides;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -36,7 +38,7 @@ public interface RapportSuiviVidesRepository extends JpaRepository<RapportSuiviV
            "(:dateFrom IS NULL OR r.eventDate >= :dateFrom) AND " +
            "(:dateTo IS NULL OR r.eventDate <= :dateTo) " +
            "ORDER BY r.createdAt DESC")
-    List<RapportSuiviVides> findFiltered(
+    Page<RapportSuiviVides> findFiltered(
             @Param("shipowner")         String shipowner,
             @Param("itemType")          String itemType,
             @Param("equipmentNumber")   String equipmentNumber,
@@ -44,6 +46,7 @@ public interface RapportSuiviVidesRepository extends JpaRepository<RapportSuiviV
             @Param("eventCode")         String eventCode,
             @Param("eventFamily")       String eventFamily,
             @Param("dateFrom")          String dateFrom,
-            @Param("dateTo")            String dateTo
+            @Param("dateTo")            String dateTo,
+            Pageable pageable
     );
 }

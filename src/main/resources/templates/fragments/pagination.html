@@ -1,0 +1,33 @@
+<th:block xmlns:th="http://www.thymeleaf.org" th:fragment="server(action, pageParam)">
+  <form th:if="${totalPages > 1}" th:action="@{${action}}" method="get" class="pagination-bar">
+    <th:block th:each="entry : ${param}">
+      <th:block th:if="${entry.key != pageParam}">
+        <input th:each="value : ${entry.value}" type="hidden" th:name="${entry.key}" th:value="${value}">
+      </th:block>
+    </th:block>
+
+    <span class="pagination-info"
+          th:text="'Affichage ' + ${pageStart} + ' - ' + ${pageEnd} + ' sur ' + ${totalItems}"></span>
+
+    <div class="pagination-controls">
+      <button type="submit" class="page-btn" th:name="${pageParam}" value="0"
+              th:classappend="${currentPage == 0} ? ' disabled' : ''">««</button>
+      <button type="submit" class="page-btn" th:name="${pageParam}"
+              th:value="${currentPage > 0 ? currentPage - 1 : 0}"
+              th:classappend="${currentPage == 0} ? ' disabled' : ''">‹</button>
+
+      <button type="submit" class="page-btn"
+              th:each="pageNumber : ${#numbers.sequence(0, totalPages - 1)}"
+              th:name="${pageParam}" th:value="${pageNumber}"
+              th:text="${pageNumber + 1}"
+              th:classappend="${pageNumber == currentPage} ? ' active' : ''"></button>
+
+      <button type="submit" class="page-btn" th:name="${pageParam}"
+              th:value="${currentPage + 1 < totalPages ? currentPage + 1 : currentPage}"
+              th:classappend="${currentPage + 1 >= totalPages} ? ' disabled' : ''">›</button>
+      <button type="submit" class="page-btn" th:name="${pageParam}"
+              th:value="${totalPages > 0 ? totalPages - 1 : 0}"
+              th:classappend="${currentPage + 1 >= totalPages} ? ' disabled' : ''">»»</button>
+    </div>
+  </form>
+</th:block>

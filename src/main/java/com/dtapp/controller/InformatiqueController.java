@@ -6,12 +6,12 @@ import com.dtapp.entity.User;
 import com.dtapp.repository.MachineRepository;
 import com.dtapp.repository.PosteFixeRepository;
 import com.dtapp.repository.UserRepository;
+import com.dtapp.util.PaginationUtils;
 import com.dtapp.service.BulkInsertService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -31,8 +31,6 @@ import java.util.List;
 @Controller
 @RequestMapping("/menu/informatique/parc")
 public class InformatiqueController {
-
-    private static final int MAX_TABLE_ROWS = 100000;
 
     private final UserRepository userRepository;
     private final MachineRepository machineRepository;
@@ -73,6 +71,7 @@ public class InformatiqueController {
                            @RequestParam(required = false) String filterService,
                            @RequestParam(required = false) String filterSite,
                            @RequestParam(defaultValue = "0") int page,
+                           @RequestParam(defaultValue = "25") int size,
                            Model model, Authentication auth) {
         boolean hasColumnFilter = hasText(filterNom) || hasText(filterAjow) || hasText(filterType)
                 || hasText(filterUser) || hasText(filterModel) || hasText(filterService) || hasText(filterSite);
@@ -82,9 +81,9 @@ public class InformatiqueController {
             machinesPage = machineRepository.filterByColumns(
                     emptyNull(filterNom), emptyNull(filterAjow), emptyNull(filterType),
                     emptyNull(filterUser), emptyNull(filterModel), emptyNull(filterService),
-                    emptyNull(filterSite), PageRequest.of(0, MAX_TABLE_ROWS));
+                    emptyNull(filterSite), PaginationUtils.pageable(page, size));
         } else {
-            machinesPage = machineRepository.searchPaged(search, PageRequest.of(0, MAX_TABLE_ROWS));
+            machinesPage = machineRepository.searchPaged(search, PaginationUtils.pageable(page, size));
         }
 
         model.addAttribute("loggedUser",    loggedUser(auth));
@@ -97,10 +96,7 @@ public class InformatiqueController {
         model.addAttribute("filterModel",   filterModel   != null ? filterModel   : "");
         model.addAttribute("filterService", filterService != null ? filterService : "");
         model.addAttribute("filterSite",    filterSite    != null ? filterSite    : "");
-        model.addAttribute("currentPage",   0);
-        model.addAttribute("totalPages",    0);
-        model.addAttribute("totalItems",    machinesPage.getTotalElements());
-        model.addAttribute("pageSize",      machinesPage.getContent().size());
+        PaginationUtils.addPageAttributes(model, machinesPage);
         return "informatique/machines";
     }
 
@@ -337,6 +333,7 @@ public class InformatiqueController {
                               @RequestParam(required = false) String filterPrenom,
                               @RequestParam(required = false) String filterType,
                               @RequestParam(defaultValue = "0") int page,
+                              @RequestParam(defaultValue = "25") int size,
                               Model model, Authentication auth) {
         boolean hasColumnFilter = hasText(filterAnnuaire) || hasText(filterNom)
                 || hasText(filterPrenom) || hasText(filterType);
@@ -346,9 +343,9 @@ public class InformatiqueController {
             postesPage = posteFixeRepository.filterByColumns(
                     emptyNull(filterAnnuaire), emptyNull(filterNom),
                     emptyNull(filterPrenom), emptyNull(filterType),
-                    PageRequest.of(0, MAX_TABLE_ROWS));
+                    PaginationUtils.pageable(page, size));
         } else {
-            postesPage = posteFixeRepository.searchPaged(search, PageRequest.of(0, MAX_TABLE_ROWS));
+            postesPage = posteFixeRepository.searchPaged(search, PaginationUtils.pageable(page, size));
         }
 
         model.addAttribute("loggedUser",     loggedUser(auth));
@@ -358,10 +355,7 @@ public class InformatiqueController {
         model.addAttribute("filterNom",      filterNom      != null ? filterNom      : "");
         model.addAttribute("filterPrenom",   filterPrenom   != null ? filterPrenom   : "");
         model.addAttribute("filterType",     filterType     != null ? filterType     : "");
-        model.addAttribute("currentPage",    0);
-        model.addAttribute("totalPages",     0);
-        model.addAttribute("totalItems",     postesPage.getTotalElements());
-        model.addAttribute("pageSize",       postesPage.getContent().size());
+        PaginationUtils.addPageAttributes(model, postesPage);
         return "informatique/postes-fixes";
     }
 

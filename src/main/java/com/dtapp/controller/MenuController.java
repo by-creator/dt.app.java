@@ -13,11 +13,11 @@ import com.dtapp.repository.TiersUnifyRepository;
 import com.dtapp.repository.UserRepository;
 import com.dtapp.service.BulkInsertService;
 import com.dtapp.service.EmailService;
+import com.dtapp.util.PaginationUtils;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.Authentication;
@@ -174,6 +174,7 @@ public class MenuController {
 
     @GetMapping("/menu/direction-generale/gestion-remises")
     public String directionGeneraleRemises(@RequestParam(defaultValue = "0") int page,
+                                           @RequestParam(defaultValue = "25") int size,
                                            @RequestParam(required = false) String filterDate,
                                            @RequestParam(required = false) String filterNom,
                                            @RequestParam(required = false) String filterPrenom,
@@ -183,11 +184,12 @@ public class MenuController {
                                            @RequestParam(required = false) String filterStatut,
                                            Model model, Authentication auth) {
         return renderRemisesPage(model, auth, "Direction Generale", "/menu/direction-generale", page,
-                filterDate, filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut);
+                size, filterDate, filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut);
     }
 
     @GetMapping("/menu/direction-financiere/gestion-remises")
     public String directionFinanciereRemises(@RequestParam(defaultValue = "0") int page,
+                                             @RequestParam(defaultValue = "25") int size,
                                              @RequestParam(required = false) String filterDate,
                                              @RequestParam(required = false) String filterNom,
                                              @RequestParam(required = false) String filterPrenom,
@@ -197,11 +199,12 @@ public class MenuController {
                                              @RequestParam(required = false) String filterStatut,
                                              Model model, Authentication auth) {
         return renderRemisesPage(model, auth, "Direction Financiere", "/menu/direction-financiere", page,
-                filterDate, filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut);
+                size, filterDate, filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut);
     }
 
     @GetMapping("/menu/direction-exploitation/gestion-remises")
     public String directionExploitationRemises(@RequestParam(defaultValue = "0") int page,
+                                               @RequestParam(defaultValue = "25") int size,
                                                @RequestParam(required = false) String filterDate,
                                                @RequestParam(required = false) String filterNom,
                                                @RequestParam(required = false) String filterPrenom,
@@ -211,7 +214,7 @@ public class MenuController {
                                                @RequestParam(required = false) String filterStatut,
                                                Model model, Authentication auth) {
         return renderRemisesPage(model, auth, "Direction Exploitation", "/menu/direction-exploitation", page,
-                filterDate, filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut);
+                size, filterDate, filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut);
     }
 
     @GetMapping("/menu/facturation/ies")
@@ -231,6 +234,7 @@ public class MenuController {
 
     @GetMapping("/menu/facturation/gestion-remises")
     public String facturationRemises(@RequestParam(defaultValue = "0") int page,
+                                     @RequestParam(defaultValue = "25") int size,
                                      @RequestParam(required = false) String filterDate,
                                      @RequestParam(required = false) String filterNom,
                                      @RequestParam(required = false) String filterPrenom,
@@ -240,11 +244,12 @@ public class MenuController {
                                      @RequestParam(required = false) String filterStatut,
                                      Model model, Authentication auth) {
         return renderRemisesPage(model, auth, "Facturation", "/menu/facturation", page,
-                filterDate, filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut);
+                size, filterDate, filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut);
     }
 
     @GetMapping("/menu/facturation/gestion-validations")
     public String facturationValidations(@RequestParam(defaultValue = "0") int page,
+                                         @RequestParam(defaultValue = "25") int size,
                                          @RequestParam(required = false) String filterDate,
                                          @RequestParam(required = false) String filterNom,
                                          @RequestParam(required = false) String filterPrenom,
@@ -258,12 +263,10 @@ public class MenuController {
                 .map(GrantedAuthority::getAuthority).collect(Collectors.toSet());
         boolean admin = roles.contains("ROLE_ADMIN");
         Page<RattachementBl> demandesPage = fetchBls("FACTURATION", filterDate,
-                filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut, 0);
+                filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut, page, size);
         model.addAttribute("loggedUser", loggedUser);
         model.addAttribute("demandes", demandesPage.getContent());
-        model.addAttribute("currentPage", 0);
-        model.addAttribute("totalPages", 0);
-        model.addAttribute("totalItems", demandesPage.getTotalElements());
+        PaginationUtils.addPageAttributes(model, demandesPage);
         model.addAttribute("filterDate",   filterDate   != null ? filterDate   : "");
         model.addAttribute("filterNom",    filterNom    != null ? filterNom    : "");
         model.addAttribute("filterPrenom", filterPrenom != null ? filterPrenom : "");
@@ -319,6 +322,8 @@ public class MenuController {
     @GetMapping("/menu/facturation/gestion-rapports")
     public String facturationReportsWizard(
             @RequestParam(defaultValue = "suivi-vides") String tab,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "25") int size,
             @RequestParam(required = false) String shipowner,
             @RequestParam(required = false) String itemType,
             @RequestParam(required = false) String equipmentNumber,
@@ -346,8 +351,11 @@ public class MenuController {
         model.addAttribute("activeTab", normalizeReportsTab(tab));
         model.addAttribute("isAdmin", isAdmin);
         model.addAttribute("sidebarMenuUrl", isAdmin ? "/menu" : "/menu/facturation");
-        model.addAttribute("suiviVidesRows",
-                rapportSuiviVidesRepository.findFiltered(s, it, en, et, ec, ef, df, dt));
+        var suiviVidesPage = rapportSuiviVidesRepository.findFiltered(
+                s, it, en, et, ec, ef, df, dt,
+                PaginationUtils.pageable(page, size, Sort.by(Sort.Direction.DESC, "createdAt")));
+        model.addAttribute("suiviVidesRows", suiviVidesPage.getContent());
+        PaginationUtils.addPageAttributes(model, suiviVidesPage);
         model.addAttribute("shipowners",         rapportSuiviVidesRepository.findDistinctShipowners());
         model.addAttribute("itemTypes",          rapportSuiviVidesRepository.findDistinctItemTypes());
         model.addAttribute("equipmentTypeSizes", rapportSuiviVidesRepository.findDistinctEquipmentTypeSizes());
@@ -378,7 +386,7 @@ public class MenuController {
         List<RapportSuiviVides> rows = rapportSuiviVidesRepository.findFiltered(
                 blankToNull(shipowner), blankToNull(itemType), blankToNull(equipmentNumber),
                 blankToNull(equipmentTypeSize), blankToNull(eventCode), blankToNull(eventFamily),
-                blankToNull(dateFrom), blankToNull(dateTo));
+                blankToNull(dateFrom), blankToNull(dateTo), org.springframework.data.domain.Pageable.unpaged()).getContent();
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         response.setHeader("Content-Disposition", "attachment; filename=\"rapport-suivi-vides.xlsx\"");
         try (XSSFWorkbook wb = new XSSFWorkbook()) {
@@ -416,13 +424,12 @@ public class MenuController {
         }
     }
 
-    private static final int MAX_TABLE_ROWS  = 100000;
-
     @GetMapping("/menu/facturation/unify")
     public String facturationUnifyWizard(@RequestParam(defaultValue = "formulaire-creation") String tab,
                                          @RequestParam(defaultValue = "1") int step,
                                          @RequestParam(required = false) String search,
                                          @RequestParam(defaultValue = "0") int page,
+                                         @RequestParam(defaultValue = "25") int size,
                                          Model model,
                                          Authentication auth) {
         User loggedUser = userRepository.findByEmail(auth.getName()).orElseThrow();
@@ -431,7 +438,7 @@ public class MenuController {
 
         Page<TiersUnify> tiersPage = tiersUnifyRepository.search(
                 search,
-                PageRequest.of(0, MAX_TABLE_ROWS, Sort.by(Sort.Direction.DESC, "createdAt"))
+                PaginationUtils.pageable(page, size, Sort.by(Sort.Direction.DESC, "createdAt"))
         );
 
         model.addAttribute("loggedUser", loggedUser);
@@ -440,9 +447,7 @@ public class MenuController {
         model.addAttribute("isAdmin", isAdmin);
         model.addAttribute("tiers", tiersPage.getContent());
         model.addAttribute("search", search != null ? search : "");
-        model.addAttribute("currentPage", 0);
-        model.addAttribute("totalPages", 0);
-        model.addAttribute("totalItems", tiersPage.getTotalElements());
+        PaginationUtils.addPageAttributes(model, tiersPage);
         model.addAttribute("sidebarMenuUrl", isAdmin ? "/menu" : "/menu/facturation");
         return "facturation/unify";
     }
@@ -843,6 +848,7 @@ public class MenuController {
 
     @GetMapping("/menu/dt/satisfaction")
     public String satisfactionDashboard(@RequestParam(defaultValue = "0") int page,
+                                        @RequestParam(defaultValue = "25") int size,
                                         Model model, Authentication auth) {
         User loggedUser = userRepository.findByEmail(auth.getName()).orElseThrow();
         List<SatisfactionReponse> reponses = satisfactionReponseRepository
@@ -851,14 +857,12 @@ public class MenuController {
 
         org.springframework.data.domain.Page<SatisfactionReponse> reponsesPage =
                 satisfactionReponseRepository.findAll(
-                        PageRequest.of(0, MAX_TABLE_ROWS, Sort.by(Sort.Direction.DESC, "createdAt")));
+                        PaginationUtils.pageable(page, size, Sort.by(Sort.Direction.DESC, "createdAt")));
 
         model.addAttribute("loggedUser", loggedUser);
         model.addAttribute("currentDate", formatDate());
         model.addAttribute("reponses", reponsesPage.getContent());
-        model.addAttribute("currentPage", 0);
-        model.addAttribute("totalPages", 0);
-        model.addAttribute("totalItems", reponsesPage.getTotalElements());
+        PaginationUtils.addPageAttributes(model, reponsesPage);
         model.addAttribute("total", total);
 
         // ── Général ────────────────────────────────────────────────────────
@@ -1120,7 +1124,7 @@ public class MenuController {
     private Page<RattachementBl> fetchBls(String type, String filterDate,
                                           String nom, String prenom, String email,
                                           String bl, String maison, String statut,
-                                          int safePage) {
+                                          int page, int size) {
         java.time.LocalDateTime dateStart = null;
         java.time.LocalDateTime dateEnd   = null;
         if (filterDate != null && !filterDate.isBlank()) {
@@ -1140,7 +1144,7 @@ public class MenuController {
 
         return rattachementBlRepository.findByTypeWithFilters(
                 type, dateStart, dateEnd, sNom, sPrenom, sEmail, sBl, sMaison, sStatut,
-                PageRequest.of(0, MAX_TABLE_ROWS));
+                PaginationUtils.pageable(page, size));
     }
 
     private boolean isDirection(Set<String> roles) {
@@ -1155,6 +1159,7 @@ public class MenuController {
                                      String sectionLabel,
                                      String parentMenuPath,
                                      int page,
+                                     int size,
                                      String filterDate,
                                      String filterNom,
                                      String filterPrenom,
@@ -1168,12 +1173,10 @@ public class MenuController {
         boolean admin = roles.contains("ROLE_ADMIN");
         String currentPagePath = parentMenuPath + "/gestion-remises";
         Page<RattachementBl> demandesPage = fetchBls("REMISE", filterDate,
-                filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut, 0);
+                filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut, page, size);
         model.addAttribute("loggedUser", loggedUser);
         model.addAttribute("demandes", demandesPage.getContent());
-        model.addAttribute("currentPage", 0);
-        model.addAttribute("totalPages", 0);
-        model.addAttribute("totalItems", demandesPage.getTotalElements());
+        PaginationUtils.addPageAttributes(model, demandesPage);
         model.addAttribute("filterDate",   filterDate   != null ? filterDate   : "");
         model.addAttribute("filterNom",    filterNom    != null ? filterNom    : "");
         model.addAttribute("filterPrenom", filterPrenom != null ? filterPrenom : "");

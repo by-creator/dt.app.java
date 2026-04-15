@@ -418,10 +418,18 @@ function initColumnFilters(table) {
   var card = table.closest('.page-section-card');
   var searchInput = card ? card.querySelector('.table-search-input') : null;
   var searchForm = searchInput ? searchInput.closest('form') : null;
+  var hasServerPagination = !!((card || table.parentElement || document).querySelector('.pagination-bar'));
   var legacyManagedInputs = searchForm ? searchForm.querySelectorAll('.table-search-input').length : 0;
   var hasInlineLegacyFiltering = searchForm && Array.from(searchForm.querySelectorAll('.table-search-input')).some(function (control) {
     return control.hasAttribute('oninput') || control.hasAttribute('onchange');
   });
+
+  // When pagination is handled on the server, client-side filtering would only
+  // affect the currently visible page. In that case we keep filtering entirely
+  // server-side and skip all browser-side table filtering helpers.
+  if (hasServerPagination) {
+    return;
+  }
 
   // Preserve pages that already define a full table-filter toolbar so they all
   // keep the same shared appearance as the validation screen.

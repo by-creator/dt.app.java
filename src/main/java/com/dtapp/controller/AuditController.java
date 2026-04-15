@@ -2,8 +2,8 @@ package com.dtapp.controller;
 
 import com.dtapp.repository.AuditLogRepository;
 import com.dtapp.repository.UserRepository;
+import com.dtapp.util.PaginationUtils;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -15,8 +15,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 @Controller
 @RequestMapping("/menu/audit")
 public class AuditController {
-
-    private static final int MAX_TABLE_ROWS = 100000;
 
     private final AuditLogRepository auditLogRepository;
     private final UserRepository userRepository;
@@ -32,9 +30,10 @@ public class AuditController {
                         @RequestParam(required = false) String filterDate,
                         @RequestParam(required = false) String filterMethode,
                         @RequestParam(defaultValue = "0") int page,
+                        @RequestParam(defaultValue = "25") int size,
                         Model model,
                         Authentication auth) {
-        var pageable = PageRequest.of(0, MAX_TABLE_ROWS, Sort.by(Sort.Direction.DESC, "createdAt"));
+        var pageable = PaginationUtils.pageable(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
         Page<com.dtapp.entity.AuditLog> auditPage = auditLogRepository.searchWithFilters(
                 search, filterMethode, filterDate, pageable);
@@ -44,10 +43,7 @@ public class AuditController {
         model.addAttribute("search",         search         != null ? search         : "");
         model.addAttribute("filterDate",     filterDate     != null ? filterDate     : "");
         model.addAttribute("filterMethode",  filterMethode  != null ? filterMethode  : "");
-        model.addAttribute("currentPage",    0);
-        model.addAttribute("totalPages",     0);
-        model.addAttribute("totalItems",     auditPage.getTotalElements());
-        model.addAttribute("pageSize",       auditPage.getContent().size());
+        PaginationUtils.addPageAttributes(model, auditPage);
         return "audit/index";
     }
 }

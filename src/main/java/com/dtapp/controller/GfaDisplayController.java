@@ -13,6 +13,7 @@ import com.dtapp.repository.GfaTicketRepository;
 import com.dtapp.repository.GfaWifiSettingsRepository;
 import com.dtapp.repository.UserRepository;
 import com.dtapp.service.PusherService;
+import com.dtapp.util.PaginationUtils;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -161,6 +162,15 @@ public class GfaDisplayController {
 
     @GetMapping("/menu/facturation/gfa/admin")
     public String admin(@RequestParam(defaultValue = "vue-globale") String tab,
+                        @RequestParam(defaultValue = "0") int page,
+                        @RequestParam(defaultValue = "25") int size,
+                        @RequestParam(required = false) String serviceSearch,
+                        @RequestParam(required = false) String guichetSearch,
+                        @RequestParam(required = false) String agentSearch,
+                        @RequestParam(required = false) String ticketService,
+                        @RequestParam(required = false) String ticketGuichet,
+                        @RequestParam(required = false) String ticketAgent,
+                        @RequestParam(required = false) String ticketStatut,
                         @RequestParam(required = false) Long editServiceId,
                         @RequestParam(required = false) Long editGuichetId,
                         @RequestParam(required = false) Long editAgentId,
@@ -178,6 +188,9 @@ public class GfaDisplayController {
         model.addAttribute("isAdmin", isAdmin);
         model.addAttribute("loggedUser", loggedUser);
         model.addAttribute("activeTab", normalizeTab(tab));
+        model.addAttribute("serviceOptions", services);
+        model.addAttribute("guichetOptions", guichets);
+        model.addAttribute("agentOptions", agents);
         model.addAttribute("services", services);
         model.addAttribute("guichets", guichets);
         model.addAttribute("agents", agents);
@@ -193,7 +206,83 @@ public class GfaDisplayController {
         model.addAttribute("closedTodayCount", gfaTicketRepository.countClosedToday());
         model.addAttribute("activityRows", buildActivityRows(guichets, agents));
         model.addAttribute("serviceStats", buildServiceStats(services));
+
+        if ("services".equals(model.getAttribute("activeTab"))) {
+            var servicesPage = PaginationUtils.fromList(filterItems(services, serviceSearch,
+                    GfaService::getNom, GfaService::getCode),
+                    page, size);
+            model.addAttribute("services", servicesPage.getContent());
+            model.addAttribute("serviceSearch", defaultString(serviceSearch));
+            PaginationUtils.addPageAttributes(model, servicesPage);
+        } else if ("guichets".equals(model.getAttribute("activeTab"))) {
+            var guichetsPage = PaginationUtils.fromList(filterItems(guichets, guichetSearch,
+                    GfaGuichet::getNumero, GfaGuichet::getInfos,
+                    guichet -> guichet.getService() != null ? guichet.getService().getNom() : null),
+                    page, size);
+            model.addAttribute("guichets", guichetsPage.getContent());
+            model.addAttribute("guichetSearch", defaultString(guichetSearch));
+            PaginationUtils.addPageAttributes(model, guichetsPage);
+        } else if ("agents".equals(model.getAttribute("activeTab"))) {
+            var agentsPage = PaginationUtils.fromList(filterItems(agents, agentSearch,
+                    GfaAgent::getNom, GfaAgent::getPrenom,
+                    agent -> agent.getService() != null ? agent.getService().getNom() : null,
+                    agent -> agent.getGuichet() != null ? agent.getGuichet().getNumero() : null),
+                    page, size);
+            model.addAttribute("agents", agentsPage.getContent());
+            model.addAttribute("agentSearch", defaultString(agentSearch));
+            PaginationUtils.addPageAttributes(model, agentsPage);
+        } else if ("tickets".equals(model.getAttribute("activeTab"))) {
+            var ticketsPage = PaginationUtils.fromList(tickets.stream()
+                    .filter(ticket -> matches(ticketService, ticket.getService() != null ? ticket.getService().getNom() : null))
+                    .filter(ticket -> matches(ticketGuichet, ticket.getGuichet() != null ? ticket.getGuichet().getNumero() : null))
+                    .filter(ticket -> matches(ticketAgent, ticket.getAgent() != null ? (((ticket.getAgent().getPrenom() != null ? ticket.getAgent().getPrenom() : "") + " " + ticket.getAgent().getNom()).trim()) : null))
+                    .filter(ticket -> matches(ticketStatut, ticket.getStatut()))
+                    .toList(), page, size);
+            model.addAttribute("tickets", ticketsPage.getContent());
+            model.addAttribute("ticketService", defaultString(ticketService));
+            model.addAttribute("ticketGuichet", defaultString(ticketGuichet));
+            model.addAttribute("ticketAgent", defaultString(ticketAgent));
+            model.addAttribute("ticketStatut", defaultString(ticketStatut));
+            PaginationUtils.addPageAttributes(model, ticketsPage);
+        }
         return "facturation/gfa-admin";
+    }
+
+    @SafeVarargs
+    private final <T> List<T> filterItems(List<T> source, String search, Function<T, String>... extractors) {
+        String normalizedSearch = normalizeSearch(search);
+        if (normalizedSearch.isBlank()) {
+            return source;
+        }
+        return source.stream()
+                .filter(item -> java.util.Arrays.stream(extractors)
+                        .map(extractor -> extractor.apply(item))
+                        .filter(Objects::nonNull)
+                        .map(this::normalizeSearch)
+                        .anyMatch(value -> value.contains(normalizedSearch)))
+                .toList();
+    }
+
+    private boolean matches(String expected, String actual) {
+        String normalizedExpected = normalizeSearch(expected);
+        if (normalizedExpected.isBlank()) {
+            return true;
+        }
+        return normalizeSearch(actual).contains(normalizedExpected);
+    }
+
+    private String defaultString(String value) {
+        return value == null ? "" : value;
+    }
+
+    private String normalizeSearch(String value) {
+        if (value == null) {
+            return "";
+        }
+        return java.text.Normalizer.normalize(value, java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .toLowerCase(Locale.ROOT)
+                .trim();
     }
 
     @GetMapping("/api/gfa/guichets/{id}/state")

@@ -5,10 +5,10 @@ import com.dtapp.entity.User;
 import com.dtapp.repository.RattachementBlRepository;
 import com.dtapp.repository.UserRepository;
 import com.dtapp.service.EmailService;
+import com.dtapp.util.PaginationUtils;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -27,8 +27,6 @@ import java.util.stream.Collectors;
 
 @Controller
 public class FacturationController {
-
-    private static final int MAX_TABLE_ROWS = 100000;
 
     private final RattachementBlRepository rattachementBlRepository;
     private final UserRepository userRepository;
@@ -61,6 +59,7 @@ public class FacturationController {
 
     @GetMapping("/facturation/gestion-validations")
     public String gestionValidations(@RequestParam(defaultValue = "0") int page,
+                                     @RequestParam(defaultValue = "25") int size,
                                      @RequestParam(required = false) String filterDate,
                                      @RequestParam(required = false) String filterNom,
                                      @RequestParam(required = false) String filterPrenom,
@@ -76,13 +75,11 @@ public class FacturationController {
                 .collect(Collectors.toSet());
         boolean admin = roles.contains("ROLE_ADMIN");
         Page<RattachementBl> demandesPage = fetchBls("FACTURATION", filterDate,
-                filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut, page);
+                filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut, page, size);
 
         model.addAttribute("loggedUser", loggedUser);
         model.addAttribute("demandes", demandesPage.getContent());
-        model.addAttribute("currentPage", 0);
-        model.addAttribute("totalPages", 0);
-        model.addAttribute("totalItems", demandesPage.getTotalElements());
+        PaginationUtils.addPageAttributes(model, demandesPage);
         model.addAttribute("filterDate", filterDate != null ? filterDate : "");
         model.addAttribute("filterNom", filterNom != null ? filterNom : "");
         model.addAttribute("filterPrenom", filterPrenom != null ? filterPrenom : "");
@@ -142,6 +139,7 @@ public class FacturationController {
 
     @GetMapping("/facturation/gestion-remises")
     public String gestionRemises(@RequestParam(defaultValue = "0") int page,
+                                 @RequestParam(defaultValue = "25") int size,
                                  @RequestParam(required = false) String filterDate,
                                  @RequestParam(required = false) String filterNom,
                                  @RequestParam(required = false) String filterPrenom,
@@ -152,7 +150,7 @@ public class FacturationController {
                                  Model model,
                                  Authentication auth) {
         return renderRemisesPage(model, auth, "Facturation", "/menu/facturation", "/facturation/gestion-remises",
-                "/facturation/gestion-remises", page, filterDate, filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut);
+                "/facturation/gestion-remises", page, size, filterDate, filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut);
     }
 
     @PostMapping("/facturation/gestion-remises/{id}/valider")
@@ -232,7 +230,8 @@ public class FacturationController {
                                           String bl,
                                           String maison,
                                           String statut,
-                                          int page) {
+                                          int page,
+                                          int size) {
         java.time.LocalDateTime dateStart = null;
         java.time.LocalDateTime dateEnd = null;
         if (filterDate != null && !filterDate.isBlank()) {
@@ -253,7 +252,7 @@ public class FacturationController {
 
         return rattachementBlRepository.findByTypeWithFilters(
                 type, dateStart, dateEnd, sNom, sPrenom, sEmail, sBl, sMaison, sStatut,
-                PageRequest.of(0, MAX_TABLE_ROWS));
+                PaginationUtils.pageable(page, size));
     }
 
     private String renderRemisesPage(Model model,
@@ -263,6 +262,7 @@ public class FacturationController {
                                      String currentPagePath,
                                      String actionBasePath,
                                      int page,
+                                     int size,
                                      String filterDate,
                                      String filterNom,
                                      String filterPrenom,
@@ -276,13 +276,11 @@ public class FacturationController {
                 .collect(Collectors.toSet());
         boolean admin = roles.contains("ROLE_ADMIN");
         Page<RattachementBl> demandesPage = fetchBls("REMISE", filterDate,
-                filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut, page);
+                filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut, page, size);
 
         model.addAttribute("loggedUser", loggedUser);
         model.addAttribute("demandes", demandesPage.getContent());
-        model.addAttribute("currentPage", 0);
-        model.addAttribute("totalPages", 0);
-        model.addAttribute("totalItems", demandesPage.getTotalElements());
+        PaginationUtils.addPageAttributes(model, demandesPage);
         model.addAttribute("filterDate", filterDate != null ? filterDate : "");
         model.addAttribute("filterNom", filterNom != null ? filterNom : "");
         model.addAttribute("filterPrenom", filterPrenom != null ? filterPrenom : "");

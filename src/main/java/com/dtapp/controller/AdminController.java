@@ -9,11 +9,11 @@ import com.dtapp.repository.AuthorityDefinitionRepository;
 import com.dtapp.repository.AuthorityRepository;
 import com.dtapp.repository.CompagnieRepository;
 import com.dtapp.repository.UserRepository;
+import com.dtapp.util.PaginationUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -42,8 +42,6 @@ import java.util.stream.Collectors;
 @RequestMapping("/admin")
 @Slf4j
 public class AdminController {
-
-    private static final int MAX_TABLE_ROWS = 100000;
 
     private final UserRepository userRepository;
     private final CompagnieRepository compagnieRepository;
@@ -134,21 +132,35 @@ public class AdminController {
 
     @GetMapping
     public String index(@RequestParam(defaultValue = "users") String tab,
+                        @RequestParam(required = false) String userSearch,
+                        @RequestParam(required = false) String compagnieSearch,
+                        @RequestParam(required = false) String authorityDefinitionSearch,
+                        @RequestParam(required = false) String assignedAuthoritySearch,
+                        @RequestParam(required = false) String routeSearch,
+                        @RequestParam(required = false) String commandeSearch,
+                        @RequestParam(defaultValue = "0") int userPage,
+                        @RequestParam(defaultValue = "0") int compagniePage,
+                        @RequestParam(defaultValue = "0") int authorityDefinitionPage,
+                        @RequestParam(defaultValue = "0") int assignedAuthorityPage,
+                        @RequestParam(defaultValue = "0") int routePage,
+                        @RequestParam(defaultValue = "0") int commandePage,
                         @RequestParam(required = false) String auditSearch,
                         @RequestParam(defaultValue = "0") int auditPage,
+                        @RequestParam(defaultValue = "25") int auditSize,
                         Model model, Authentication auth) {
         model.addAttribute("loggedUser", userRepository.findByEmail(auth.getName()).orElseThrow());
-        model.addAttribute("users",      userRepository.findAllByOrderByCreatedAtDesc());
-        model.addAttribute("compagnies", compagnieRepository.findAll(Sort.by("name")));
-        model.addAttribute("authorities", authorityRepository.findAllWithUser());
-        model.addAttribute("authorityDefinitions", authorityDefinitionRepository.findAll(Sort.by("name")));
         model.addAttribute("tab", tab);
-        model.addAttribute("routes", buildRoutes());
+
+        List<User> allUsers = userRepository.findAllByOrderByCreatedAtDesc();
+        List<Compagnie> allCompagnies = compagnieRepository.findAll(Sort.by("name"));
+        List<Authority> allAuthorities = authorityRepository.findAllWithUser();
+        List<AuthorityDefinition> allAuthorityDefinitions = authorityDefinitionRepository.findAll(Sort.by("name"));
+        List<RouteInfo> allRoutes = buildRoutes();
 
         long intervalMin = rappelIntervalMs / 60000;
         String planification = "Toutes les " + intervalMin + " minute" + (intervalMin > 1 ? "s" : "")
                 + " (entre 8h00 et 17h00)";
-        model.addAttribute("commandes", List.of(
+        List<CommandeInfo> allCommandes = List.of(
             new CommandeInfo(
                 "Rappel Validations",
                 "Envoie des e-mails de rappel pour les demandes de validation toujours en attente",
@@ -176,19 +188,99 @@ public class AdminController {
                 "—",
                 "Table tickets (DELETE ALL)",
                 "Actif")
-        ));
+        );
+
+        var usersPageData = PaginationUtils.fromList(filterList(allUsers, userSearch,
+                user -> user.getUsername(),
+                user -> user.getEmail(),
+                user -> user.getTelephone(),
+                user -> user.getCompagnie() != null ? user.getCompagnie().getName() : null,
+                user -> user.getAuthorities().stream().map(Authority::getAuthority).collect(Collectors.joining(" "))),
+                userPage, PaginationUtils.DEFAULT_PAGE_SIZE);
+        model.addAttribute("users", usersPageData.getContent());
+        model.addAttribute("userOptions", allUsers);
+        model.addAttribute("userSearch", defaultString(userSearch));
+        PaginationUtils.addPageAttributes(model, usersPageData, "users");
+
+        var compagniesPageData = PaginationUtils.fromList(filterList(allCompagnies, compagnieSearch,
+                Compagnie::getName),
+                compagniePage, PaginationUtils.DEFAULT_PAGE_SIZE);
+        model.addAttribute("compagnies", compagniesPageData.getContent());
+        model.addAttribute("compagnieOptions", allCompagnies);
+        model.addAttribute("compagnieSearch", defaultString(compagnieSearch));
+        PaginationUtils.addPageAttributes(model, compagniesPageData, "compagnies");
+
+        var authorityDefinitionsPageData = PaginationUtils.fromList(filterList(allAuthorityDefinitions, authorityDefinitionSearch,
+                AuthorityDefinition::getName),
+                authorityDefinitionPage, PaginationUtils.DEFAULT_PAGE_SIZE);
+        model.addAttribute("authorityDefinitions", authorityDefinitionsPageData.getContent());
+        model.addAttribute("authorityDefinitionOptions", allAuthorityDefinitions);
+        model.addAttribute("authorityDefinitionSearch", defaultString(authorityDefinitionSearch));
+        PaginationUtils.addPageAttributes(model, authorityDefinitionsPageData, "authorityDefinitions");
+
+        var authoritiesPageData = PaginationUtils.fromList(filterList(allAuthorities, assignedAuthoritySearch,
+                authority -> authority.getUser() != null ? authority.getUser().getUsername() : null,
+                authority -> authority.getUser() != null ? authority.getUser().getEmail() : null,
+                Authority::getAuthority),
+                assignedAuthorityPage, PaginationUtils.DEFAULT_PAGE_SIZE);
+        model.addAttribute("authorities", authoritiesPageData.getContent());
+        model.addAttribute("assignedAuthoritySearch", defaultString(assignedAuthoritySearch));
+        PaginationUtils.addPageAttributes(model, authoritiesPageData, "assignedAuthorities");
+
+        var routesPageData = PaginationUtils.fromList(filterList(allRoutes, routeSearch,
+                RouteInfo::name, RouteInfo::description, RouteInfo::url, RouteInfo::controllerName, RouteInfo::methodName, RouteInfo::httpMethod),
+                routePage, PaginationUtils.DEFAULT_PAGE_SIZE);
+        model.addAttribute("routes", routesPageData.getContent());
+        model.addAttribute("routeSearch", defaultString(routeSearch));
+        PaginationUtils.addPageAttributes(model, routesPageData, "routes");
+
+        var commandesPageData = PaginationUtils.fromList(filterList(allCommandes, commandeSearch,
+                CommandeInfo::nom, CommandeInfo::description, CommandeInfo::type, CommandeInfo::planification,
+                CommandeInfo::jourExecution, CommandeInfo::destinataire, CommandeInfo::typesSurveilles, CommandeInfo::statut),
+                commandePage, PaginationUtils.DEFAULT_PAGE_SIZE);
+        model.addAttribute("commandes", commandesPageData.getContent());
+        model.addAttribute("commandeSearch", defaultString(commandeSearch));
+        PaginationUtils.addPageAttributes(model, commandesPageData, "commandes");
 
         Page<com.dtapp.entity.AuditLog> auditPageData = auditLogRepository.search(
                 auditSearch,
-                PageRequest.of(0, MAX_TABLE_ROWS, Sort.by(Sort.Direction.DESC, "createdAt"))
+                PaginationUtils.pageable(auditPage, auditSize, Sort.by(Sort.Direction.DESC, "createdAt"))
         );
         model.addAttribute("auditLogs",        auditPageData.getContent());
         model.addAttribute("auditSearch",      auditSearch != null ? auditSearch : "");
-        model.addAttribute("auditCurrentPage", 0);
-        model.addAttribute("auditTotalPages",  0);
         model.addAttribute("auditTotalItems",  auditPageData.getTotalElements());
+        PaginationUtils.addPageAttributes(model, auditPageData, "audit");
 
         return "admin/index";
+    }
+
+    @SafeVarargs
+    private <T> List<T> filterList(List<T> source, String search, java.util.function.Function<T, String>... extractors) {
+        String normalizedSearch = normalize(search);
+        if (normalizedSearch.isBlank()) {
+            return source;
+        }
+        return source.stream()
+                .filter(item -> java.util.Arrays.stream(extractors)
+                        .map(extractor -> extractor.apply(item))
+                        .filter(java.util.Objects::nonNull)
+                        .map(this::normalize)
+                        .anyMatch(value -> value.contains(normalizedSearch)))
+                .toList();
+    }
+
+    private String defaultString(String value) {
+        return value == null ? "" : value;
+    }
+
+    private String normalize(String value) {
+        if (value == null) {
+            return "";
+        }
+        return java.text.Normalizer.normalize(value, java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .toLowerCase()
+                .trim();
     }
 
     // ===== CONVERSION XLSX / CSV =====

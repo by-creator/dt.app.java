@@ -88,9 +88,9 @@
         <!-- Toolbar -->
         <div class="table-toolbar">
           <span class="toolbar-title">Suivi vides
-            <span th:if="${!#lists.isEmpty(suiviVidesRows)}"
+            <span th:if="${totalItems > 0}"
                   style="font-size:12px; font-weight:400; color:#94a3b8; margin-left:8px;"
-                  th:text="'(' + ${#lists.size(suiviVidesRows)} + ' ligne(s))'"></span>
+                  th:text="'(' + ${totalItems} + ' ligne(s))'"></span>
           </span>
           <a th:href="@{/menu/facturation/gestion-rapports/suivi-vides/export(
                         shipowner=${fShipowner},
@@ -170,25 +170,13 @@
                 <span class="table-filter-label">Event Date (au)</span>
                 <input type="date" name="dateTo" class="table-filter-control" th:value="${fDateTo}">
               </label>
+              <div class="table-filter-item" style="justify-content:flex-end;">
+                <span class="table-filter-label" style="visibility:hidden;">Action</span>
+                <button type="submit" class="btn-actualiser" style="height:36px;">Filtrer</button>
+              </div>
             </div>
           </div>
         </form>
-        <script>
-          (function () {
-            var form = document.getElementById('suiviVidesFilterForm');
-            if (!form) return;
-            var debounceTimer;
-            form.querySelectorAll('select, input[type="date"]').forEach(function (el) {
-              el.addEventListener('change', function () { form.submit(); });
-            });
-            form.querySelectorAll('input[type="search"]').forEach(function (el) {
-              el.addEventListener('input', function () {
-                clearTimeout(debounceTimer);
-                debounceTimer = setTimeout(function () { form.submit(); }, 400);
-              });
-            });
-          })();
-        </script>
 
         <!-- Tableau -->
         <div class="table-wrapper">
@@ -226,6 +214,7 @@
             </tbody>
           </table>
         </div>
+        <th:block th:replace="~{fragments/pagination :: server('/menu/facturation/gestion-rapports', 'page')}"></th:block>
       </div>
 
       <div class="page-section-card" th:if="${activeTab == 'suivi-stationnement'}" style="padding:0; overflow:hidden;">
