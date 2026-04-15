@@ -83,32 +83,148 @@
 
       <span th:if="${success}" id="_flashSuccess" th:text="${success}" style="display:none"></span>
 
-      <div class="page-section-card" th:if="${activeTab == 'suivi-vides'}" style="padding:0; overflow:hidden;">
+      <div th:if="${activeTab == 'suivi-vides'}" class="page-section-card" style="padding:0; overflow:hidden;">
+
+        <!-- Toolbar -->
         <div class="table-toolbar">
-          <span class="toolbar-title">Suivi vides</span>
+          <span class="toolbar-title">Suivi vides
+            <span th:if="${!#lists.isEmpty(suiviVidesRows)}"
+                  style="font-size:12px; font-weight:400; color:#94a3b8; margin-left:8px;"
+                  th:text="'(' + ${#lists.size(suiviVidesRows)} + ' ligne(s))'"></span>
+          </span>
+          <a th:href="@{/menu/facturation/gestion-rapports/suivi-vides/export(
+                        shipowner=${fShipowner},
+                        itemType=${fItemType},
+                        equipmentNumber=${fEquipmentNumber},
+                        equipmentTypeSize=${fEquipmentTypeSize},
+                        eventCode=${fEventCode},
+                        eventFamily=${fEventFamily},
+                        dateFrom=${fDateFrom},
+                        dateTo=${fDateTo})}"
+             class="btn-actualiser"
+             style="text-decoration:none; font-size:13px; padding:6px 14px;">
+            Exporter xlsx
+          </a>
         </div>
-                <div class="table-wrapper">
-<table class="data-table">
-          <thead>
-          <tr>
-            <th>Terminal</th>
-            <th>Equipment Number</th>
-            <th>Type / Size</th>
-            <th>Event Code</th>
-            <th>Event Name</th>
-            <th>Event Family</th>
-            <th>Event Date</th>
-            <th>Booking Sec No</th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr>
-            <td colspan="8" style="text-align:center; color:#94a3b8; padding:32px;">
-              Aucune donnee disponible pour le suivi vides.
-            </td>
-          </tr>
-          </tbody>
-        </table>
+
+        <!-- Filtres inline (même mise en forme que l'auto-généré par theme.js) -->
+        <form id="suiviVidesFilterForm" method="get" th:action="@{/menu/facturation/gestion-rapports}">
+          <input type="hidden" name="tab" value="suivi-vides">
+          <div class="table-filter-panel">
+            <div class="table-filter-panel-header">
+              <span>Filtres par colonnes</span>
+              <a th:href="@{/menu/facturation/gestion-rapports(tab='suivi-vides')}"
+                 class="table-filter-reset" style="text-decoration:none;">Reinitialiser</a>
+            </div>
+            <div class="table-filter-grid">
+              <label class="table-filter-item">
+                <span class="table-filter-label">Shipowner</span>
+                <select name="shipowner" class="table-filter-control">
+                  <option value="">Tous</option>
+                  <option th:each="o : ${shipowners}" th:value="${o}" th:text="${o}"
+                          th:selected="${o == fShipowner}"></option>
+                </select>
+              </label>
+              <label class="table-filter-item">
+                <span class="table-filter-label">Item Type</span>
+                <select name="itemType" class="table-filter-control">
+                  <option value="">Tous</option>
+                  <option th:each="o : ${itemTypes}" th:value="${o}" th:text="${o}"
+                          th:selected="${o == fItemType}"></option>
+                </select>
+              </label>
+              <label class="table-filter-item">
+                <span class="table-filter-label">Equipment Number</span>
+                <input type="search" name="equipmentNumber" class="table-filter-control"
+                       placeholder="Saisir..." th:value="${fEquipmentNumber}">
+              </label>
+              <label class="table-filter-item">
+                <span class="table-filter-label">Equipment Type/Size</span>
+                <select name="equipmentTypeSize" class="table-filter-control">
+                  <option value="">Tous</option>
+                  <option th:each="o : ${equipmentTypeSizes}" th:value="${o}" th:text="${o}"
+                          th:selected="${o == fEquipmentTypeSize}"></option>
+                </select>
+              </label>
+              <label class="table-filter-item">
+                <span class="table-filter-label">Event Code</span>
+                <select name="eventCode" class="table-filter-control">
+                  <option value="">Tous</option>
+                  <option th:each="o : ${eventCodes}" th:value="${o}" th:text="${o}"
+                          th:selected="${o == fEventCode}"></option>
+                </select>
+              </label>
+              <label class="table-filter-item">
+                <span class="table-filter-label">Event Family</span>
+                <select name="eventFamily" class="table-filter-control">
+                  <option value="">Tous</option>
+                  <option th:each="o : ${eventFamilies}" th:value="${o}" th:text="${o}"
+                          th:selected="${o == fEventFamily}"></option>
+                </select>
+              </label>
+              <label class="table-filter-item">
+                <span class="table-filter-label">Event Date (du)</span>
+                <input type="date" name="dateFrom" class="table-filter-control" th:value="${fDateFrom}">
+              </label>
+              <label class="table-filter-item">
+                <span class="table-filter-label">Event Date (au)</span>
+                <input type="date" name="dateTo" class="table-filter-control" th:value="${fDateTo}">
+              </label>
+            </div>
+          </div>
+        </form>
+        <script>
+          (function () {
+            var form = document.getElementById('suiviVidesFilterForm');
+            if (!form) return;
+            var debounceTimer;
+            form.querySelectorAll('select, input[type="date"]').forEach(function (el) {
+              el.addEventListener('change', function () { form.submit(); });
+            });
+            form.querySelectorAll('input[type="search"]').forEach(function (el) {
+              el.addEventListener('input', function () {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(function () { form.submit(); }, 400);
+              });
+            });
+          })();
+        </script>
+
+        <!-- Tableau -->
+        <div class="table-wrapper">
+          <table class="data-table" data-disable-column-filters="true">
+            <thead>
+            <tr>
+              <th>Terminal</th>
+              <th>Shipowner</th>
+              <th>Item Type</th>
+              <th>Equipment Number</th>
+              <th>Equipment Type/Size</th>
+              <th>Event Code</th>
+              <th>Event Family</th>
+              <th>Event Date</th>
+              <th>Booking Sec No</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:if="${#lists.isEmpty(suiviVidesRows)}">
+              <td colspan="9" style="text-align:center; color:#94a3b8; padding:32px;">
+                Aucune donnee disponible pour le suivi vides.
+              </td>
+            </tr>
+            <tr th:each="row : ${suiviVidesRows}">
+              <td th:text="${row.terminal}"></td>
+              <td th:text="${row.shipowner}"></td>
+              <td th:text="${row.itemType}"></td>
+              <td th:text="${row.equipmentNumber}"></td>
+              <td th:text="${row.equipmentTypeSize}"></td>
+              <td th:text="${row.eventCode}"></td>
+              <td th:text="${row.eventFamily}"></td>
+              <td th:text="${row.eventDate}"></td>
+              <td th:text="${row.bookingSecNo}"></td>
+            </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 

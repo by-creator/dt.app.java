@@ -1,10 +1,12 @@
 package com.dtapp.controller;
 
+import com.dtapp.entity.RapportSuiviVides;
 import com.dtapp.entity.RattachementBl;
 import com.dtapp.entity.SatisfactionReponse;
 import com.dtapp.entity.TiersUnify;
 import com.dtapp.entity.User;
 import com.dtapp.repository.GfaGuichetRepository;
+import com.dtapp.repository.RapportSuiviVidesRepository;
 import com.dtapp.repository.RattachementBlRepository;
 import com.dtapp.repository.SatisfactionReponseRepository;
 import com.dtapp.repository.TiersUnifyRepository;
@@ -45,6 +47,7 @@ public class MenuController {
     private final SatisfactionReponseRepository satisfactionReponseRepository;
     private final GfaGuichetRepository gfaGuichetRepository;
     private final TiersUnifyRepository tiersUnifyRepository;
+    private final RapportSuiviVidesRepository rapportSuiviVidesRepository;
     private final EmailService emailService;
     private final BulkInsertService bulkInsertService;
 
@@ -53,6 +56,7 @@ public class MenuController {
                           SatisfactionReponseRepository satisfactionReponseRepository,
                           GfaGuichetRepository gfaGuichetRepository,
                           TiersUnifyRepository tiersUnifyRepository,
+                          RapportSuiviVidesRepository rapportSuiviVidesRepository,
                           EmailService emailService,
                           BulkInsertService bulkInsertService) {
         this.userRepository = userRepository;
@@ -60,6 +64,7 @@ public class MenuController {
         this.satisfactionReponseRepository = satisfactionReponseRepository;
         this.gfaGuichetRepository = gfaGuichetRepository;
         this.tiersUnifyRepository = tiersUnifyRepository;
+        this.rapportSuiviVidesRepository = rapportSuiviVidesRepository;
         this.emailService = emailService;
         this.bulkInsertService = bulkInsertService;
     }
@@ -312,17 +317,103 @@ public class MenuController {
     }
 
     @GetMapping("/menu/facturation/gestion-rapports")
-    public String facturationReportsWizard(@RequestParam(defaultValue = "suivi-vides") String tab,
-                                           Model model,
-                                           Authentication auth) {
+    public String facturationReportsWizard(
+            @RequestParam(defaultValue = "suivi-vides") String tab,
+            @RequestParam(required = false) String shipowner,
+            @RequestParam(required = false) String itemType,
+            @RequestParam(required = false) String equipmentNumber,
+            @RequestParam(required = false) String equipmentTypeSize,
+            @RequestParam(required = false) String eventCode,
+            @RequestParam(required = false) String eventFamily,
+            @RequestParam(required = false) String dateFrom,
+            @RequestParam(required = false) String dateTo,
+            Model model,
+            Authentication auth) {
         User loggedUser = userRepository.findByEmail(auth.getName()).orElseThrow();
         boolean isAdmin = auth.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        String s  = blankToNull(shipowner);
+        String it = blankToNull(itemType);
+        String en = blankToNull(equipmentNumber);
+        String et = blankToNull(equipmentTypeSize);
+        String ec = blankToNull(eventCode);
+        String ef = blankToNull(eventFamily);
+        String df = blankToNull(dateFrom);
+        String dt = blankToNull(dateTo);
+
         model.addAttribute("loggedUser", loggedUser);
         model.addAttribute("activeTab", normalizeReportsTab(tab));
         model.addAttribute("isAdmin", isAdmin);
         model.addAttribute("sidebarMenuUrl", isAdmin ? "/menu" : "/menu/facturation");
+        model.addAttribute("suiviVidesRows",
+                rapportSuiviVidesRepository.findFiltered(s, it, en, et, ec, ef, df, dt));
+        model.addAttribute("shipowners",         rapportSuiviVidesRepository.findDistinctShipowners());
+        model.addAttribute("itemTypes",          rapportSuiviVidesRepository.findDistinctItemTypes());
+        model.addAttribute("equipmentTypeSizes", rapportSuiviVidesRepository.findDistinctEquipmentTypeSizes());
+        model.addAttribute("eventCodes",         rapportSuiviVidesRepository.findDistinctEventCodes());
+        model.addAttribute("eventFamilies",      rapportSuiviVidesRepository.findDistinctEventFamilies());
+        model.addAttribute("fShipowner",         val(shipowner));
+        model.addAttribute("fItemType",          val(itemType));
+        model.addAttribute("fEquipmentNumber",   val(equipmentNumber));
+        model.addAttribute("fEquipmentTypeSize", val(equipmentTypeSize));
+        model.addAttribute("fEventCode",         val(eventCode));
+        model.addAttribute("fEventFamily",       val(eventFamily));
+        model.addAttribute("fDateFrom",          val(dateFrom));
+        model.addAttribute("fDateTo",            val(dateTo));
         return "facturation/reports";
+    }
+
+    @GetMapping("/menu/facturation/gestion-rapports/suivi-vides/export")
+    public void exportSuiviVides(
+            @RequestParam(required = false) String shipowner,
+            @RequestParam(required = false) String itemType,
+            @RequestParam(required = false) String equipmentNumber,
+            @RequestParam(required = false) String equipmentTypeSize,
+            @RequestParam(required = false) String eventCode,
+            @RequestParam(required = false) String eventFamily,
+            @RequestParam(required = false) String dateFrom,
+            @RequestParam(required = false) String dateTo,
+            HttpServletResponse response) throws IOException {
+        List<RapportSuiviVides> rows = rapportSuiviVidesRepository.findFiltered(
+                blankToNull(shipowner), blankToNull(itemType), blankToNull(equipmentNumber),
+                blankToNull(equipmentTypeSize), blankToNull(eventCode), blankToNull(eventFamily),
+                blankToNull(dateFrom), blankToNull(dateTo));
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setHeader("Content-Disposition", "attachment; filename=\"rapport-suivi-vides.xlsx\"");
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
+            Sheet sheet = wb.createSheet("Suivi vides");
+            CellStyle headerStyle = wb.createCellStyle();
+            Font headerFont = wb.createFont();
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+            headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            String[] headers = {"Terminal", "Shipowner", "Item Type", "Equipment Number",
+                                "Equipment Type/Size", "Event Code", "Event Family",
+                                "Event Date", "Booking Sec No"};
+            Row headerRow = sheet.createRow(0);
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+                cell.setCellStyle(headerStyle);
+            }
+            int rowIdx = 1;
+            for (RapportSuiviVides r : rows) {
+                Row row = sheet.createRow(rowIdx++);
+                row.createCell(0).setCellValue(val(r.getTerminal()));
+                row.createCell(1).setCellValue(val(r.getShipowner()));
+                row.createCell(2).setCellValue(val(r.getItemType()));
+                row.createCell(3).setCellValue(val(r.getEquipmentNumber()));
+                row.createCell(4).setCellValue(val(r.getEquipmentTypeSize()));
+                row.createCell(5).setCellValue(val(r.getEventCode()));
+                row.createCell(6).setCellValue(val(r.getEventFamily()));
+                row.createCell(7).setCellValue(val(r.getEventDate()));
+                row.createCell(8).setCellValue(val(r.getBookingSecNo()));
+            }
+            for (int i = 0; i < headers.length; i++) sheet.autoSizeColumn(i);
+            wb.write(response.getOutputStream());
+        }
     }
 
     private static final int MAX_TABLE_ROWS  = 100000;
@@ -594,10 +685,74 @@ public class MenuController {
     @PostMapping("/menu/facturation/gestion-rapports/admin")
     public String submitFacturationReportsAdmin(@RequestParam String reportType,
                                                 @RequestParam("file") org.springframework.web.multipart.MultipartFile file,
-                                                RedirectAttributes redirectAttributes) {
-        String fileName = file != null ? file.getOriginalFilename() : null;
+                                                RedirectAttributes redirectAttributes) throws java.io.IOException {
+        if (file == null || file.isEmpty()) {
+            redirectAttributes.addFlashAttribute("success", "Aucun fichier selectionne.");
+            return "redirect:/menu/facturation/gestion-rapports?tab=admin";
+        }
+        if (!"suivi-vides".equals(reportType)) {
+            redirectAttributes.addFlashAttribute("success", "Import non disponible pour ce type de rapport.");
+            return "redirect:/menu/facturation/gestion-rapports?tab=admin";
+        }
+        String originalName = java.util.Objects.toString(file.getOriginalFilename(), "").toLowerCase();
+        java.util.List<RapportSuiviVides> batch = new java.util.ArrayList<>();
+        try {
+            if (originalName.endsWith(".csv")) {
+                try (java.io.BufferedReader reader = new java.io.BufferedReader(
+                        new java.io.InputStreamReader(file.getInputStream(), java.nio.charset.StandardCharsets.UTF_8))) {
+                    String line;
+                    boolean firstLine = true;
+                    while ((line = reader.readLine()) != null) {
+                        if (firstLine) { firstLine = false; continue; }
+                        if (line.isBlank()) continue;
+                        String delimiter = line.contains(";") ? ";" : ",";
+                        String[] cols = line.split(delimiter, -1);
+                        RapportSuiviVides r = new RapportSuiviVides();
+                        r.setTerminal(cols.length > 0 ? cols[0].trim() : null);
+                        r.setShipowner(cols.length > 1 ? cols[1].trim() : null);
+                        r.setItemType(cols.length > 2 ? cols[2].trim() : null);
+                        r.setEquipmentNumber(cols.length > 3 ? cols[3].trim() : null);
+                        r.setEquipmentTypeSize(cols.length > 4 ? cols[4].trim() : null);
+                        r.setEventCode(cols.length > 5 ? cols[5].trim() : null);
+                        r.setEventFamily(cols.length > 6 ? cols[6].trim() : null);
+                        r.setEventDate(cols.length > 7 ? cols[7].trim() : null);
+                        r.setBookingSecNo(cols.length > 8 ? cols[8].trim() : null);
+                        batch.add(r);
+                    }
+                }
+            } else {
+                // XLSX parsing via DOM (XSSFWorkbook) — nécessaire car les cellules de ce fichier
+                // n'ont pas d'attribut "r" (référence), ce qui rend le parsing SAX inopérant.
+                try (java.io.InputStream is = file.getInputStream();
+                     XSSFWorkbook wb = new XSSFWorkbook(is)) {
+                    org.apache.poi.ss.usermodel.Sheet sheet = wb.getSheetAt(0);
+                    org.apache.poi.ss.usermodel.DataFormatter fmt = new org.apache.poi.ss.usermodel.DataFormatter();
+                    for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+                        org.apache.poi.ss.usermodel.Row row = sheet.getRow(i);
+                        if (row == null) continue;
+                        RapportSuiviVides r = new RapportSuiviVides();
+                        r.setTerminal(xlsxCell(fmt, row, 0));
+                        r.setShipowner(xlsxCell(fmt, row, 1));
+                        r.setItemType(xlsxCell(fmt, row, 2));
+                        r.setEquipmentNumber(xlsxCell(fmt, row, 3));
+                        r.setEquipmentTypeSize(xlsxCell(fmt, row, 4));
+                        r.setEventCode(xlsxCell(fmt, row, 5));
+                        r.setEventFamily(xlsxCell(fmt, row, 6));
+                        r.setEventDate(xlsxDateCell(row, 7));
+                        r.setBookingSecNo(xlsxCell(fmt, row, 8));
+                        batch.add(r);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("success", "Erreur lors de l'import : " + e.getMessage());
+            return "redirect:/menu/facturation/gestion-rapports?tab=admin";
+        }
+        if (!batch.isEmpty()) {
+            bulkInsertService.bulkInsertRapportSuiviVides(batch);
+        }
         redirectAttributes.addFlashAttribute("success",
-                "Import prepare pour le type " + reportType + (fileName != null ? " avec le fichier " + fileName + "." : "."));
+                batch.size() + " lignes en cours d'import. Actualisez dans quelques instants.");
         return "redirect:/menu/facturation/gestion-rapports?tab=admin";
     }
 
@@ -847,6 +1002,32 @@ public class MenuController {
 
     private String val(String s) {
         return s != null ? s : "";
+    }
+
+    private String blankToNull(String s) {
+        return (s == null || s.isBlank()) ? null : s.trim();
+    }
+
+    private String xlsxCell(org.apache.poi.ss.usermodel.DataFormatter fmt,
+                             org.apache.poi.ss.usermodel.Row row, int col) {
+        org.apache.poi.ss.usermodel.Cell cell = row.getCell(col, org.apache.poi.ss.usermodel.Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
+        if (cell == null) return null;
+        String v = fmt.formatCellValue(cell).trim();
+        return v.isEmpty() ? null : v;
+    }
+
+    /** Lit une cellule date et la retourne en format ISO yyyy-MM-dd pour permettre le filtrage BETWEEN. */
+    private String xlsxDateCell(org.apache.poi.ss.usermodel.Row row, int col) {
+        org.apache.poi.ss.usermodel.Cell cell = row.getCell(col, org.apache.poi.ss.usermodel.Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
+        if (cell == null) return null;
+        if (cell.getCellType() == org.apache.poi.ss.usermodel.CellType.NUMERIC
+                && org.apache.poi.ss.usermodel.DateUtil.isCellDateFormatted(cell)) {
+            java.time.LocalDate d = cell.getLocalDateTimeCellValue().toLocalDate();
+            return d.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE);
+        }
+        // Fallback : valeur texte telle quelle
+        String v = cell.toString().trim();
+        return v.isEmpty() ? null : v;
     }
 
     private String renderModuleDashboard(Model model, Authentication auth,

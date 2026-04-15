@@ -2,6 +2,7 @@ package com.dtapp.service;
 
 import com.dtapp.entity.Machine;
 import com.dtapp.entity.PosteFixe;
+import com.dtapp.entity.RapportSuiviVides;
 import com.dtapp.entity.TiersUnify;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
@@ -194,6 +195,43 @@ public class BulkInsertService {
         });
 
         log.info("batchUpdate postes_fixes : {} enregistrements insérés", items.size());
+    }
+
+    // ── rapport_suivi_vides ────────────────────────────────────────────────────
+
+    /**
+     * Insère en masse des RapportSuiviVides — exécuté en tâche de fond (@Async).
+     */
+    @Async
+    public void bulkInsertRapportSuiviVides(List<RapportSuiviVides> items) {
+        if (items.isEmpty()) return;
+
+        String sql = "INSERT INTO rapport_suivi_vides"
+                   + " (terminal, shipowner, item_type, equipment_number, equipment_type_size,"
+                   + "  event_code, event_family, event_date, booking_sec_no, created_at)"
+                   + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String now = LocalDateTime.now().format(SQL_DT);
+
+        jdbc.batchUpdate(sql, new BatchPreparedStatementSetter() {
+            @Override
+            public void setValues(@NonNull PreparedStatement ps, int i) throws SQLException {
+                RapportSuiviVides r = items.get(i);
+                ps.setString(1,  nullToEmpty(r.getTerminal()));
+                ps.setString(2,  nullToEmpty(r.getShipowner()));
+                ps.setString(3,  nullToEmpty(r.getItemType()));
+                ps.setString(4,  nullToEmpty(r.getEquipmentNumber()));
+                ps.setString(5,  nullToEmpty(r.getEquipmentTypeSize()));
+                ps.setString(6,  nullToEmpty(r.getEventCode()));
+                ps.setString(7,  nullToEmpty(r.getEventFamily()));
+                ps.setString(8,  nullToEmpty(r.getEventDate()));
+                ps.setString(9,  nullToEmpty(r.getBookingSecNo()));
+                ps.setString(10, now);
+            }
+            @Override
+            public int getBatchSize() { return items.size(); }
+        });
+
+        log.info("batchUpdate rapport_suivi_vides : {} enregistrements insérés", items.size());
     }
 
     // ── Helper ─────────────────────────────────────────────────────────────────
