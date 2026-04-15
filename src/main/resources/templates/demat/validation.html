@@ -197,11 +197,12 @@
       <input id="email" name="email" type="email" placeholder="Votre email" required>
 
       <label for="bl-number">Numero de BL</label>
-      <input id="bl-number" name="bl-number" type="text" placeholder="Votre numero de BL" required>
+      <input id="bl-number" name="bl-number" type="text" placeholder="Votre numero de BL" required
+             style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase()">
 
       <label for="sel-search">Maison de transit</label>
       <div class="sel-wrap">
-        <input type="hidden" name="maison-transit" id="maison-transit-hidden">
+        <input type="hidden" name="maison-transit" id="maison-transit-hidden" required>
         <input type="text" id="sel-search" class="sel-input" placeholder="Rechercher une maison de transit..." autocomplete="off">
         <div class="sel-dropdown" id="sel-dropdown"></div>
       </div>
@@ -294,6 +295,15 @@
   document.addEventListener('click', function(e) {
     if (!searchEl.contains(e.target) && !dropEl.contains(e.target)) {
       dropEl.classList.remove('open');
+    }
+  });
+
+  document.querySelector('form').addEventListener('submit', function(e) {
+    if (!hiddenEl.value) {
+      e.preventDefault();
+      searchEl.style.borderColor = '#ef4444';
+      searchEl.placeholder = 'Veuillez sélectionner une maison de transit';
+      searchEl.focus();
     }
   });
 })();

@@ -90,6 +90,8 @@ public class DematController {
             @RequestParam("bad-shipping") MultipartFile badShipping,
             @RequestParam("declaration") MultipartFile declaration) {
 
+        blNumber = blNumber.toUpperCase();
+
         List<String> pendingStatuts = Arrays.asList("EN_ATTENTE", "EN_ATTENTE_DIRECTION");
         if (rattachementBlRepository.existsByBlAndTypeAndStatutIn(blNumber, "FACTURATION", pendingStatuts)) {
             return "redirect:/demat/validation?duplicate=true";
@@ -139,6 +141,8 @@ public class DematController {
             @RequestParam("bl-file") MultipartFile blFile,
             @RequestParam("facture-file") MultipartFile factureFile,
             @RequestParam("declaration-file") MultipartFile declarationFile) {
+
+        blNumber = blNumber.toUpperCase();
 
         List<String> pendingStatuts = Arrays.asList("EN_ATTENTE", "EN_ATTENTE_DIRECTION");
         if (rattachementBlRepository.existsByBlAndTypeAndStatutIn(blNumber, "REMISE", pendingStatuts)) {

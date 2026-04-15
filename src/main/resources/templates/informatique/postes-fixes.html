@@ -313,18 +313,28 @@
   document.getElementById('tablePostes').addEventListener('submit', function(e) {
     if (!e.target.classList.contains('js-delete-form')) return;
     e.preventDefault();
-    if (!confirm('Supprimer ce poste fixe ?')) return;
     const form = e.target;
     const tr = form.closest('tr');
-    fetch(form.action, { method: 'POST', body: new FormData(form) })
-      .then(r => {
-        if (r.ok) {
-          tr.style.transition = 'opacity 0.3s'; tr.style.opacity = '0';
-          setTimeout(() => tr.remove(), 300);
-          showToast('Poste fixe supprimé');
-        } else { showToast('Erreur lors de la suppression', 'error'); }
-      })
-      .catch(() => showToast('Erreur réseau', 'error'));
+    Swal.fire({
+      title: 'Supprimer ce poste fixe ?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Supprimer',
+      cancelButtonText: 'Annuler'
+    }).then(result => {
+      if (!result.isConfirmed) return;
+      fetch(form.action, { method: 'POST', body: new FormData(form) })
+        .then(r => {
+          if (r.ok) {
+            tr.style.transition = 'opacity 0.3s'; tr.style.opacity = '0';
+            setTimeout(() => tr.remove(), 300);
+            showToast('Poste fixe supprimé');
+          } else { showToast('Erreur lors de la suppression', 'error'); }
+        })
+        .catch(() => showToast('Erreur réseau', 'error'));
+    });
   });
 
   // Édition — AJAX soumission
