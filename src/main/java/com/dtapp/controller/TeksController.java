@@ -11,7 +11,11 @@ import org.apache.pdfbox.io.RandomAccessReadBuffer;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
 import org.apache.pdfbox.multipdf.Splitter;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.rendering.PDFRenderer;
 import org.apache.pdfbox.text.PDFTextStripper;
+
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ContentDisposition;
@@ -210,44 +214,12 @@ public class TeksController {
 
     @GetMapping("/teks/print-escale")
     public String printEscaleView(@RequestParam String escale, Model model) {
-        model.addAttribute("escale", escale);
-        return "public/teks-print-escale";
-    }
-
-    @GetMapping("/teks/print-escale/file")
-    @ResponseBody
-    public ResponseEntity<ByteArrayResource> printEscaleFile(@RequestParam String escale) throws IOException {
-        List<Teks> pdfs = teksRepository.findByEscaleOrderByCreatedAtAsc(escale).stream()
-                .filter(t -> MediaType.APPLICATION_PDF_VALUE.equalsIgnoreCase(t.getFileContentType()))
+        List<Teks> pages = teksRepository.findByEscaleOrderByCreatedAtAsc(escale).stream()
+                .filter(t -> t.getFileContentType() != null && t.getFileContentType().startsWith("image/"))
                 .toList();
-
-        if (pdfs.isEmpty()) {
-            return ResponseEntity.noContent().build();
-        }
-
-        byte[] merged;
-        if (pdfs.size() == 1) {
-            merged = pdfs.get(0).getFileData();
-        } else {
-            PDFMergerUtility merger = new PDFMergerUtility();
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            merger.setDestinationStream(out);
-            for (Teks t : pdfs) {
-                merger.addSource(new RandomAccessReadBuffer(t.getFileData()));
-            }
-            merger.mergeDocuments(null);
-            merged = out.toByteArray();
-        }
-
-        ContentDisposition disposition = ContentDisposition.inline()
-                .filename(escale + ".pdf", StandardCharsets.UTF_8)
-                .build();
-
-        return ResponseEntity.ok()
-                .contentType(MediaType.APPLICATION_PDF)
-                .contentLength(merged.length)
-                .header(HttpHeaders.CONTENT_DISPOSITION, disposition.toString())
-                .body(new ByteArrayResource(merged));
+        model.addAttribute("escale", escale);
+        model.addAttribute("pages", pages);
+        return "public/teks-print-escale";
     }
 
     @GetMapping("/teks/{id}/print")
@@ -362,7 +334,7 @@ public class TeksController {
             teks.setChassis(d.chassis);
             teks.setEscale(d.escale);
             teks.setFileName(d.fileName);
-            teks.setFileContentType(MediaType.APPLICATION_PDF_VALUE);
+            teks.setFileContentType(MediaType.IMAGE_PNG_VALUE);
             teks.setFileData(d.pdfBytes);
             teksRepository.save(teks);
             count++;
@@ -388,6 +360,7 @@ public class TeksController {
             List<PDDocument> pageDocs = splitter.split(doc);
             PDFTextStripper stripper = new PDFTextStripper();
 
+            PDFRenderer renderer = new PDFRenderer(doc);
             for (int i = 0; i < pageDocs.size(); i++) {
                 PDDocument pageDoc = pageDocs.get(i);
                 try {
@@ -397,9 +370,10 @@ public class TeksController {
                     String chassis = extractChassis(text);
                     String escale = extractEscale(text);
 
+                    BufferedImage image = renderer.renderImageWithDPI(i, 150);
                     ByteArrayOutputStream out = new ByteArrayOutputStream();
-                    pageDoc.save(out);
-                    result.add(new EscalePageData(bl, chassis, escale, out.toByteArray(), "escale-p" + (i + 1) + ".pdf"));
+                    ImageIO.write(image, "PNG", out);
+                    result.add(new EscalePageData(bl, chassis, escale, out.toByteArray(), "escale-p" + (i + 1) + ".png"));
                 } finally {
                     pageDoc.close();
                 }

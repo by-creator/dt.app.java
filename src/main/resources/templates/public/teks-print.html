@@ -8,11 +8,7 @@
     body {
       margin: 0;
       font-family: "Segoe UI", sans-serif;
-      background: #0f172a;
       color: #e2e8f0;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
     }
     .print-topbar {
       padding: 16px 20px;
@@ -44,14 +40,10 @@
     }
     .print-actions button { background: #2563eb; color: #fff; }
     .print-actions a     { background: #1e293b; color: #e2e8f0; }
-    @media print {
-      .print-topbar { display: none; }
-    }
     iframe, img {
-      flex: 1;
       width: 100%;
       border: none;
-      background: #fff;
+      display: block;
     }
     .print-fallback {
       padding: 28px 20px;
@@ -60,6 +52,27 @@
     .print-fallback p {
       color: #cbd5e1;
       line-height: 1.6;
+    }
+    /* Layout écran uniquement */
+    @media screen {
+      body {
+        background: #0f172a;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      iframe, img {
+        flex: 1;
+        background: #fff;
+      }
+    }
+    /* Impression : aucun flex, aucun min-height */
+    @media print {
+      .print-topbar { display: none; }
+      img {
+        width: 100%;
+        height: auto;
+      }
     }
   </style>
 </head>
