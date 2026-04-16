@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface TeksRepository extends JpaRepository<Teks, Long> {
 
@@ -24,4 +26,9 @@ public interface TeksRepository extends JpaRepository<Teks, Long> {
                       @Param("filterBl") String filterBl,
                       @Param("filterChassis") String filterChassis,
                       Pageable pageable);
+
+    List<Teks> findByEscaleOrderByCreatedAtAsc(String escale);
+
+    @Query("SELECT DISTINCT t.escale FROM Teks t WHERE t.escale IS NOT NULL AND t.escale <> '' ORDER BY t.escale")
+    List<String> findDistinctEscales();
 }

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title th:text="'Impression - ' + ${teks.bl}">Impression teks</title>
+  <title>Impression - Document complet</title>
   <style>
     body {
       margin: 0;
@@ -47,7 +47,7 @@
     @media print {
       .print-topbar { display: none; }
     }
-    iframe, img {
+    iframe {
       flex: 1;
       width: 100%;
       border: none;
@@ -57,34 +57,26 @@
       padding: 28px 20px;
       max-width: 720px;
     }
-    .print-fallback p {
-      color: #cbd5e1;
-      line-height: 1.6;
-    }
+    .print-fallback p { color: #cbd5e1; line-height: 1.6; }
   </style>
 </head>
 <body>
   <div class="print-topbar">
-    <h1 th:text="'BL ' + ${teks.bl} + ' - ' + ${teks.chassis}">BL</h1>
+    <h1>Document complet - tous les teks</h1>
     <div class="print-actions">
-      <button th:if="${printable}" type="button" onclick="window.print()">Imprimer</button>
-      <a th:href="@{/teks/files/{id}(id=${teks.id}, download=true)}">Telecharger le fichier</a>
+      <button th:if="${hasPdfs}" type="button" onclick="window.print()">Imprimer</button>
+      <a th:href="@{/teks/print-all/file}" th:if="${hasPdfs}">Telecharger le fichier</a>
       <a th:href="@{/teks}">Retour</a>
     </div>
   </div>
 
-  <iframe th:if="${printable and teks.fileContentType == 'application/pdf'}"
-          th:src="@{|${fileUrl}#toolbar=0&navpanes=0|}"
+  <iframe th:if="${hasPdfs}"
+          th:src="@{|/teks/print-all/file#toolbar=0&navpanes=0|}"
           onload="setTimeout(function(){ window.print(); }, 500)"></iframe>
 
-  <img th:if="${printable and teks.fileContentType != 'application/pdf'}"
-       th:src="@{${fileUrl}}"
-       alt="Apercu du teks"
-       onload="setTimeout(function(){ window.print(); }, 500)">
-
-  <div th:if="${!printable}" class="print-fallback">
-    <h2>Impression automatique non disponible</h2>
-    <p>Ce type de fichier n'est pas pris en charge directement par le navigateur pour l'impression automatique. Utilisez le bouton de telechargement ci-dessus pour l'ouvrir puis l'imprimer.</p>
+  <div th:if="${!hasPdfs}" class="print-fallback">
+    <h2>Aucun document disponible</h2>
+    <p>Il n'y a pas encore de fichiers PDF importes. <a th:href="@{/teks}" style="color:#6366f1;">Retour</a></p>
   </div>
 </body>
 </html>

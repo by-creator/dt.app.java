@@ -166,7 +166,21 @@
 <body>
   <div class="teks-public-shell">
     <section class="teks-hero">
-      <h1>Teks</h1>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;">
+        <h1 style="margin:0;">Teks</h1>
+        <button onclick="openEscaleModal()"
+                style="min-height:44px; border-radius:14px; border:none; padding:0 20px;
+                       font-size:14px; font-weight:700; cursor:pointer;
+                       display:inline-flex; align-items:center; gap:8px;
+                       background:#1d4ed8; color:#fff; white-space:nowrap; flex-shrink:0;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 6 2 18 2 18 9"/>
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+            <rect x="6" y="14" width="12" height="8"/>
+          </svg>
+          Imprimer une escale
+        </button>
+      </div>
       <p>Retrouvez les fichiers disponibles par BL ou chassis. Un clic sur une carte ouvre directement la vue d'impression du document associe.</p>
 
       <form method="get" class="teks-search-row">
@@ -187,6 +201,10 @@
         <span class="teks-card-badge">Impression</span>
         <h2 th:text="${teks.bl}">BL</h2>
         <dl>
+          <div th:if="${teks.escale != null and !teks.escale.isEmpty()}">
+            <dt>Escale</dt>
+            <dd th:text="${teks.escale}" style="color:#1d4ed8; font-weight:700; font-size:13px;">ESCALE</dd>
+          </div>
           <div>
             <dt>Chassis</dt>
             <dd th:text="${teks.chassis}">CHASSIS</dd>
@@ -198,7 +216,14 @@
         </dl>
         <div class="teks-card-footer">
           <span th:text="${teks.formattedDate}">15/04/2026 10:00</span>
-          <span>Ouvrir</span>
+          <span style="display:inline-flex; align-items:center; gap:5px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 6 2 18 2 18 9"/>
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+              <rect x="6" y="14" width="12" height="8"/>
+            </svg>
+            Imprimer
+          </span>
         </div>
       </a>
     </section>
@@ -207,5 +232,92 @@
       <th:block th:replace="~{fragments/pagination :: server('/teks', 'page')}"></th:block>
     </div>
   </div>
+  <!-- Modal Imprimer une escale -->
+  <div id="escaleModal" style="display:none; position:fixed; inset:0; z-index:9999;
+       background:rgba(15,23,42,0.55); backdrop-filter:blur(4px);
+       align-items:center; justify-content:center;" onclick="closeEscaleModal(event)">
+    <div style="background:#fff; border-radius:24px; padding:32px; width:100%; max-width:440px;
+                box-shadow:0 24px 64px rgba(15,23,42,0.18); display:flex; flex-direction:column; gap:18px;"
+         onclick="event.stopPropagation()">
+
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <h2 style="margin:0; font-size:18px; color:#0f172a;">Imprimer une escale</h2>
+        <button onclick="closeEscaleModal()" style="border:none; background:none; cursor:pointer; color:#64748b; font-size:20px; line-height:1;">&#x2715;</button>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <label style="font-size:12px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.06em;">Rechercher une escale</label>
+        <input id="escaleSearchInput" type="text" placeholder="Taper pour filtrer..."
+               oninput="filterEscaleOptions()"
+               style="width:100%; box-sizing:border-box; padding:10px 14px; border:1px solid #e2e8f0;
+                      border-radius:12px; font-size:14px; outline:none;">
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <label style="font-size:12px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.06em;">Escale</label>
+        <select id="escaleSelect" size="6"
+                style="width:100%; border:1px solid #e2e8f0; border-radius:12px; padding:6px;
+                       font-size:14px; outline:none; background:#f8fafc;">
+          <option th:each="e : ${escales}" th:value="${e}" th:text="${e}"></option>
+          <option th:if="${#lists.isEmpty(escales)}" disabled>Aucune escale disponible</option>
+        </select>
+      </div>
+
+      <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:4px;">
+        <button onclick="closeEscaleModal()"
+                style="padding:10px 20px; border-radius:12px; border:1px solid #e2e8f0;
+                       background:#f1f5f9; color:#0f172a; font-size:14px; font-weight:600; cursor:pointer;">
+          Annuler
+        </button>
+        <button onclick="printSelectedEscale()"
+                style="padding:10px 20px; border-radius:12px; border:none;
+                       background:#1d4ed8; color:#fff; font-size:14px; font-weight:700; cursor:pointer;
+                       display:inline-flex; align-items:center; gap:7px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 6 2 18 2 18 9"/>
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+            <rect x="6" y="14" width="12" height="8"/>
+          </svg>
+          Imprimer
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openEscaleModal() {
+      const modal = document.getElementById('escaleModal');
+      modal.style.display = 'flex';
+      document.getElementById('escaleSearchInput').value = '';
+      filterEscaleOptions();
+      document.getElementById('escaleSearchInput').focus();
+    }
+    function closeEscaleModal(e) {
+      if (!e || e.target === document.getElementById('escaleModal')) {
+        document.getElementById('escaleModal').style.display = 'none';
+      }
+    }
+
+    function filterEscaleOptions() {
+      const q = document.getElementById('escaleSearchInput').value.toLowerCase();
+      const opts = document.getElementById('escaleSelect').options;
+      for (let o of opts) {
+        o.hidden = !o.text.toLowerCase().includes(q);
+      }
+    }
+    function printSelectedEscale() {
+      const sel = document.getElementById('escaleSelect');
+      const val = sel.value;
+      if (!val) {
+        alert('Veuillez sélectionner une escale.');
+        return;
+      }
+      window.location.href = '/teks/print-escale?escale=' + encodeURIComponent(val);
+    }
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') document.getElementById('escaleModal').style.display = 'none';
+    });
+
+  </script>
 </body>
 </html>

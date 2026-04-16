@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="'Impression - ' + ${escale}">Impression escale</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .print-topbar {
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: rgba(15,23,42,0.92);
+      border-bottom: 1px solid rgba(148,163,184,0.22);
+    }
+    .print-topbar h1 { margin: 0; font-size: 16px; }
+    .print-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .print-actions a,
+    .print-actions button {
+      border: none; border-radius: 12px; padding: 10px 14px;
+      font-size: 13px; font-weight: 700; text-decoration: none; cursor: pointer;
+    }
+    .print-actions button { background: #2563eb; color: #fff; }
+    .print-actions a     { background: #1e293b; color: #e2e8f0; }
+    @media print { .print-topbar { display: none; } }
+    iframe {
+      flex: 1; width: 100%; border: none; background: #fff;
+    }
+  </style>
+</head>
+<body>
+  <div class="print-topbar">
+    <h1>Escale : <span th:text="${escale}"></span></h1>
+    <div class="print-actions">
+      <button type="button" onclick="window.print()">Imprimer</button>
+      <a th:href="@{/teks/print-escale/file(escale=${escale})}">Telecharger le fichier</a>
+      <a th:href="@{/teks}">Retour</a>
+    </div>
+  </div>
+
+  <iframe th:src="@{/teks/print-escale/file(escale=${escale})}"
+          onload="setTimeout(function(){ window.print(); }, 500)"></iframe>
+</body>
+</html>

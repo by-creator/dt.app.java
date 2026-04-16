@@ -131,6 +131,13 @@
             <version>1.6.0</version>
         </dependency>
 
+        <!-- Apache PDFBox for PDF parsing and splitting -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>3.0.3</version>
+        </dependency>
+
         <!-- Testing -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

@@ -132,6 +132,98 @@
         </form>
       </div>
 
+      <!-- ================================================================== -->
+      <!-- Upload Escale                                                      -->
+      <!-- ================================================================== -->
+      <div class="page-section-card" style="margin-bottom:28px;">
+        <div class="blocage-card-header">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <span>Import Escale</span>
+        </div>
+        <p class="blocage-card-subtitle">Importez un fichier PDF Escale pour créer automatiquement les enregistrements teks (1 enregistrement par page).</p>
+
+        <!-- Etape 1 : formulaire d'upload -->
+        <div th:if="${escalePreview == null}">
+          <form th:action="@{/menu/informatique/teks/upload-escale/preview}" method="post" enctype="multipart/form-data">
+            <div style="display:flex; align-items:flex-end; gap:16px; flex-wrap:wrap; margin-bottom:4px;">
+              <div class="form-group" style="flex:1; min-width:260px;">
+                <label class="form-label">FICHIER PDF ESCALE *</label>
+                <input name="escaleFile" type="file" accept=".pdf,application/pdf" class="form-input" required
+                       style="height:52px; padding:6px 12px; display:flex; align-items:center; line-height:1.2;">
+              </div>
+              <button type="submit" class="btn-debloquer" style="white-space:nowrap; margin-bottom:0;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                Analyser le fichier
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Etape 2 : aperçu avant confirmation -->
+        <div th:if="${escalePreview != null}">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px; padding:10px 14px; background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span style="font-size:13px; color:#0369a1; font-weight:500;">
+              <span th:text="${#lists.size(escalePreview)}">0</span> page(s) détectée(s). Vérifiez les données avant de confirmer l'importation.
+            </span>
+          </div>
+
+          <div class="table-wrapper" style="margin-bottom:16px; border-radius:8px; overflow:hidden; border:1px solid rgba(148,163,184,0.2);">
+            <table class="data-table">
+              <thead>
+              <tr>
+                <th style="width:60px; text-align:center;">Page</th>
+                <th>Escale</th>
+                <th>BL</th>
+                <th>Chassis</th>
+                <th>Fichier généré</th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr th:each="p : ${escalePreview}">
+                <td style="text-align:center; font-weight:600;" th:text="${p.pageNumber}"></td>
+                <td>
+                  <span th:if="${!#strings.isEmpty(p.escale)}" th:text="${p.escale}" style="font-weight:600; color:#6366f1;"></span>
+                  <span th:if="${#strings.isEmpty(p.escale)}" style="color:#ef4444; font-style:italic;">Non trouvé</span>
+                </td>
+                <td>
+                  <span th:if="${!#strings.isEmpty(p.bl)}" th:text="${p.bl}" style="font-weight:500;"></span>
+                  <span th:if="${#strings.isEmpty(p.bl)}" style="color:#ef4444; font-style:italic;">Non trouvé</span>
+                </td>
+                <td>
+                  <span th:if="${!#strings.isEmpty(p.chassis)}" th:text="${p.chassis}" style="font-weight:500;"></span>
+                  <span th:if="${#strings.isEmpty(p.chassis)}" style="color:#ef4444; font-style:italic;">Non trouvé</span>
+                </td>
+                <td th:text="${p.fileName}" style="color:#64748b; font-size:12px;"></td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <form th:action="@{/menu/informatique/teks/upload-escale/confirm}" method="post">
+              <button type="submit" class="btn-debloquer">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                Confirmer l'importation
+              </button>
+            </form>
+            <form th:action="@{/menu/informatique/teks/upload-escale/cancel}" method="post">
+              <button type="submit" class="btn-actualiser">Annuler</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
       <div class="page-section-card" style="padding:0; overflow:hidden;">
         <div class="table-toolbar">
           <div style="display:flex; align-items:center; gap:10px;">
@@ -171,6 +263,7 @@
             <tr>
               <th>BL</th>
               <th>Chassis</th>
+              <th>Escale</th>
               <th>Fichier</th>
               <th>Date</th>
               <th>Actions</th>
@@ -187,6 +280,7 @@
                 th:data-filename="${teks.fileName}">
               <td th:text="${teks.bl}"></td>
               <td th:text="${teks.chassis}"></td>
+              <td th:text="${teks.escale}" style="color:#6366f1; font-size:12px; font-weight:600;"></td>
               <td>
                 <a th:href="@{/teks/files/{id}(id=${teks.id})}" th:text="${teks.fileName}" style="color:#6366f1; text-decoration:none; font-weight:600;"></a>
               </td>

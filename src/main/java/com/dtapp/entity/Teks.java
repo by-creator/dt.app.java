@@ -31,6 +31,9 @@ public class Teks {
     @Column(length = 255, nullable = false)
     private String chassis;
 
+    @Column(columnDefinition = "TEXT")
+    private String escale;
+
     @Column(name = "file_name", length = 255, nullable = false)
     private String fileName;
 
