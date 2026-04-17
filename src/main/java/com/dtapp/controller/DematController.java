@@ -18,7 +18,10 @@ import com.dtapp.repository.SatisfactionAccueilRepository;
 import com.dtapp.repository.SatisfactionLivraisonRepository;
 import com.dtapp.repository.SatisfactionCommunicationRepository;
 import com.dtapp.repository.TiersUnifyRepository;
+import com.dtapp.service.B2StorageService;
 import com.dtapp.service.EmailService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -27,11 +30,16 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 
 @Controller
 public class DematController {
+
+    private static final Logger log = LoggerFactory.getLogger(DematController.class);
+    private static final DateTimeFormatter DATE_FOLDER = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
     private final RattachementBlRepository rattachementBlRepository;
     private final TiersUnifyRepository tiersUnifyRepository;
@@ -43,6 +51,7 @@ public class DematController {
     private final SatisfactionLivraisonRepository satisfactionLivraisonRepository;
     private final SatisfactionCommunicationRepository satisfactionCommunicationRepository;
     private final EmailService emailService;
+    private final B2StorageService b2StorageService;
 
     public DematController(RattachementBlRepository rattachementBlRepository,
                            TiersUnifyRepository tiersUnifyRepository,
@@ -53,7 +62,8 @@ public class DematController {
                            SatisfactionAccueilRepository satisfactionAccueilRepository,
                            SatisfactionLivraisonRepository satisfactionLivraisonRepository,
                            SatisfactionCommunicationRepository satisfactionCommunicationRepository,
-                           EmailService emailService) {
+                           EmailService emailService,
+                           B2StorageService b2StorageService) {
         this.rattachementBlRepository = rattachementBlRepository;
         this.tiersUnifyRepository = tiersUnifyRepository;
         this.satisfactionInfoRepository = satisfactionInfoRepository;
@@ -64,6 +74,23 @@ public class DematController {
         this.satisfactionLivraisonRepository = satisfactionLivraisonRepository;
         this.satisfactionCommunicationRepository = satisfactionCommunicationRepository;
         this.emailService = emailService;
+        this.b2StorageService = b2StorageService;
+    }
+
+    private String uploadNamedFileToB2(String baseFolder, String blNumber, String typeKey, MultipartFile file) {
+        if (file == null || file.isEmpty()) return null;
+        String today = LocalDate.now().format(DATE_FOLDER);
+        String safebl = blNumber.replaceAll("[^\\w\\-]", "_");
+        String name = file.getOriginalFilename();
+        String safeName = (name != null ? name : "fichier").replaceAll("[^\\w.\\-]", "_");
+        String key = baseFolder + "/" + today + "/" + safebl + "/" + typeKey + "__" + safeName;
+        try {
+            b2StorageService.uploadFile(key, file);
+            return key;
+        } catch (Exception e) {
+            log.warn("Echec upload B2 {}: {}", key, e.getMessage());
+            return null;
+        }
     }
 
     @GetMapping("/demat")
@@ -115,6 +142,10 @@ public class DematController {
         bl.setType("FACTURATION");
         rattachementBlRepository.save(bl);
 
+        uploadNamedFileToB2("Gestion_des_validations", blNumber, "bl", blFile);
+        uploadNamedFileToB2("Gestion_des_validations", blNumber, "bad_shipping", badShipping);
+        uploadNamedFileToB2("Gestion_des_validations", blNumber, "declaration", declaration);
+
         List<MultipartFile> attachments = Arrays.asList(blFile, badShipping, declaration);
         emailService.sendValidationNotification(bl, compteIpaki, attachments);
 
@@ -165,6 +196,12 @@ public class DematController {
         bl.setStatut("EN_ATTENTE");
         bl.setType("REMISE");
         rattachementBlRepository.save(bl);
+
+        uploadNamedFileToB2("Gestion_des_remises", blNumber, "demande_manuscrite", demandeManuscrite);
+        uploadNamedFileToB2("Gestion_des_remises", blNumber, "bad_shipping", badShipping);
+        uploadNamedFileToB2("Gestion_des_remises", blNumber, "bl", blFile);
+        uploadNamedFileToB2("Gestion_des_remises", blNumber, "facture", factureFile);
+        uploadNamedFileToB2("Gestion_des_remises", blNumber, "declaration", declarationFile);
 
         List<MultipartFile> attachments = Arrays.asList(
                 demandeManuscrite, badShipping, blFile, factureFile, declarationFile);

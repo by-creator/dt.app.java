@@ -223,7 +223,86 @@
         </div>
         <th:block th:replace="~{fragments/pagination :: server(${currentPagePath}, 'page')}"></th:block>
       </div>
+
+    <!-- ===== SECTION FICHIERS B2 ===== -->
+    <div class="page-section-card" style="padding:0; overflow:hidden; margin-top:24px;">
+      <div class="table-toolbar">
+        <span class="toolbar-title">Fichiers — Gestion des validations</span>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <th:block th:if="${!valIsRoot}">
+            <a th:href="@{/menu/facturation/gestion-validations(valFilesPrefix=${valFileParentPrefix})}"
+               class="btn-table-action debloque" style="text-decoration:none;">← Retour</a>
+          </th:block>
+          <span class="pagination-info" th:if="${valFolderView.enabled}"
+                th:text="${valFolderView.subfolders.size() + valFolderView.files.size()} + ' élément(s)'"></span>
+        </div>
+      </div>
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Nom</th>
+              <th>Clé / Chemin</th>
+              <th>Taille</th>
+              <th>Dernière modification</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:if="${!valFolderView.enabled}">
+              <td colspan="5" style="text-align:center; color:#94a3b8; padding:32px;" th:text="${valFolderView.message}"></td>
+            </tr>
+            <tr th:each="folder : ${valFolderView.subfolders}">
+              <td>
+                <a th:href="@{/menu/facturation/gestion-validations(valFilesPrefix=${folder.prefix})}"
+                   style="display:inline-flex; align-items:center; gap:8px; color:#6366f1; text-decoration:none; font-weight:600;">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="#e0e7ff" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                  </svg>
+                  <span th:text="${folder.name}"></span>
+                </a>
+              </td>
+              <td style="font-family:monospace; font-size:12px; color:#94a3b8;" th:text="${folder.prefix}"></td>
+              <td style="color:#94a3b8;">—</td>
+              <td style="color:#94a3b8;">—</td>
+              <td>
+                <a th:href="@{/menu/facturation/gestion-validations(valFilesPrefix=${folder.prefix})}"
+                   class="btn-table-action debloque" style="text-decoration:none;">Ouvrir</a>
+              </td>
+            </tr>
+            <tr th:if="${valFolderView.enabled and #lists.isEmpty(valFolderView.subfolders) and #lists.isEmpty(valFolderView.files)}">
+              <td colspan="5" style="text-align:center; color:#94a3b8; padding:32px;">Ce dossier est vide.</td>
+            </tr>
+            <tr th:each="file : ${valFolderView.files}">
+              <td style="font-weight:600;">
+                <div style="display:inline-flex; align-items:center; gap:8px;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                  </svg>
+                  <span th:text="${file.fileName}"></span>
+                </div>
+              </td>
+              <td style="font-family:monospace; font-size:12px; color:#64748b;" th:text="${file.key}"></td>
+              <td th:text="${file.sizeLabel}"></td>
+              <td th:text="${file.lastModifiedLabel}"></td>
+              <td style="white-space:nowrap; display:flex; gap:6px; align-items:center;">
+                <a th:href="${file.viewUrl}" target="_blank" rel="noopener noreferrer"
+                   class="btn-table-action debloque" style="text-decoration:none;">Ouvrir</a>
+                <a th:href="${file.downloadUrl}" target="_blank" rel="noopener noreferrer"
+                   class="btn-table-action" style="text-decoration:none; background:#eef2ff; color:#4338ca;">Télécharger</a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div th:if="${valFolderView.enabled}" style="padding:10px 16px; font-size:12px; color:#94a3b8; border-top:1px solid rgba(148,163,184,0.15);">
+        Liens pré-signés actifs pendant <span th:text="${valFolderView.presignDurationMinutes}">15</span> minute(s).
+      </div>
     </div>
+
+    </div>
+
   </main>
 </div>
 

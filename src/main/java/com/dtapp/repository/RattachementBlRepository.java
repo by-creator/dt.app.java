@@ -26,12 +26,12 @@ public interface RattachementBlRepository extends JpaRepository<RattachementBl, 
     @Query("SELECT r FROM RattachementBl r WHERE r.type = :type " +
            "AND (:dateStart IS NULL OR r.createdAt >= :dateStart) " +
            "AND (:dateEnd   IS NULL OR r.createdAt <  :dateEnd) " +
-           "AND ('' = :nom    OR LOWER(r.nom)    LIKE LOWER(CONCAT('%', :nom,    '%'))) " +
-           "AND ('' = :prenom OR LOWER(r.prenom) LIKE LOWER(CONCAT('%', :prenom, '%'))) " +
-           "AND ('' = :email  OR LOWER(r.email)  LIKE LOWER(CONCAT('%', :email,  '%'))) " +
-           "AND ('' = :bl     OR LOWER(r.bl)     LIKE LOWER(CONCAT('%', :bl,     '%'))) " +
-           "AND ('' = :maison OR LOWER(r.maison) LIKE LOWER(CONCAT('%', :maison, '%'))) " +
-           "AND ('' = :statut OR r.statut = :statut) " +
+           "AND (:nom    = '' OR LOWER(r.nom)    LIKE LOWER(CONCAT('%', :nom,    '%'))) " +
+           "AND (:prenom = '' OR LOWER(r.prenom) LIKE LOWER(CONCAT('%', :prenom, '%'))) " +
+           "AND (:email  = '' OR LOWER(r.email)  LIKE LOWER(CONCAT('%', :email,  '%'))) " +
+           "AND (:bl     = '' OR LOWER(r.bl)     LIKE LOWER(CONCAT('%', :bl,     '%'))) " +
+           "AND (:maison = '' OR LOWER(r.maison) LIKE LOWER(CONCAT('%', :maison, '%'))) " +
+           "AND (:statut = '' OR r.statut = :statut) " +
            "ORDER BY r.createdAt DESC")
     Page<RattachementBl> findByTypeWithFilters(@Param("type")      String type,
                                                @Param("dateStart") LocalDateTime dateStart,

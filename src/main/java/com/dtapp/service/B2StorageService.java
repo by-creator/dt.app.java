@@ -7,8 +7,12 @@ import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.CommonPrefix;
+import software.amazon.awssdk.services.s3.model.Delete;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
+import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Object;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
@@ -127,6 +131,53 @@ public class B2StorageService {
                         .contentLength(file.getSize())
                         .build(),
                 RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
+    }
+
+    public record FileLinks(String fileName, String viewUrl, String downloadUrl) {}
+
+    public FileLinks fileLinks(String key) {
+        if (key == null || key.isBlank()) return null;
+        S3Presigner presigner = s3PresignerProvider.getIfAvailable();
+        if (presigner == null) return null;
+        String fileName = extractFileName(key);
+        int sep = fileName.indexOf("__");
+        String displayName = sep >= 0 ? fileName.substring(sep + 2) : fileName;
+        return new FileLinks(displayName, presignUrl(presigner, key, false), presignUrl(presigner, key, true));
+    }
+
+    public void deleteObject(String key) {
+        S3Client s3Client = s3ClientProvider.getIfAvailable();
+        if (s3Client == null) throw new IllegalStateException("S3 client non disponible");
+        s3Client.deleteObject(DeleteObjectRequest.builder().bucket(bucketName).key(key).build());
+    }
+
+    public int deletePrefix(String prefix) {
+        S3Client s3Client = s3ClientProvider.getIfAvailable();
+        if (s3Client == null) throw new IllegalStateException("S3 client non disponible");
+        String normalized = prefix.endsWith("/") ? prefix : prefix + "/";
+        int total = 0;
+        String token = null;
+        do {
+            var req = ListObjectsV2Request.builder()
+                    .bucket(bucketName).prefix(normalized).maxKeys(1000);
+            if (token != null) req.continuationToken(token);
+            var resp = s3Client.listObjectsV2(req.build());
+            List<ObjectIdentifier> ids = resp.contents().stream()
+                    .map(o -> ObjectIdentifier.builder().key(o.key()).build())
+                    .toList();
+            if (!ids.isEmpty()) {
+                s3Client.deleteObjects(DeleteObjectsRequest.builder()
+                        .bucket(bucketName)
+                        .delete(Delete.builder().objects(ids).quiet(true).build())
+                        .build());
+                total += ids.size();
+            }
+            token = resp.isTruncated() ? resp.nextContinuationToken() : null;
+        } while (token != null);
+        // delete the folder marker itself if it exists
+        try { s3Client.deleteObject(DeleteObjectRequest.builder().bucket(bucketName).key(normalized).build()); }
+        catch (Exception ignored) {}
+        return total;
     }
 
     private String extractFolderName(String folderPrefix) {

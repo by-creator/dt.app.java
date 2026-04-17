@@ -31,6 +31,17 @@
     .btn-cancel   { padding: 10px 18px; border: none; border-radius: 10px; background: #f1f5f9; color: #334155; font-weight: 700; font-size: 13px; cursor: pointer; }
     .btn-confirm  { padding: 10px 18px; border: none; border-radius: 10px; background: #16a34a; color: white; font-weight: 700; font-size: 13px; cursor: pointer; }
     .btn-confirm-red { padding: 10px 18px; border: none; border-radius: 10px; background: #dc2626; color: white; font-weight: 700; font-size: 13px; cursor: pointer; }
+    .file-links { display:flex; flex-direction:column; gap:4px; min-width:160px; }
+    .file-row { display:flex; align-items:center; gap:5px; font-size:11px; }
+    .file-name { color:#475569; max-width:130px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .file-btn { display:inline-flex; align-items:center; justify-content:center; padding:2px 6px; border-radius:5px; font-size:10px; font-weight:700; text-decoration:none; white-space:nowrap; }
+    .file-btn-view { background:#ede9fe; color:#6d28d9; }
+    .file-btn-dl   { background:#dcfce7; color:#15803d; }
+    @media (prefers-color-scheme: dark) {
+      .file-name { color:#94a3b8; }
+      .file-btn-view { background:#2d1f63; color:#a78bfa; }
+      .file-btn-dl   { background:#14532d; color:#4ade80; }
+    }
     @media (prefers-color-scheme: dark) {
       .modal-box { background: #1e293b; box-shadow: 0 24px 60px rgba(0,0,0,0.4); }
       .modal-box h3 { color: #e2e8f0; }
@@ -219,7 +230,7 @@
                 </td>
                 <td style="font-size:12px; color:#94a3b8;" th:text="${d.motifRejet != null ? d.motifRejet : '-'}"></td>
                 <td>
-                  <div th:if="${d.statut == 'EN_ATTENTE' or d.statut == 'EN_ATTENTE_DIRECTION'}" class="row-actions">
+                  <div th:if="${d.statut == 'EN_ATTENTE' or (d.statut == 'EN_ATTENTE_DIRECTION' and isDirection)}" class="row-actions">
                     <form th:action="|${actionBasePath}/${d.id}/valider|" method="post" th:id="'fv-' + ${d.id}">
                       <input type="hidden" name="returnTo" th:value="${currentPagePath}">
                       <input type="hidden" name="dateValiditeRemise" th:id="'validite-' + ${d.id}" value="">
@@ -235,7 +246,86 @@
         </div>
         <th:block th:replace="~{fragments/pagination :: server(${currentPagePath}, 'page')}"></th:block>
       </div>
+
+    <!-- ===== SECTION FICHIERS B2 ===== -->
+    <div class="page-section-card" style="padding:0; overflow:hidden; margin-top:24px;">
+      <div class="table-toolbar">
+        <span class="toolbar-title">Fichiers — Gestion des remises</span>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <th:block th:if="${!remIsRoot}">
+            <a th:href="@{/menu/facturation/gestion-remises(remFilesPrefix=${remFileParentPrefix})}"
+               class="btn-table-action debloque" style="text-decoration:none;">← Retour</a>
+          </th:block>
+          <span class="pagination-info" th:if="${remFolderView.enabled}"
+                th:text="${remFolderView.subfolders.size() + remFolderView.files.size()} + ' élément(s)'"></span>
+        </div>
+      </div>
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Nom</th>
+              <th>Clé / Chemin</th>
+              <th>Taille</th>
+              <th>Dernière modification</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:if="${!remFolderView.enabled}">
+              <td colspan="5" style="text-align:center; color:#94a3b8; padding:32px;" th:text="${remFolderView.message}"></td>
+            </tr>
+            <tr th:each="folder : ${remFolderView.subfolders}">
+              <td>
+                <a th:href="@{/menu/facturation/gestion-remises(remFilesPrefix=${folder.prefix})}"
+                   style="display:inline-flex; align-items:center; gap:8px; color:#6366f1; text-decoration:none; font-weight:600;">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="#e0e7ff" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                  </svg>
+                  <span th:text="${folder.name}"></span>
+                </a>
+              </td>
+              <td style="font-family:monospace; font-size:12px; color:#94a3b8;" th:text="${folder.prefix}"></td>
+              <td style="color:#94a3b8;">—</td>
+              <td style="color:#94a3b8;">—</td>
+              <td>
+                <a th:href="@{/menu/facturation/gestion-remises(remFilesPrefix=${folder.prefix})}"
+                   class="btn-table-action debloque" style="text-decoration:none;">Ouvrir</a>
+              </td>
+            </tr>
+            <tr th:if="${remFolderView.enabled and #lists.isEmpty(remFolderView.subfolders) and #lists.isEmpty(remFolderView.files)}">
+              <td colspan="5" style="text-align:center; color:#94a3b8; padding:32px;">Ce dossier est vide.</td>
+            </tr>
+            <tr th:each="file : ${remFolderView.files}">
+              <td style="font-weight:600;">
+                <div style="display:inline-flex; align-items:center; gap:8px;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                  </svg>
+                  <span th:text="${file.fileName}"></span>
+                </div>
+              </td>
+              <td style="font-family:monospace; font-size:12px; color:#64748b;" th:text="${file.key}"></td>
+              <td th:text="${file.sizeLabel}"></td>
+              <td th:text="${file.lastModifiedLabel}"></td>
+              <td style="white-space:nowrap; display:flex; gap:6px; align-items:center;">
+                <a th:href="${file.viewUrl}" target="_blank" rel="noopener noreferrer"
+                   class="btn-table-action debloque" style="text-decoration:none;">Ouvrir</a>
+                <a th:href="${file.downloadUrl}" target="_blank" rel="noopener noreferrer"
+                   class="btn-table-action" style="text-decoration:none; background:#eef2ff; color:#4338ca;">Télécharger</a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div th:if="${remFolderView.enabled}" style="padding:10px 16px; font-size:12px; color:#94a3b8; border-top:1px solid rgba(148,163,184,0.15);">
+        Liens pré-signés actifs pendant <span th:text="${remFolderView.presignDurationMinutes}">15</span> minute(s).
+      </div>
     </div>
+
+    </div>
+
   </main>
 </div>
 

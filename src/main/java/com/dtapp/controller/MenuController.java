@@ -11,6 +11,7 @@ import com.dtapp.repository.RattachementBlRepository;
 import com.dtapp.repository.SatisfactionReponseRepository;
 import com.dtapp.repository.TiersUnifyRepository;
 import com.dtapp.repository.UserRepository;
+import com.dtapp.service.B2StorageService;
 import com.dtapp.service.BulkInsertService;
 import com.dtapp.service.EmailService;
 import com.dtapp.util.PaginationUtils;
@@ -50,6 +51,7 @@ public class MenuController {
     private final RapportSuiviVidesRepository rapportSuiviVidesRepository;
     private final EmailService emailService;
     private final BulkInsertService bulkInsertService;
+    private final B2StorageService b2StorageService;
 
     public MenuController(UserRepository userRepository,
                           RattachementBlRepository rattachementBlRepository,
@@ -58,7 +60,8 @@ public class MenuController {
                           TiersUnifyRepository tiersUnifyRepository,
                           RapportSuiviVidesRepository rapportSuiviVidesRepository,
                           EmailService emailService,
-                          BulkInsertService bulkInsertService) {
+                          BulkInsertService bulkInsertService,
+                          B2StorageService b2StorageService) {
         this.userRepository = userRepository;
         this.rattachementBlRepository = rattachementBlRepository;
         this.satisfactionReponseRepository = satisfactionReponseRepository;
@@ -67,6 +70,7 @@ public class MenuController {
         this.rapportSuiviVidesRepository = rapportSuiviVidesRepository;
         this.emailService = emailService;
         this.bulkInsertService = bulkInsertService;
+        this.b2StorageService = b2StorageService;
     }
 
     @GetMapping("/menu")
@@ -184,7 +188,7 @@ public class MenuController {
                                            @RequestParam(required = false) String filterStatut,
                                            Model model, Authentication auth) {
         return renderRemisesPage(model, auth, "Direction Generale", "/menu/direction-generale", page,
-                size, filterDate, filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut);
+                size, filterDate, filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut, REM_ROOT);
     }
 
     @GetMapping("/menu/direction-financiere/gestion-remises")
@@ -199,7 +203,7 @@ public class MenuController {
                                              @RequestParam(required = false) String filterStatut,
                                              Model model, Authentication auth) {
         return renderRemisesPage(model, auth, "Direction Financiere", "/menu/direction-financiere", page,
-                size, filterDate, filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut);
+                size, filterDate, filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut, REM_ROOT);
     }
 
     @GetMapping("/menu/direction-exploitation/gestion-remises")
@@ -214,7 +218,7 @@ public class MenuController {
                                                @RequestParam(required = false) String filterStatut,
                                                Model model, Authentication auth) {
         return renderRemisesPage(model, auth, "Direction Exploitation", "/menu/direction-exploitation", page,
-                size, filterDate, filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut);
+                size, filterDate, filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut, REM_ROOT);
     }
 
     @GetMapping("/menu/facturation/ies")
@@ -242,10 +246,14 @@ public class MenuController {
                                      @RequestParam(required = false) String filterBl,
                                      @RequestParam(required = false) String filterMaison,
                                      @RequestParam(required = false) String filterStatut,
+                                     @RequestParam(defaultValue = "Gestion_des_remises") String remFilesPrefix,
                                      Model model, Authentication auth) {
         return renderRemisesPage(model, auth, "Facturation", "/menu/facturation", page,
-                size, filterDate, filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut);
+                size, filterDate, filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut, remFilesPrefix);
     }
+
+    private static final String VAL_ROOT = "Gestion_des_validations";
+    private static final String REM_ROOT = "Gestion_des_remises";
 
     @GetMapping("/menu/facturation/gestion-validations")
     public String facturationValidations(@RequestParam(defaultValue = "0") int page,
@@ -257,6 +265,7 @@ public class MenuController {
                                          @RequestParam(required = false) String filterBl,
                                          @RequestParam(required = false) String filterMaison,
                                          @RequestParam(required = false) String filterStatut,
+                                         @RequestParam(defaultValue = "Gestion_des_validations") String valFilesPrefix,
                                          Model model, Authentication auth) {
         User loggedUser = userRepository.findByEmail(auth.getName()).orElseThrow();
         Set<String> roles = auth.getAuthorities().stream()
@@ -264,8 +273,14 @@ public class MenuController {
         boolean admin = roles.contains("ROLE_ADMIN");
         Page<RattachementBl> demandesPage = fetchBls("FACTURATION", filterDate,
                 filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut, page, size);
+        List<RattachementBl> demandes = demandesPage.getContent();
+
+        // Sécurité : restreindre la navigation au dossier racine Gestion_des_validations
+        if (!valFilesPrefix.startsWith(VAL_ROOT)) valFilesPrefix = VAL_ROOT;
+        B2StorageService.FolderView valFolderView = b2StorageService.listFolder(valFilesPrefix);
+
         model.addAttribute("loggedUser", loggedUser);
-        model.addAttribute("demandes", demandesPage.getContent());
+        model.addAttribute("demandes", demandes);
         PaginationUtils.addPageAttributes(model, demandesPage);
         model.addAttribute("filterDate",   filterDate   != null ? filterDate   : "");
         model.addAttribute("filterNom",    filterNom    != null ? filterNom    : "");
@@ -279,6 +294,10 @@ public class MenuController {
         model.addAttribute("currentPagePath", "/menu/facturation/gestion-validations");
         model.addAttribute("isAdmin", admin);
         model.addAttribute("sidebarMenuUrl", admin ? "/menu" : "/menu/facturation");
+        model.addAttribute("valFolderView", valFolderView);
+        model.addAttribute("valFilesPrefix", valFilesPrefix);
+        model.addAttribute("valFileParentPrefix", valFilesPrefix.equals(VAL_ROOT) ? "" : valFilesPrefix.contains("/") ? valFilesPrefix.substring(0, valFilesPrefix.lastIndexOf('/', valFilesPrefix.length() - 2) + 1) : VAL_ROOT);
+        model.addAttribute("valIsRoot", valFilesPrefix.equals(VAL_ROOT) || valFilesPrefix.equals(VAL_ROOT + "/"));
         return "validations/index";
     }
 
@@ -1200,7 +1219,8 @@ public class MenuController {
                                      String filterEmail,
                                      String filterBl,
                                      String filterMaison,
-                                     String filterStatut) {
+                                     String filterStatut,
+                                     String remFilesPrefix) {
         User loggedUser = userRepository.findByEmail(auth.getName()).orElseThrow();
         Set<String> roles = auth.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority).collect(Collectors.toSet());
@@ -1208,8 +1228,13 @@ public class MenuController {
         String currentPagePath = parentMenuPath + "/gestion-remises";
         Page<RattachementBl> demandesPage = fetchBls("REMISE", filterDate,
                 filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut, page, size);
+        List<RattachementBl> demandes = demandesPage.getContent();
+
+        if (!remFilesPrefix.startsWith(REM_ROOT)) remFilesPrefix = REM_ROOT;
+        B2StorageService.FolderView remFolderView = b2StorageService.listFolder(remFilesPrefix);
+
         model.addAttribute("loggedUser", loggedUser);
-        model.addAttribute("demandes", demandesPage.getContent());
+        model.addAttribute("demandes", demandes);
         PaginationUtils.addPageAttributes(model, demandesPage);
         model.addAttribute("filterDate",   filterDate   != null ? filterDate   : "");
         model.addAttribute("filterNom",    filterNom    != null ? filterNom    : "");
@@ -1225,6 +1250,10 @@ public class MenuController {
         model.addAttribute("isDirection", isDirection(roles));
         model.addAttribute("isAdmin", admin);
         model.addAttribute("sidebarMenuUrl", admin ? "/menu" : parentMenuPath);
+        model.addAttribute("remFolderView", remFolderView);
+        model.addAttribute("remFilesPrefix", remFilesPrefix);
+        model.addAttribute("remFileParentPrefix", remFilesPrefix.equals(REM_ROOT) ? "" : remFilesPrefix.contains("/") ? remFilesPrefix.substring(0, remFilesPrefix.lastIndexOf('/', remFilesPrefix.length() - 2) + 1) : REM_ROOT);
+        model.addAttribute("remIsRoot", remFilesPrefix.equals(REM_ROOT) || remFilesPrefix.equals(REM_ROOT + "/"));
         return "remises/index";
     }
 }

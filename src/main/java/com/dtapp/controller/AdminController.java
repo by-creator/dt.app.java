@@ -261,6 +261,8 @@ public class AdminController {
         model.addAttribute("fileSearch", defaultString(fileSearch));
         model.addAttribute("filePrefix", filePrefix);
         model.addAttribute("fileBreadcrumb", buildBreadcrumb(filePrefix));
+        model.addAttribute("fileParentPrefix", parentPrefix(filePrefix));
+        model.addAttribute("fileCurrentLabel", currentFolderLabel(filePrefix));
         PaginationUtils.addPageAttributes(model, filesPageData, "files");
 
         Page<com.dtapp.entity.AuditLog> auditPageData = auditLogRepository.search(
@@ -302,6 +304,20 @@ public class AdminController {
                 .replaceAll("\\p{M}", "")
                 .toLowerCase()
                 .trim();
+    }
+
+    private String parentPrefix(String prefix) {
+        if (prefix == null || prefix.isBlank()) return "";
+        String p = prefix.endsWith("/") ? prefix.substring(0, prefix.length() - 1) : prefix;
+        int idx = p.lastIndexOf('/');
+        return idx >= 0 ? p.substring(0, idx + 1) : "";
+    }
+
+    private String currentFolderLabel(String prefix) {
+        if (prefix == null || prefix.isBlank()) return "Racine";
+        String p = prefix.endsWith("/") ? prefix.substring(0, prefix.length() - 1) : prefix;
+        int idx = p.lastIndexOf('/');
+        return idx >= 0 ? p.substring(idx + 1) : p;
     }
 
     /** Builds breadcrumb segments for the files tab. Each entry: {label, prefix}. */
@@ -362,6 +378,26 @@ public class AdminController {
         } catch (Exception e) {
             log.error("Erreur création dossier B2", e);
             ra.addFlashAttribute("error", "Erreur lors de la création : " + e.getMessage());
+        }
+        return "redirect:/admin?tab=files&filePrefix=" + filePrefix;
+    }
+
+    @PostMapping("/files/delete")
+    public String deleteFileOrFolder(@RequestParam String key,
+                                     @RequestParam(defaultValue = "") String filePrefix,
+                                     @RequestParam(defaultValue = "false") boolean recursive,
+                                     RedirectAttributes ra) {
+        try {
+            if (key.endsWith("/")) {
+                int n = b2StorageService.deletePrefix(key);
+                ra.addFlashAttribute("success", "Dossier supprimé (" + n + " objet(s) effacé(s)).");
+            } else {
+                b2StorageService.deleteObject(key);
+                ra.addFlashAttribute("success", "Fichier supprimé.");
+            }
+        } catch (Exception e) {
+            log.error("Erreur suppression B2", e);
+            ra.addFlashAttribute("error", "Erreur lors de la suppression : " + e.getMessage());
         }
         return "redirect:/admin?tab=files&filePrefix=" + filePrefix;
     }

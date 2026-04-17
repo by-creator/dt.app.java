@@ -945,22 +945,6 @@
         <!-- Actions : breadcrumb + upload + mkdir -->
         <div th:if="${folderView.enabled}" class="page-section-card" style="margin-bottom:28px; padding:20px 24px;">
 
-          <!-- Breadcrumb -->
-          <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:20px; font-size:13px;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
-            </svg>
-            <th:block th:each="crumb, s : ${fileBreadcrumb}">
-              <span th:if="!s.last">
-                <a th:href="@{/admin(tab='files',filePrefix=${crumb['prefix']})}"
-                   style="color:#6366f1; text-decoration:none; font-weight:500;"
-                   th:text="${crumb['label']}">Racine</a>
-              </span>
-              <span th:if="s.last" style="font-weight:700; color:#0f172a;" th:text="${crumb['label']}">Racine</span>
-              <span th:if="!s.last" style="color:#cbd5e1;">›</span>
-            </th:block>
-          </div>
-
           <!-- Upload + Mkdir -->
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
 
@@ -1023,9 +1007,21 @@
         <!-- Table fichiers / dossiers -->
         <div class="page-section-card" style="padding:0; overflow:hidden;">
           <div class="table-toolbar">
-            <span class="toolbar-title">
-              <span th:if="${filePrefix.isEmpty()}">Racine du bucket</span>
-              <span th:if="${!filePrefix.isEmpty()}" style="font-family:monospace; font-size:13px;" th:text="${filePrefix}"></span>
+            <span class="toolbar-title" style="display:flex; align-items:center; gap:10px;">
+              <a th:if="${!filePrefix.isEmpty()}"
+                 th:href="@{/admin(tab='files',filePrefix=${fileParentPrefix})}"
+                 style="display:inline-flex; align-items:center; gap:5px; padding:4px 12px; border-radius:7px; background:#f1f5f9; color:#475569; font-size:12px; font-weight:600; text-decoration:none; flex-shrink:0;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="15 18 9 12 15 6"/>
+                </svg>
+                Retour
+              </a>
+              <span style="display:inline-flex; align-items:center; gap:6px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" th:if="${!filePrefix.isEmpty()}" fill="#e0e7ff" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                </svg>
+                <span th:text="${fileCurrentLabel}">Racine du bucket</span>
+              </span>
             </span>
             <form th:action="@{/admin}" method="get" style="display:flex; align-items:center; gap:8px;">
               <input type="hidden" name="tab" value="files">
@@ -1078,11 +1074,23 @@
                   <td style="font-family:monospace; font-size:12px; color:#94a3b8;" th:text="${folder.prefix}"></td>
                   <td style="color:#94a3b8;">—</td>
                   <td style="color:#94a3b8;">—</td>
-                  <td>
+                  <td style="white-space:nowrap; display:flex; gap:6px; align-items:center;">
                     <a th:href="@{/admin(tab='files',filePrefix=${folder.prefix})}"
                        class="btn-table-action debloque" style="text-decoration:none;">
                       Ouvrir
                     </a>
+                    <form th:action="@{/admin/files/delete}" method="post" style="margin:0;"
+                          th:id="'del-folder-' + ${folderStat.index}">
+                      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                      <input type="hidden" name="key" th:value="${folder.prefix}">
+                      <input type="hidden" name="filePrefix" th:value="${filePrefix}">
+                      <button type="button" class="btn-table-action bloquer"
+                              th:data-idx="${folderStat.index}"
+                              th:data-name="${folder.name}"
+                              onclick="confirmDelFolder(this.dataset.idx, this.dataset.name)">
+                        Supprimer
+                      </button>
+                    </form>
                   </td>
                 </tr>
 
@@ -1105,7 +1113,7 @@
                   <td style="font-family:monospace; font-size:12px; color:#64748b;" th:text="${file.key}">folder/doc.pdf</td>
                   <td th:text="${file.sizeLabel}">10 KB</td>
                   <td th:text="${file.lastModifiedLabel}">15/04/2026 10:00</td>
-                  <td style="white-space:nowrap;">
+                  <td style="white-space:nowrap; display:flex; gap:6px; align-items:center;">
                     <a th:href="${file.viewUrl}" target="_blank" rel="noopener noreferrer"
                        class="btn-table-action debloque" style="text-decoration:none;">
                       Ouvrir
@@ -1114,6 +1122,18 @@
                        class="btn-table-action" style="text-decoration:none; background:#eef2ff; color:#4338ca; border-color:#c7d2fe;">
                       Télécharger
                     </a>
+                    <form th:action="@{/admin/files/delete}" method="post" style="margin:0;"
+                          th:id="'del-file-' + ${fileStat.index}">
+                      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                      <input type="hidden" name="key" th:value="${file.key}">
+                      <input type="hidden" name="filePrefix" th:value="${filePrefix}">
+                      <button type="button" class="btn-table-action bloquer"
+                              th:data-idx="${fileStat.index}"
+                              th:data-name="${file.fileName}"
+                              onclick="confirmDelFile(this.dataset.idx, this.dataset.name)">
+                        Supprimer
+                      </button>
+                    </form>
                   </td>
                 </tr>
 
@@ -1393,6 +1413,18 @@
         label.textContent = 'Convertir et télécharger';
       });
   });
+
+  // ===== B2 DELETE CONFIRMATIONS =====
+  function confirmDelFile(idx, name) {
+    if (confirm('Supprimer le fichier « ' + name + ' » ? Cette action est irréversible.')) {
+      document.getElementById('del-file-' + idx).submit();
+    }
+  }
+  function confirmDelFolder(idx, name) {
+    if (confirm('Supprimer le dossier « ' + name + ' » et tout son contenu ? Cette action est irréversible.')) {
+      document.getElementById('del-folder-' + idx).submit();
+    }
+  }
 </script>
 
 </body>

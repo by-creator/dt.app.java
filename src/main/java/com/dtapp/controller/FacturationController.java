@@ -21,6 +21,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -77,8 +78,9 @@ public class FacturationController {
         Page<RattachementBl> demandesPage = fetchBls("FACTURATION", filterDate,
                 filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut, page, size);
 
+        List<RattachementBl> demandes = demandesPage.getContent();
         model.addAttribute("loggedUser", loggedUser);
-        model.addAttribute("demandes", demandesPage.getContent());
+        model.addAttribute("demandes", demandes);
         PaginationUtils.addPageAttributes(model, demandesPage);
         model.addAttribute("filterDate", filterDate != null ? filterDate : "");
         model.addAttribute("filterNom", filterNom != null ? filterNom : "");
@@ -278,8 +280,9 @@ public class FacturationController {
         Page<RattachementBl> demandesPage = fetchBls("REMISE", filterDate,
                 filterNom, filterPrenom, filterEmail, filterBl, filterMaison, filterStatut, page, size);
 
+        List<RattachementBl> demandes = demandesPage.getContent();
         model.addAttribute("loggedUser", loggedUser);
-        model.addAttribute("demandes", demandesPage.getContent());
+        model.addAttribute("demandes", demandes);
         PaginationUtils.addPageAttributes(model, demandesPage);
         model.addAttribute("filterDate", filterDate != null ? filterDate : "");
         model.addAttribute("filterNom", filterNom != null ? filterNom : "");

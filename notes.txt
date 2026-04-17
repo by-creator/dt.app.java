@@ -1,3 +1,6 @@
-Je souhaite que pour les routes /demat/validation et /demat/remise lors de 
-l'envoi d'une demande que l'on puisse pouvoir enregistrer les fichiers upload
-au niveau 
+au niveau de cette route /menu/facturation/gestion-remises je souhaite que si le 
+le statut de la demande est  EN_ATTENTE_DIRECTION et que le user connecté a pour 
+ROLE_FACTURATION que les boutons Valider / Rejeter ne puissent plus s'afficher
+
+ensuite vérifier la concordance des filtres au niveau de STATUT car quand je filtre
+ce sur Att. Direction rien ne s'affiche
