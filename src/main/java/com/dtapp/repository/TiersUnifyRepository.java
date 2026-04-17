@@ -24,4 +24,13 @@ public interface TiersUnifyRepository extends JpaRepository<TiersUnify, Long> {
                    "(compte_ipaki NOT LIKE 'SN00%' AND compte_ipaki NOT LIKE 'ND%' AND compte_ipaki NOT REGEXP '^[0-9]')",
            nativeQuery = true)
     int deleteInvalidCompteIpaki();
+
+    @Query("SELECT LOWER(t.raisonSociale) FROM TiersUnify t WHERE t.raisonSociale IS NOT NULL AND t.raisonSociale <> ''")
+    java.util.List<String> findAllRaisonSocialesLower();
+
+    @Query("SELECT LOWER(t.compteIpaki) FROM TiersUnify t WHERE t.compteIpaki IS NOT NULL AND t.compteIpaki <> ''")
+    java.util.List<String> findAllComptesIpakiLower();
+
+    @Query("SELECT LOWER(t.compteNeptune) FROM TiersUnify t WHERE t.compteNeptune IS NOT NULL AND t.compteNeptune <> ''")
+    java.util.List<String> findAllComptesNeptuneLower();
 }

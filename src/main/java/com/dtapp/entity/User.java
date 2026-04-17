@@ -17,7 +17,7 @@ import java.util.Set;
 @Setter
 @NoArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@ToString(exclude = {"compagnie", "authorities"})
+@ToString(exclude = {"password", "compagnie", "authorities"})
 public class User {
 
     @Id

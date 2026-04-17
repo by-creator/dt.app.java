@@ -599,7 +599,15 @@ public class MenuController {
             return "redirect:/menu/facturation/unify?tab=admin";
         }
         String originalName = java.util.Objects.toString(file.getOriginalFilename(), "").toLowerCase();
+
+        // Charger les valeurs existantes en mémoire pour détecter les doublons efficacement
+        java.util.Set<String> existingRaisons   = new java.util.HashSet<>(tiersUnifyRepository.findAllRaisonSocialesLower());
+        java.util.Set<String> existingIpakis    = new java.util.HashSet<>(tiersUnifyRepository.findAllComptesIpakiLower());
+        java.util.Set<String> existingNeptunes  = new java.util.HashSet<>(tiersUnifyRepository.findAllComptesNeptuneLower());
+
         java.util.List<TiersUnify> batch = new java.util.ArrayList<>();
+        int[] skipped = {0};
+
         try {
             if (originalName.endsWith(".csv")) {
                 // CSV parsing — supports comma or semicolon delimiter
@@ -612,10 +620,17 @@ public class MenuController {
                         if (line.isBlank()) continue;
                         String delimiter = line.contains(";") ? ";" : ",";
                         String[] cols = line.split(delimiter, -1);
+                        String raison   = cols.length > 0 ? cols[0].trim() : null;
+                        String ipaki    = cols.length > 1 ? cols[1].trim() : null;
+                        String neptune  = cols.length > 2 ? cols[2].trim() : null;
+                        if (isDuplicateTiers(raison, ipaki, neptune, existingRaisons, existingIpakis, existingNeptunes)) {
+                            skipped[0]++;
+                            continue;
+                        }
                         TiersUnify t = new TiersUnify();
-                        t.setRaisonSociale(cols.length > 0 ? cols[0].trim() : null);
-                        t.setCompteIpaki(cols.length > 1 ? cols[1].trim() : null);
-                        t.setCompteNeptune(cols.length > 2 ? cols[2].trim() : null);
+                        t.setRaisonSociale(raison);
+                        t.setCompteIpaki(ipaki);
+                        t.setCompteNeptune(neptune);
                         batch.add(t);
                     }
                 }
@@ -644,10 +659,17 @@ public class MenuController {
                                 @Override
                                 public void endRow(int rowNum) {
                                     if (rowNum == 0) return; // skip header
+                                    String raison  = rowData[0];
+                                    String ipaki   = rowData[1];
+                                    String neptune = rowData[2];
+                                    if (isDuplicateTiers(raison, ipaki, neptune, existingRaisons, existingIpakis, existingNeptunes)) {
+                                        skipped[0]++;
+                                        return;
+                                    }
                                     TiersUnify t = new TiersUnify();
-                                    t.setRaisonSociale(rowData[0]);
-                                    t.setCompteIpaki(rowData[1]);
-                                    t.setCompteNeptune(rowData[2]);
+                                    t.setRaisonSociale(raison);
+                                    t.setCompteIpaki(ipaki);
+                                    t.setCompteNeptune(neptune);
                                     batch.add(t);
                                 }
 
@@ -682,9 +704,21 @@ public class MenuController {
         if (!batch.isEmpty()) {
             bulkInsertService.bulkInsertTiersUnify(batch);
         }
-        ra.addFlashAttribute("successMsg",
-                batch.size() + " tiers en cours d'import en arrière-plan. Actualisez dans quelques instants.");
+        String msg = batch.size() + " tiers en cours d'import en arrière-plan. Actualisez dans quelques instants.";
+        if (skipped[0] > 0) {
+            msg += " " + skipped[0] + " doublon" + (skipped[0] > 1 ? "s ignorés" : " ignoré") + " (raison sociale, compte Ipaki ou Neptune déjà existant).";
+        }
+        ra.addFlashAttribute("successMsg", msg);
         return "redirect:/menu/facturation/unify?tab=admin";
+    }
+
+    private boolean isDuplicateTiers(String raison, String ipaki, String neptune,
+                                     java.util.Set<String> existingRaisons,
+                                     java.util.Set<String> existingIpakis,
+                                     java.util.Set<String> existingNeptunes) {
+        return (raison  != null && !raison.isBlank()  && existingRaisons.contains(raison.toLowerCase())) ||
+               (ipaki   != null && !ipaki.isBlank()   && existingIpakis.contains(ipaki.toLowerCase())) ||
+               (neptune != null && !neptune.isBlank() && existingNeptunes.contains(neptune.toLowerCase()));
     }
 
     @PostMapping("/menu/facturation/gestion-rapports/admin")

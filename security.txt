@@ -1,0 +1,223 @@
+================================================================================
+  POLITIQUE DE SECURITE — DT APP (DAKAR TERMINAL)
+  Application Spring Boot 3.5.13 — Java 21
+  Date de redaction : 2026-04-17
+================================================================================
+
+
+1. AUTHENTIFICATION
+───────────────────
+  Mecanisme       : Authentification par formulaire (Spring Security form login)
+  Identifiant     : Adresse email (champ "email")
+  Mot de passe    : Champ "password"
+  Encodage        : BCryptPasswordEncoder (force par defaut : 10 rounds)
+  Succes          : Redirection vers /dashboard
+  Echec           : Redirection vers /login?error (aucun detail expose)
+  Classe          : com.dtapp.config.SecurityConfig
+                    com.dtapp.service.UserDetailsServiceImpl
+
+  Remember-me
+  ───────────
+  Parametre       : "remember-me" (checkbox login)
+  Duree           : 2 heures (7 200 secondes)
+  Cle de signature: Externalisee via variable d'environnement REMEMBER_ME_KEY
+                    (fallback local : dt-app-remember-me-key-change-in-prod)
+  IMPORTANT       : En production, definir REMEMBER_ME_KEY avec une valeur
+                    aleatoire longue (min. 32 caracteres, ex: openssl rand -hex 32)
+
+  Mots de passe utilisateurs
+  ──────────────────────────
+  Validation min. : 8 caracteres (ParametresController)
+  Verification    : Ancien mot de passe verifie avant modification
+  Confirmation    : Double saisie obligatoire
+  Stockage        : Hash BCrypt uniquement — aucun mot de passe en clair en base
+
+
+2. AUTORISATION (CONTROLE D'ACCES)
+───────────────────────────────────
+  Modele          : Role-Based Access Control (RBAC)
+  Annotation      : @EnableMethodSecurity active (sécurité au niveau des methodes)
+
+  Routes publiques (sans authentification) :
+    - /login
+    - /css/**, /js/**, /img/**, /images/**
+    - /gfa/display, /gfa/ticket/**, /api/gfa/display/state
+    - /demat/**
+    - /teks, /teks/**
+    - /actuator/health, /actuator/health/**, /api/health/**
+
+  Toutes les autres routes : authentification obligatoire (.anyRequest().authenticated())
+
+  Roles disponibles (15) :
+    ROLE_ADMIN, ROLE_DIRECTION_GENERALE, ROLE_DIRECTION_FINANCIERE,
+    ROLE_DIRECTION_EXPLOITATION, ROLE_INFORMATIQUE, ROLE_FACTURATION,
+    ROLE_CAISSE, ROLE_CONTROLE_DE_GESTION, ROLE_COMPTABILITE,
+    ROLE_SERVICE_GENERAUX, ROLE_PLANIFICATION, ROLE_RESSOURCES_HUMAINES,
+    ROLE_JURIDIQUE, ROLE_OPERATIONS, ROLE_QHSE, ROLE_DOUANE
+
+  Onglets/fonctions reserves a ROLE_ADMIN :
+    - Onglet Admin (/facturation/unify?tab=admin)
+    - Gestion des utilisateurs (/admin/utilisateurs)
+    - Gestion des autorites (/admin/autorites)
+
+
+3. EN-TETES HTTP DE SECURITE
+─────────────────────────────
+  Tous configures dans SecurityConfig.filterChain() :
+
+  X-XSS-Protection              : 1; mode=block
+  X-Content-Type-Options        : nosniff
+  Strict-Transport-Security     : max-age=31536000; includeSubDomains
+  X-Frame-Options               : SAMEORIGIN
+  Content-Security-Policy       :
+    default-src 'self';
+    script-src  'self' 'unsafe-inline' https://cdn.jsdelivr.net;
+    style-src   'self' 'unsafe-inline';
+    img-src     'self' data: blob:;
+    font-src    'self';
+    frame-src   'self';
+    connect-src 'self' wss:;
+    object-src  'none';
+
+
+4. GESTION DES SESSIONS
+────────────────────────
+  Cookie JSESSIONID
+    http-only   : true  (inaccessible via JavaScript)
+    same-site   : strict (protection CSRF cross-origin)
+    secure      : a activer en production avec HTTPS
+
+  Timeout         : 30 minutes d'inactivite
+  Sessions max    : 5 sessions simultanees par utilisateur
+  Deconnexion     : Invalide la session + supprime les cookies
+                    JSESSIONID et remember-me
+
+  CSRF            : Protection activee par defaut (Spring Security 6)
+                    Token CSRF inclus dans tous les formulaires Thymeleaf
+                    via th:name="${_csrf.parameterName}" th:value="${_csrf.token}"
+
+
+5. GESTION DES SECRETS
+───────────────────────
+  Principe        : Aucun secret en dur dans le code source versionne
+                    Toutes les cles sensibles lisent d'abord la variable
+                    d'environnement, puis un fallback local si absent
+
+  Variable               | Propriete Spring                        | Utilisation
+  ───────────────────────┼─────────────────────────────────────────┼─────────────────────
+  B2_ACCESS_KEY          | spring.cloud.aws.credentials.access-key | Backblaze B2 Storage
+  B2_SECRET_KEY          | spring.cloud.aws.credentials.secret-key | Backblaze B2 Storage
+  MAIL_PASSWORD          | spring.mail.password                    | Gmail SMTP
+  PUSHER_SECRET          | pusher.secret                           | Pusher WebSocket
+  REMEMBER_ME_KEY        | app.security.remember-me-key            | Signature remember-me
+  MYSQL_HOST/PORT/DB/... | spring.datasource.*                     | Base de donnees (prod)
+  APP_BASE_URL           | app.base-url                            | URLs dans les emails
+
+  Environnement local    : fallbacks dans application.properties
+  Production (Heroku)    : Config Vars Heroku — jamais dans le code
+                           Dashboard : App > Settings > Config Vars
+                           CLI       : heroku config:set CLE=valeur
+
+
+6. AUDIT ET TRAÇABILITE
+────────────────────────
+  Classe          : com.dtapp.config.AuditLogFilter
+  Positionnement  : Filtre apres SecurityContextHolderFilter
+
+  Ce qui est trace pour chaque requete authentifiee :
+    - Utilisateur connecte (email)
+    - Methode HTTP + URL + parametres de requete
+    - Adresse IP source
+    - Status de reponse HTTP
+    - Duree d'execution
+    - Payload des requetes POST (tronque a 8 000 caracteres)
+
+  Stockage        : Table audit_logs en base de donnees
+  Echec silencieux: Les erreurs de persistence d'audit ne bloquent pas
+                    la requete metier (catch Exception ignore)
+
+  Niveaux de log  :
+    com.dtapp             : INFO
+    org.springframework.web: WARN
+    org.hibernate         : ERROR
+    org.flywaydb          : ERROR
+  Fichier de log  : logs/dtapp.log
+
+
+7. PROTECTION DES DONNEES SENSIBLES
+─────────────────────────────────────
+  Entite User
+    - Champ password exclu de @ToString (ne peut pas fuiter dans les logs)
+    - Champ password exclu du DTO UserViewDto (non expose en vue)
+
+  DataInitializer
+    - Creation du compte admin logguee sans le mot de passe
+
+  Requetes JPA
+    - Utilisation systematique de requetes parametrees (Spring Data JPA)
+    - Protection native contre les injections SQL
+
+
+8. POINTS RESTANTS A AMELIORER (RECOMMANDATIONS)
+──────────────────────────────────────────────────
+  CRITIQUE
+  ────────
+  [ ] Activer HTTPS en production
+      → server.servlet.session.cookie.secure=true
+      → Forcer la redirection HTTP → HTTPS
+      → Sur Heroku : inclure le buildpack SSL ou utiliser un domaine custom
+
+  [ ] Rotation des mots de passe par defaut
+      → Forcer le changement de mot de passe a la premiere connexion
+        (ajouter champ mustChangePassword sur User)
+
+  HAUTE PRIORITE
+  ──────────────
+  [ ] Limitation des tentatives de connexion (brute force)
+      → Integrer Bucket4j ou Spring Security's built-in account locking
+      → Verrouillage temporaire apres N echecs consecutifs
+
+  [ ] Authentification a deux facteurs (2FA/MFA)
+      → TOTP via Google Authenticator (spring-security-totp)
+      → Recommande pour les comptes ROLE_ADMIN et ROLE_DIRECTION_*
+
+  [ ] Validation de complexite des mots de passe
+      → Imposer : majuscule + minuscule + chiffre + caractere special
+      → Rejeter les mots de passe trop communs
+
+  MOYENNE PRIORITE
+  ────────────────
+  [ ] Chiffrement des mots de passe WiFi (GfaWifiSettings.password)
+      → Utiliser @Convert avec AttributeEncryptor (AES-256)
+
+  [ ] Pages d'erreur personnalisees
+      → Creer /error/403.html et /error/401.html
+      → Eviter que Spring expose des details techniques
+
+  [ ] Audit des changements de privileges
+      → Logger quel utilisateur a modifie quelle autorite et quand
+
+  [ ] Scan automatique des dependances
+      → Ajouter le plugin OWASP Dependency Check dans pom.xml
+      → Executer a chaque build CI/CD
+
+
+9. CONFORMITE
+───────────────
+  OWASP Top 10 — Etat actuel :
+
+  A01 Broken Access Control      : Traite — RBAC + URL patterns + @EnableMethodSecurity
+  A02 Cryptographic Failures     : Partiel — BCrypt OK, HTTPS recommande en prod
+  A03 Injection                  : Traite — JPA requetes parametrees
+  A04 Insecure Design            : Partiel — Pas de limite de tentatives login
+  A05 Security Misconfiguration  : Traite — En-tetes HTTP, logs, secrets externalises
+  A06 Vulnerable Components      : A surveiller — Ajouter OWASP Dependency Check
+  A07 Authentication Failures    : Partiel — Pas de 2FA, pas de lockout
+  A08 Software Integrity Failures: Traite — Flyway migrations versionnees
+  A09 Logging & Monitoring       : Traite — AuditLogFilter sur toutes les requetes
+  A10 SSRF                       : Non applicable — Pas d'appels URL utilisateur
+
+
+================================================================================
+  Genere le 2026-04-17 — DT App Security Review
+================================================================================

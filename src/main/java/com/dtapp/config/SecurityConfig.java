@@ -1,21 +1,29 @@
 package com.dtapp.config;
 
 import com.dtapp.service.UserDetailsServiceImpl;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.header.writers.XXssProtectionHeaderWriter;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final UserDetailsServiceImpl userDetailsService;
     private final AuditLogFilter auditLogFilter;
+
+    @Value("${app.security.remember-me-key:dt-app-remember-me-key-change-in-prod}")
+    private String rememberMeKey;
 
     public SecurityConfig(UserDetailsServiceImpl userDetailsService,
                           AuditLogFilter auditLogFilter) {
@@ -28,6 +36,26 @@ public class SecurityConfig {
         http
             .headers(headers -> headers
                 .frameOptions(frame -> frame.sameOrigin())
+                .xssProtection(xss -> xss.headerValue(XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK))
+                .contentTypeOptions(Customizer.withDefaults())
+                .httpStrictTransportSecurity(hsts -> hsts
+                    .includeSubDomains(true)
+                    .maxAgeInSeconds(31536000)
+                )
+                .contentSecurityPolicy(csp -> csp.policyDirectives(
+                    "default-src 'self'; " +
+                    "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " +
+                    "style-src 'self' 'unsafe-inline'; " +
+                    "img-src 'self' data: blob:; " +
+                    "font-src 'self'; " +
+                    "frame-src 'self'; " +
+                    "connect-src 'self' wss:; " +
+                    "object-src 'none';"
+                ))
+            )
+            .sessionManagement(session -> session
+                .maximumSessions(5)
+                .maxSessionsPreventsLogin(false)
             )
             .authenticationProvider(authenticationProvider())
             .authorizeHttpRequests(authz -> authz
@@ -50,12 +78,14 @@ public class SecurityConfig {
             .logout(logout -> logout
                 .logoutUrl("/logout")
                 .logoutSuccessUrl("/login?logout")
+                .invalidateHttpSession(true)
+                .deleteCookies("JSESSIONID", "remember-me")
                 .permitAll()
             )
             .rememberMe(rm -> rm
-                .key("dt-app-remember-me")
+                .key(rememberMeKey)
                 .rememberMeParameter("remember-me")
-                .tokenValiditySeconds(7 * 24 * 3600)
+                .tokenValiditySeconds(2 * 3600)
             );
 
         return http.build();

@@ -12,6 +12,26 @@
   <style>
     .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px; }
     @media (max-width: 640px) { .form-grid-2 { grid-template-columns: 1fr; } }
+
+    #unify-import-file {
+      height: 52px;
+      padding: 6px 12px;
+      display: flex;
+      align-items: center;
+      line-height: 1.2;
+    }
+    #unify-import-file::file-selector-button {
+      height: 38px;
+      margin: -2px 12px -2px -6px;
+      padding: 0 18px;
+      border: none;
+      border-radius: 12px;
+      background: #6366f1;
+      color: #fff;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -292,13 +312,14 @@
             <p style="margin:0 0 16px; color:#94a3b8; font-size:14px;">Selectionnez un fichier puis lancez l'import.</p>
             <form th:action="@{/menu/facturation/unify/admin/import}" method="post" enctype="multipart/form-data">
               <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-              <div class="form-group" style="margin-bottom:18px;">
-                <label class="form-label" for="unify-import-file">Fichier a importer</label>
-                <input id="unify-import-file" type="file" name="file" class="form-input" accept=".xlsx,.xls,.csv" onchange="updateUnifyFileName(this)">
-                <div id="unifyImportFileName" style="margin-top:10px; color:#94a3b8; font-size:13px;">Aucun fichier selectionne.</div>
+              <div style="display:flex; align-items:flex-end; gap:16px; flex-wrap:wrap; margin-bottom:16px;">
+                <div class="form-group" style="flex:1; min-width:200px; margin-bottom:0;">
+                  <label class="form-label" for="unify-import-file">FICHIER A IMPORTER</label>
+                  <input id="unify-import-file" type="file" name="file" class="form-input" accept=".xlsx,.xls,.csv">
+                </div>
+                <button type="submit" class="btn-debloquer" style="white-space:nowrap; margin-bottom:0;">Importer</button>
               </div>
-              <div class="blocage-actions" style="justify-content:flex-start;">
-                <button type="submit" class="btn-debloquer">Importer</button>
+              <div>
                 <a th:href="@{/menu/facturation/unify/admin/export}" class="btn-actualiser" style="text-decoration:none;">Exporter</a>
               </div>
             </form>
@@ -586,13 +607,6 @@
     document.querySelectorAll('#' + tableId + ' tbody tr').forEach(row => {
       row.style.display = (!q || row.textContent.toLowerCase().includes(q)) ? '' : 'none';
     });
-  }
-
-  function updateUnifyFileName(input) {
-    const target = document.getElementById('unifyImportFileName');
-    if (target) target.textContent = input.files.length > 0
-      ? 'Fichier selectionne : ' + input.files[0].name
-      : 'Aucun fichier selectionne.';
   }
 
   function resetAdminForm() {

@@ -182,7 +182,7 @@ public class DataInitializer implements CommandLineRunner {
                     role.setAuthority("ROLE_ADMIN");
                     authorityRepository.save(role);
 
-                    log.info("Compte admin créé : {} / {} — compagnie : {}", ADMIN_EMAIL, ADMIN_PASSWORD, DEFAULT_COMPAGNIE);
+                    log.info("Compte admin créé : {} — compagnie : {}", ADMIN_EMAIL, DEFAULT_COMPAGNIE);
                 }
         );
 
