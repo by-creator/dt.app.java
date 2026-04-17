@@ -1,4 +1,1 @@
-J'ai fait en sorte que chaque utilisateur connecté en fonction de son authority
-accède à un menu bien défini à la connexion néanmoins je constate que si on tape 
-le lien de la route /menu sur la barre de recherche ou peu imprte où se trouve le lien on accède au menu global 
-sans restriction en fonction de l'autority du user connecté 
+mvn clean package -DskipTests &&  git add . && git commit -m "update" && git push -u origin main

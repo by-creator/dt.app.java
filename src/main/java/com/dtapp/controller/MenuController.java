@@ -75,10 +75,26 @@ public class MenuController {
 
     @GetMapping("/menu")
     public String menu(Model model, Authentication auth) {
+        Set<String> roles = auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority).collect(Collectors.toSet());
+        if (!roles.contains("ROLE_ADMIN")) {
+            String redirect = resolveMenuRedirect(roles);
+            if (redirect != null) return "redirect:" + redirect;
+        }
         User loggedUser = userRepository.findByEmail(auth.getName()).orElseThrow();
         model.addAttribute("loggedUser", loggedUser);
         model.addAttribute("menuView", "root");
         return "menu";
+    }
+
+    private String resolveMenuRedirect(Set<String> roles) {
+        if (roles.contains("ROLE_FACTURATION"))             return "/menu/facturation";
+        if (roles.contains("ROLE_DIRECTION_GENERALE"))      return "/menu/direction-generale";
+        if (roles.contains("ROLE_DIRECTION_FINANCIERE"))    return "/menu/direction-financiere";
+        if (roles.contains("ROLE_DIRECTION_EXPLOITATION"))  return "/menu/direction-exploitation";
+        if (roles.contains("ROLE_PLANIFICATION"))           return "/menu/planification";
+        if (roles.contains("ROLE_INFORMATIQUE"))            return "/menu/informatique";
+        return "/dashboard";
     }
 
     @GetMapping("/menu/dt")
