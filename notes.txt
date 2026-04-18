@@ -1,0 +1,10 @@
+au niveau de cette route /menu/facturation/gestion-validations je souhaite que l'affichage se présente comme suit 
+
+ - un onglet Demandes de validation avec la table Demandes de validation
+ - un onglet Gestion des validations avec la table Gestion des validations
+
+
+au niveau de cette route /menu/facturation/gestion-remises je souhaite que l'affichage se présente comme suit 
+
+ - un onglet Demandes de remise avec la table Demandes de remise
+ - un onglet Gestion des remises avec la table Gestion des remises

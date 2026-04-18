@@ -41,6 +41,29 @@
       .btn-cancel { background: #334155; color: #cbd5e1; }
       .alert-flash { background: #14532d; border-color: #166534; color: #4ade80; }
     }
+
+    /* Harmonisation barre filtres table (zone blanche) */
+    [data-theme="dark"] .page-section-card > div[style*="background:#f8fafc"] {
+      background: #162131 !important;
+      border-bottom: 1px solid rgba(71,85,105,0.45) !important;
+    }
+    [data-theme="dark"] .page-section-card > div[style*="background:#f8fafc"] label {
+      color: #cbd5e1 !important;
+    }
+    [data-theme="dark"] .page-section-card > div[style*="background:#f8fafc"] .table-search-input {
+      background: #0f1926 !important;
+      border-color: #334155 !important;
+      color: #e2e8f0 !important;
+    }
+    [data-theme="dark"] .page-section-card > div[style*="background:#f8fafc"] .table-search-input::placeholder {
+      color: #8aa0bf !important;
+      opacity: 1;
+    }
+    [data-theme="dark"] .page-section-card > div[style*="background:#f8fafc"] .table-search-input:focus {
+      background: #111d2e !important;
+      border-color: #5b7cff !important;
+      box-shadow: 0 0 0 2px rgba(91,124,255,0.2) !important;
+    }
   </style>
 </head>
 <body>
@@ -120,7 +143,23 @@
 
       <div th:if="${successMsg}" class="alert-flash" th:text="${successMsg}"></div>
 
-      <div class="page-section-card" style="padding:0; overflow:hidden;">
+      <div class="subpage-tabs">
+        <a id="tab-demandes" href="javascript:void(0)" onclick="showTab('demandes')" class="subpage-tab">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 12h6"/><path d="M9 16h6"/><path d="M9 8h6"/><path d="M5 3h11l3 3v15H5z"/><path d="M16 3v4h4"/>
+          </svg>
+          Demandes de validation
+        </a>
+        <a id="tab-gestion" href="javascript:void(0)" onclick="showTab('gestion')" class="subpage-tab">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          Gestion des validations
+        </a>
+      </div>
+
+      <div id="pane-demandes" class="tab-pane" style="display:none;">
+      <div class="page-section-card" style="padding:0; overflow:hidden; margin-top:24px;">
         <div class="table-toolbar">
           <span class="toolbar-title">Demandes de validation</span>
           <span class="pagination-info" th:if="${totalItems > 0}"
@@ -225,7 +264,10 @@
       </div>
 
     <!-- ===== SECTION FICHIERS B2 ===== -->
-    <div class="page-section-card" style="padding:0; overflow:hidden; margin-top:24px;">
+      </div>
+
+      <div id="pane-gestion" class="tab-pane" style="display:none;">
+      <div class="page-section-card" style="padding:0; overflow:hidden; margin-top:24px;">
       <div class="table-toolbar">
         <span class="toolbar-title">Fichiers — Gestion des validations</span>
         <div style="display:flex; align-items:center; gap:8px;">
@@ -300,6 +342,7 @@
         Liens pré-signés actifs pendant <span th:text="${valFolderView.presignDurationMinutes}">15</span> minute(s).
       </div>
     </div>
+      </div>
 
     </div>
 
@@ -402,6 +445,47 @@
 
   function closeModal() { document.getElementById('modalRejet').classList.remove('open'); }
   document.getElementById('modalRejet').addEventListener('click', e => { if (e.target === document.getElementById('modalRejet')) closeModal(); });
+
+  function showTab(name) {
+    document.querySelectorAll('.tab-pane').forEach(function(p) { p.style.display = 'none'; });
+    document.querySelectorAll('.subpage-tab').forEach(function(t) { t.classList.remove('active'); });
+    var pane = document.getElementById('pane-' + name);
+    var tab  = document.getElementById('tab-' + name);
+    if (pane) pane.style.display = '';
+    if (tab)  tab.classList.add('active');
+    
+    // Stocker l'onglet actif dans sessionStorage
+    sessionStorage.setItem('validationsActiveTab', name);
+    
+    // Mettre à jour l'URL sans recharger la page
+    if (!window.location.search.includes('tab=' + name)) {
+      var url = new URL(window.location);
+      url.searchParams.set('tab', name);
+      history.replaceState(null, '', url);
+    }
+  }
+
+  // Initialisation: vérifier d'abord sessionStorage, puis l'URL
+  (function() {
+    var storedTab = sessionStorage.getItem('validationsActiveTab');
+    var urlTab = new URLSearchParams(window.location.search).get('tab');
+    var tabToShow = storedTab || urlTab || 'demandes';
+    showTab(tabToShow);
+  })();
+  
+  // Ajouter un paramètre caché aux formulaires pour préserver l'onglet actif
+  document.addEventListener('DOMContentLoaded', function() {
+    var forms = document.querySelectorAll('form');
+    forms.forEach(function(form) {
+      if (!form.querySelector('input[name="tab"]')) {
+        var input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'tab';
+        input.value = sessionStorage.getItem('validationsActiveTab') || 'demandes';
+        form.appendChild(input);
+      }
+    });
+  });
 </script>
 </body>
 </html>

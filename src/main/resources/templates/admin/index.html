@@ -910,25 +910,25 @@
             </div>
           </div>
 
-          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-top:20px;">
-            <div style="padding:16px 18px; border:1px solid rgba(148,163,184,0.18); border-radius:16px; background:#f8fafc;">
-              <div style="font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase;">Bucket</div>
-              <div style="margin-top:6px; font-weight:700; color:#0f172a;"
+          <div class="files-stats-grid">
+            <div class="files-stat-card">
+              <div class="files-stat-label">Bucket</div>
+              <div class="files-stat-value"
                    th:text="${folderView.bucketName != null and !folderView.bucketName.isEmpty() ? folderView.bucketName : 'Non configuré'}">dt-app</div>
             </div>
-            <div style="padding:16px 18px; border:1px solid rgba(148,163,184,0.18); border-radius:16px; background:#f8fafc;">
-              <div style="font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase;">Endpoint</div>
-              <div style="margin-top:6px; font-weight:700; color:#0f172a; word-break:break-word;" th:text="${folderView.endpoint}">—</div>
+            <div class="files-stat-card">
+              <div class="files-stat-label">Endpoint</div>
+              <div class="files-stat-value wrap" th:text="${folderView.endpoint}">—</div>
             </div>
-            <div style="padding:16px 18px; border:1px solid rgba(148,163,184,0.18); border-radius:16px; background:#f8fafc;">
-              <div style="font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase;">Dossiers</div>
-              <div style="margin-top:6px; font-weight:700; color:#0f172a;" th:text="${folderView.subfolders.size()}">0</div>
+            <div class="files-stat-card">
+              <div class="files-stat-label">Dossiers</div>
+              <div class="files-stat-value" th:text="${folderView.subfolders.size()}">0</div>
             </div>
-            <div style="padding:16px 18px; border:1px solid rgba(148,163,184,0.18); border-radius:16px; background:#f8fafc;">
-              <div style="font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase;">Fichiers / Taille</div>
-              <div style="margin-top:6px; font-weight:700; color:#0f172a;">
+            <div class="files-stat-card">
+              <div class="files-stat-label">Fichiers / Taille</div>
+              <div class="files-stat-value">
                 <span th:text="${folderView.files.size()}">0</span>
-                <span style="color:#94a3b8; font-weight:400;"> · </span>
+                <span class="files-stat-separator"> · </span>
                 <span th:text="${folderView.totalSizeLabel}">0 B</span>
               </div>
             </div>

@@ -160,8 +160,6 @@ input, select, textarea, button { font-family: inherit; }
   background: #111d2e;
   box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
 }
-  background: #111d2e;
-}
 
 .form-group { margin-bottom: 20px; }
 
@@ -910,6 +908,44 @@ input, select, textarea, button { font-family: inherit; }
   box-shadow: 0 2px 12px rgba(99,102,241,0.06);
 }
 
+/* ===================== FILES STATS CARDS ===================== */
+
+.files-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.files-stat-card {
+  padding: 16px 18px;
+  border: 1px solid rgba(148,163,184,0.18);
+  border-radius: 16px;
+  background: #f8fafc;
+}
+
+.files-stat-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.files-stat-value {
+  margin-top: 6px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.files-stat-value.wrap {
+  word-break: break-word;
+}
+
+.files-stat-separator {
+  color: #94a3b8;
+  font-weight: 400;
+}
+
 .module-dashboard-title {
   font-size: 22px;
   font-weight: 800;
@@ -1386,6 +1422,11 @@ input, select, textarea, button { font-family: inherit; }
 
 [data-theme="dark"] .table-toolbar       { border-color: #334155; background: #1e293b; }
 [data-theme="dark"] .toolbar-title       { color: #e2e8f0; }
+
+[data-theme="dark"] .files-stat-card     { background: #1e293b; border-color: #334155; }
+[data-theme="dark"] .files-stat-label    { color: #94a3b8; }
+[data-theme="dark"] .files-stat-value    { color: #e2e8f0; }
+[data-theme="dark"] .files-stat-separator { color: #64748b; }
 [data-theme="dark"] .table-filter-panel  { background: #162131; border-color: rgba(71,85,105,0.45); }
 [data-theme="dark"] .table-filter-panel-header { color: #cbd5e1; }
 [data-theme="dark"] .table-filter-label  { color: #cbd5e1; }
