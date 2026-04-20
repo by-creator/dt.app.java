@@ -88,17 +88,31 @@ public class MenuController {
     }
 
     private String resolveMenuRedirect(Set<String> roles) {
+        if (roles.contains("ROLE_INFORMATIQUE"))            return "/menu/informatique";
         if (roles.contains("ROLE_FACTURATION"))             return "/menu/facturation";
         if (roles.contains("ROLE_DIRECTION_GENERALE"))      return "/menu/direction-generale";
         if (roles.contains("ROLE_DIRECTION_FINANCIERE"))    return "/menu/direction-financiere";
         if (roles.contains("ROLE_DIRECTION_EXPLOITATION"))  return "/menu/direction-exploitation";
         if (roles.contains("ROLE_PLANIFICATION"))           return "/menu/planification";
-        if (roles.contains("ROLE_INFORMATIQUE"))            return "/menu/informatique";
         return "/dashboard";
+    }
+
+    private boolean isInformatiqueOnly(Set<String> roles) {
+        return roles.contains("ROLE_INFORMATIQUE") && !roles.contains("ROLE_ADMIN");
+    }
+
+    private String redirectIfInformatiqueOnly(Set<String> roles) {
+        return isInformatiqueOnly(roles) ? "/menu/informatique" : null;
     }
 
     @GetMapping("/menu/dt")
     public String dtMenu(Model model, Authentication auth) {
+        Set<String> roles = auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority).collect(Collectors.toSet());
+        String redirect = redirectIfInformatiqueOnly(roles);
+        if (redirect != null) {
+            return "redirect:" + redirect;
+        }
         User loggedUser = userRepository.findByEmail(auth.getName()).orElseThrow();
         model.addAttribute("loggedUser", loggedUser);
         model.addAttribute("menuView", "dt");
@@ -107,9 +121,13 @@ public class MenuController {
 
     @GetMapping("/menu/facturation")
     public String facturationMenu(Model model, Authentication auth) {
-        User loggedUser = userRepository.findByEmail(auth.getName()).orElseThrow();
         Set<String> roles = auth.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority).collect(Collectors.toSet());
+        String redirect = redirectIfInformatiqueOnly(roles);
+        if (redirect != null) {
+            return "redirect:" + redirect;
+        }
+        User loggedUser = userRepository.findByEmail(auth.getName()).orElseThrow();
         boolean isFacturation = !roles.contains("ROLE_ADMIN") && roles.contains("ROLE_FACTURATION");
         boolean showRemises = roles.contains("ROLE_ADMIN")
                 || "aliounebadara.sy@dakar-terminal.com".equals(loggedUser.getEmail())
@@ -131,6 +149,12 @@ public class MenuController {
 
     @GetMapping("/menu/planification")
     public String planificationMenu(Model model, Authentication auth) {
+        Set<String> roles = auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority).collect(Collectors.toSet());
+        String redirect = redirectIfInformatiqueOnly(roles);
+        if (redirect != null) {
+            return "redirect:" + redirect;
+        }
         User loggedUser = userRepository.findByEmail(auth.getName()).orElseThrow();
         model.addAttribute("loggedUser", loggedUser);
         model.addAttribute("menuView", "planification");
@@ -163,6 +187,13 @@ public class MenuController {
         return renderModuleDashboard(model, auth, "Tableau de bord Planification",
                 "Module Planification", "Bienvenue dans l'espace Planification de Dakar Terminal.",
                 "/menu/planification", "/planification/dashboard");
+    }
+
+    @GetMapping("/informatique/dashboard")
+    public String informatiqueDashboard(Model model, Authentication auth) {
+        return renderModuleDashboard(model, auth, "Tableau de bord Informatique",
+                "Module Informatique", "Bienvenue dans l'espace Informatique de Dakar Terminal.",
+                "/menu/informatique", "/informatique/dashboard");
     }
 
     @GetMapping("/menu/direction-generale")
@@ -1128,6 +1159,10 @@ public class MenuController {
         Set<String> roles = auth.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toSet());
+        String redirect = redirectIfInformatiqueOnly(roles);
+        if (redirect != null && !"informatique".equals(view)) {
+            return "redirect:" + redirect;
+        }
         boolean hideMainMenuReturn = roles.contains("ROLE_DIRECTION_GENERALE")
                 || roles.contains("ROLE_DIRECTION_FINANCIERE")
                 || roles.contains("ROLE_DIRECTION_EXPLOITATION");

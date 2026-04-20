@@ -116,7 +116,7 @@
         <div class="page-badge"><span class="page-badge-dot"></span> NAVIGATION RAPIDE</div>
         <h1 class="page-title" style="font-size:26px; margin-bottom:4px;">Menu Informatique</h1>
         <p class="page-subtitle">Retrouvez les acces du module Informatique.</p>
-        <div style="margin-top:14px;">
+        <div th:if="${!hideMainMenuReturn}" style="margin-top:14px;">
           <a th:href="@{/menu/dt}" style="color:#a5b4fc; text-decoration:none; font-weight:600;">&#8592; Retour au menu principal</a>
         </div>
       </div>
