@@ -207,7 +207,7 @@
   OWASP Top 10 — Etat actuel :
 
   A01 Broken Access Control      : Traite — RBAC + URL patterns + @EnableMethodSecurity
-  A02 Cryptographic Failures     : Partiel — BCrypt OK, HTTPS activé en prod
+  A02 Cryptographic Failures     : Activé — BCrypt OK, HTTPS activé en prod
   A03 Injection                  : Traite — JPA requetes parametrees
   A04 Insecure Design            : Partiel — Pas de limite de tentatives login
   A05 Security Misconfiguration  : Traite — En-tetes HTTP, logs, secrets externalises
