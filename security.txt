@@ -43,7 +43,7 @@
     - /css/**, /js/**, /img/**, /images/**
     - /gfa/display, /gfa/ticket/**, /api/gfa/display/state
     - /demat/**
-    - /teks, /teks/**
+    - /escale-code-barres, /escale-code-barres/**
     - /actuator/health, /actuator/health/**, /api/health/**
 
   Toutes les autres routes : authentification obligatoire (.anyRequest().authenticated())
@@ -85,7 +85,7 @@
   Cookie JSESSIONID
     http-only   : true  (inaccessible via JavaScript)
     same-site   : strict (protection CSRF cross-origin)
-    secure      : a activer en production avec HTTPS
+    secure      : activé en production avec HTTPS
 
   Timeout         : 30 minutes d'inactivite
   Sessions max    : 5 sessions simultanees par utilisateur
