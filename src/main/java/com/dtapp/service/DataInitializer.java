@@ -41,7 +41,8 @@ public class DataInitializer implements CommandLineRunner {
             "ROLE_JURIDIQUE",
             "ROLE_OPERATIONS",
             "ROLE_QHSE",
-            "ROLE_DOUANE"
+            "ROLE_DOUANE",
+            "ROLE_CLIENT"
     );
 
     // [username, email, authority]

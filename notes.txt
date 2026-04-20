@@ -1,10 +1,3 @@
-au niveau de cette route /menu/facturation/gestion-validations je souhaite que l'affichage se présente comme suit 
-
- - un onglet Demandes de validation avec la table Demandes de validation
- - un onglet Gestion des validations avec la table Gestion des validations
-
-
-au niveau de cette route /menu/facturation/gestion-remises je souhaite que l'affichage se présente comme suit 
-
- - un onglet Demandes de remise avec la table Demandes de remise
- - un onglet Gestion des remises avec la table Gestion des remises
+Pour cette route /menu/dt/client au niveau de l'onglet FACTURE je veux un deuxième card que tu rajoutes manuellement
+dont le titre sera Facture définitive et au niveau de l'onglet BAD je veux un deuxième card que tu rajoutes manuellement
+dont le titre sera Bon à délivrer

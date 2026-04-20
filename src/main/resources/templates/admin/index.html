@@ -114,6 +114,12 @@
         </svg>
         Gestion de fichiers
       </a>
+      <a id="tab-automatisations" href="javascript:void(0)" onclick="showTab('automatisations')" class="subpage-tab">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+        </svg>
+        Automatisations
+      </a>
     </div>
 
     <div style="padding:32px 36px;">
@@ -1147,6 +1153,136 @@
         </div>
       </div>
 
+      <!-- ======================================================= -->
+      <!-- PANE AUTOMATISATIONS                                    -->
+      <!-- ======================================================= -->
+      <div id="pane-automatisations" class="tab-pane" style="display:none;">
+        <div class="page-section-card">
+          <div class="blocage-card-header">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+            </svg>
+            <span>Automatisations disponibles</span>
+          </div>
+          <p class="blocage-card-subtitle">Lancez les automatisations du projet et consultez les résultats (captures d'écran et logs d'exécution).</p>
+
+          <div id="automationsContainer" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px;">
+            <!-- Les automatisations seront chargées par JavaScript -->
+          </div>
+
+          <div id="automationsLoading" style="text-align:center; padding:32px; color:#94a3b8;">
+            <svg style="animation:spin 1s linear infinite; width:24px; height:24px; margin-bottom:8px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg><br>
+            Chargement des automatisations...
+          </div>
+
+          <style>
+            @keyframes spin {
+              from { transform: rotate(0deg); }
+              to { transform: rotate(360deg); }
+            }
+            .automation-card {
+              border:1px solid #e2e8f0; border-radius:8px; padding:16px; background:#f8fafc; transition:all 0.2s; color:#1e293b;
+            }
+            .automation-card:hover {
+              border-color:#6366f1; box-shadow:0 4px 12px rgba(99,102,241,0.1);
+            }
+            [data-theme="dark"] .automation-card {
+              border-color:#334155; background:#1a2a4a; color:#e2e8f0;
+            }
+            [data-theme="dark"] .automation-card:hover {
+              border-color:#818cf8; box-shadow:0 4px 12px rgba(99,102,241,0.2);
+            }
+            .automation-category {
+              font-size:11px; font-weight:600; color:#6366f1; text-transform:uppercase; margin-bottom:4px;
+            }
+            [data-theme="dark"] .automation-category {
+              color:#818cf8;
+            }
+            .automation-name {
+              font-weight:600; margin-bottom:8px; font-size:14px; color:#1e293b;
+            }
+            [data-theme="dark"] .automation-name {
+              color:#f1f5f9;
+            }
+            .automation-desc {
+              font-size:12px; color:#64748b; margin-bottom:12px; line-height:1.4;
+            }
+            [data-theme="dark"] .automation-desc {
+              color:#cbd5e1;
+            }
+            .automation-meta {
+              font-size:11px; color:#94a3b8; margin-bottom:12px; padding:8px; background:#fff; border-radius:4px;
+            }
+            [data-theme="dark"] .automation-meta {
+              background:#0f1926; color:#cbd5e1; border:1px solid #334155;
+            }
+            .automation-status {
+              display:inline-block; padding:2px 8px; border-radius:3px; font-size:11px; font-weight:500;
+            }
+            .status-idle { background:#f0f9ff; color:#0369a1; }
+            .status-running { background:#fef3c7; color:#92400e; animation: pulse 2s infinite; }
+            .status-success { background:#dbeafe; color:#0c4a6e; }
+            .status-failed { background:#fee2e2; color:#7f1d1d; }
+            [data-theme="dark"] .status-idle { background:rgba(3,105,161,0.15); color:#38bdf8; }
+            [data-theme="dark"] .status-running { background:rgba(202,138,4,0.2); color:#fbbf24; animation: pulse 2s infinite; }
+            [data-theme="dark"] .status-success { background:rgba(16,184,129,0.15); color:#6ee7b7; }
+            [data-theme="dark"] .status-failed { background:rgba(239,68,68,0.15); color:#f87171; }
+            .automation-actions {
+              display:flex; gap:8px; margin-bottom:12px;
+            }
+            .btn-auto-run {
+              flex:1; padding:8px 12px; background:#6366f1; color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:12px; font-weight:500; transition:all 0.2s;
+            }
+            .btn-auto-run:hover { background:#4f46e5; }
+            .btn-auto-run:disabled { background:#cbd5e1; cursor:not-allowed; }
+            [data-theme="dark"] .btn-auto-run:disabled { background:#475569; }
+            .automation-result {
+              padding:8px; background:#fff; border-left:3px solid #e2e8f0; border-radius:3px; margin-top:8px; color:#1e293b;
+            }
+            [data-theme="dark"] .automation-result {
+              background:#0f1926; border-left-color:#334155; color:#e2e8f0;
+            }
+            .result-success { border-left-color:#10b981; background:#f0fdf4; }
+            .result-failed { border-left-color:#ef4444; background:#fef2f2; }
+            [data-theme="dark"] .result-success { border-left-color:#6ee7b7; background:rgba(16,184,129,0.1); }
+            [data-theme="dark"] .result-failed { border-left-color:#f87171; background:rgba(239,68,68,0.1); }
+            .result-timestamp {
+              font-size:11px; color:#64748b; margin-bottom:4px;
+            }
+            [data-theme="dark"] .result-timestamp {
+              color:#94a3b8;
+            }
+            .result-message {
+              font-size:12px; margin-bottom:4px; color:#1e293b;
+            }
+            [data-theme="dark"] .result-message {
+              color:#e2e8f0;
+            }
+            .result-error {
+              font-size:11px; color:#dc2626; font-family:monospace;
+            }
+            [data-theme="dark"] .result-error {
+              color:#f87171;
+            }
+            .btn-screenshot {
+              font-size:11px; color:#6366f1; background:none; border:none; cursor:pointer; text-decoration:underline; padding:0;
+            }
+            [data-theme="dark"] .btn-screenshot {
+              color:#818cf8;
+            }
+            [data-theme="dark"] .btn-screenshot:hover {
+              color:#a5b4fc;
+            }
+            @keyframes pulse {
+              0%, 100% { opacity: 1; }
+              50% { opacity: 0.7; }
+            }
+          </style>
+        </div>
+      </div>
+
     </div><!-- /padding wrapper -->
   </main>
 </div>
@@ -1424,6 +1560,190 @@
     if (confirm('Supprimer le dossier « ' + name + ' » et tout son contenu ? Cette action est irréversible.')) {
       document.getElementById('del-folder-' + idx).submit();
     }
+  }
+
+  // ===== AUTOMATISATIONS =====
+  function loadAutomations() {
+    const container = document.getElementById('automationsContainer');
+    const loading = document.getElementById('automationsLoading');
+
+    fetch('/api/automations')
+      .then(r => r.json())
+      .then(data => {
+        loading.style.display = 'none';
+        if (data.length === 0) {
+          container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:32px; color:#94a3b8;">Aucune automatisation trouvée.</div>';
+          return;
+        }
+        
+        // Grouper par catégorie
+        const grouped = {};
+        data.forEach(auto => {
+          if (!grouped[auto.category]) grouped[auto.category] = [];
+          grouped[auto.category].push(auto);
+        });
+
+        // Afficher les automatisations
+        Object.keys(grouped).sort().forEach(category => {
+          grouped[category].forEach(auto => {
+            const card = createAutomationCard(auto);
+            container.appendChild(card);
+          });
+        });
+      })
+      .catch(err => {
+        console.error('Erreur lors du chargement des automatisations:', err);
+        loading.innerHTML = '<div style="color:#dc2626;">Erreur lors du chargement des automatisations.</div>';
+      });
+  }
+
+  function createAutomationCard(automation) {
+    const card = document.createElement('div');
+    card.className = 'automation-card';
+    card.id = 'card-' + automation.id.replace(/:/g, '-');
+
+    let statusHtml = '';
+    if (automation.lastRun) {
+      const lastStatus = automation.lastRunStatus || 'unknown';
+      const resultClass = lastStatus === 'SUCCESS' ? 'result-success' : 'result-failed';
+      const statusIcon = lastStatus === 'SUCCESS' ? '✓' : '✗';
+      
+      let resultContent = '<div class="result-message">' + statusIcon + ' ' + (lastStatus === 'SUCCESS' ? 'Succès' : 'Échec') + '</div>';
+      if (automation.lastRunError) {
+        resultContent += '<div class="result-error">' + automation.lastRunError + '</div>';
+      }
+      if (automation.lastRunScreenshot) {
+        resultContent += '<button class="btn-screenshot" onclick="viewScreenshot(\'' + automation.lastRunScreenshot + '\')">Voir capture d\'écran</button>';
+      }
+      
+      const lastRunDate = new Date(automation.lastRun).toLocaleString('fr-FR');
+      statusHtml = '<div class="automation-result ' + resultClass + '">' +
+                   '<div class="result-timestamp">Dernière exécution: ' + lastRunDate + '</div>' +
+                   resultContent +
+                   '</div>';
+    }
+
+    const safeId = automation.id.replace(/:/g, '-');
+
+    let paramsHtml = '';
+    if (automation.params && automation.params.length > 0) {
+      paramsHtml = '<div class="automation-params" style="margin-bottom:10px;">' +
+        automation.params.map(p =>
+          `<div style="margin-bottom:6px;">
+            <label style="font-size:11px;color:#64748b;display:block;margin-bottom:2px;">${escapeHtml(p.label || p.name)}</label>
+            <input type="text" id="param-${safeId}-${escapeHtml(p.name)}"
+              placeholder="${escapeHtml(p.placeholder || '')}"
+              style="width:100%;box-sizing:border-box;padding:5px 8px;font-size:12px;border:1px solid #cbd5e1;border-radius:4px;background:#fff;color:#1e293b;"
+              ${p.required === 'true' ? 'required' : ''}>
+           </div>`
+        ).join('') +
+        '</div>';
+    }
+
+    card.innerHTML = `
+      <div class="automation-category">${escapeHtml(automation.category)}</div>
+      <div class="automation-name">${escapeHtml(automation.name)}</div>
+      <div class="automation-desc">${escapeHtml(automation.description)}</div>
+      ${paramsHtml}
+      <div class="automation-actions">
+        <button class="btn-auto-run" onclick="executeAutomation('${automation.id}', this)">
+          <span id="btn-text-${automation.id}">Lancer</span>
+        </button>
+      </div>
+      ${statusHtml}
+    `;
+
+    return card;
+  }
+
+  function executeAutomation(automationId, button) {
+    const cardId = 'card-' + automationId.replace(/:/g, '-');
+    const btnTextId = 'btn-text-' + automationId;
+    const safeId = automationId.replace(/:/g, '-');
+
+    // Collect param values from input fields
+    const params = {};
+    document.querySelectorAll('[id^="param-' + safeId + '-"]').forEach(input => {
+      const paramName = input.id.replace('param-' + safeId + '-', '');
+      if (input.value.trim()) params[paramName] = input.value.trim();
+    });
+
+    button.disabled = true;
+    const originalText = document.getElementById(btnTextId).textContent;
+    document.getElementById(btnTextId).textContent = 'Exécution...';
+
+    fetch('/api/automations/' + automationId + '/execute', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(Object.keys(params).length ? params : null)
+    })
+      .then(r => r.json())
+      .then(result => {
+        const card = document.getElementById(cardId);
+        
+        // Mettre à jour le contenu
+        const statusClass = result.status === 'success' ? 'result-success' : 'result-failed';
+        const statusIcon = result.status === 'success' ? '✓' : '✗';
+        
+        let resultContent = '<div class="result-message">' + statusIcon + ' ' + 
+                           (result.status === 'success' ? 'Succès' : 'Échec') + '</div>';
+        if (result.error) {
+          resultContent += '<div class="result-error">' + escapeHtml(result.error) + '</div>';
+        }
+        if (result.screenshotPath) {
+          resultContent += '<button class="btn-screenshot" onclick="viewScreenshot(\'' + result.screenshotPath + '\')">Voir capture d\'écran</button>';
+        }
+
+        const now = new Date().toLocaleString('fr-FR');
+        const resultHtml = '<div class="automation-result ' + statusClass + '">' +
+                          '<div class="result-timestamp">Exécution: ' + now + ' (' + result.executionTime + 'ms)</div>' +
+                          resultContent +
+                          '</div>';
+
+        // Remplacer le résultat existant ou ajouter
+        const existingResult = card.querySelector('.automation-result');
+        if (existingResult) {
+          existingResult.outerHTML = resultHtml;
+        } else {
+          const actionsDiv = card.querySelector('.automation-actions');
+          actionsDiv.insertAdjacentHTML('afterend', resultHtml);
+        }
+
+        button.disabled = false;
+        document.getElementById(btnTextId).textContent = originalText;
+      })
+      .catch(err => {
+        console.error('Erreur lors de l\'exécution:', err);
+        alert('Erreur lors de l\'exécution de l\'automatisation');
+        button.disabled = false;
+        document.getElementById(btnTextId).textContent = originalText;
+      });
+  }
+
+  function viewScreenshot(path) {
+    // Ouvrir l'image dans une nouvelle fenêtre ou modal
+    window.open(path, '_blank', 'width=800,height=600');
+  }
+
+  function escapeHtml(text) {
+    const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+    return text.replace(/[&<>"']/g, m => map[m]);
+  }
+
+  // Charger les automatisations au démarrage
+  window.addEventListener('load', function() {
+    if (new URLSearchParams(window.location.search).get('tab') === 'automatisations') {
+      loadAutomations();
+    }
+  });
+
+  // Charger aussi quand on clique sur l'onglet
+  const automationTab = document.getElementById('tab-automatisations');
+  if (automationTab) {
+    const originalOnclick = automationTab.onclick;
+    automationTab.addEventListener('click', function() {
+      setTimeout(loadAutomations, 100);
+    });
   }
 </script>
 

@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Client - Dakar Terminal</title>
+  <th:block th:replace="~{fragments/pwa-head :: pwaMeta}"></th:block>
+  <script th:src="@{/js/theme.js}"></script>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+
+<div class="app-layout">
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-box">
+        <img th:src="@{/img/image.png}" alt="Dakar Terminal" style="max-height: 40px; width: 150px;">
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a th:href="@{/dashboard}" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+          <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+        </svg>
+        Dashboard
+      </a>
+      <a th:href="@{/menu/dt}" class="nav-item active">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/>
+          <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+        Menu
+      </a>
+      <a th:href="@{/parametres}" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        Parametres
+      </a>
+    </nav>
+
+    <div class="sidebar-user">
+      <div class="user-row">
+        <div class="user-avatar-sm"
+             th:text="${#strings.toUpperCase(#strings.substring(loggedUser.username, 0, 1))}">A</div>
+        <span class="user-display-name" th:text="${loggedUser.username}">Admin</span>
+        <form th:action="@{/logout}" method="post" style="margin:0">
+          <button type="submit" class="logout-btn" title="Se deconnecter">&#x2192;</button>
+        </form>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content" style="padding:0;">
+
+    <div class="subpage-topbar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+      Client
+    </div>
+
+    <div class="subpage-tabs">
+      <button type="button" class="subpage-tab active" data-client-tab="proforma" style="background:none; border:none;">PROFORMA</button>
+      <button type="button" class="subpage-tab" data-client-tab="facture" style="background:none; border:none;">FACTURE</button>
+      <button type="button" class="subpage-tab" data-client-tab="bad" style="background:none; border:none;">BAD</button>
+    </div>
+
+    <div style="padding: 32px 36px;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:24px; font-size:13px; color:#64748b;">
+        <a th:href="@{/menu}" style="color:#6366f1; text-decoration:none; font-weight:500;">Menu</a>
+        <span>&#8250;</span>
+        <a th:href="@{/menu/dt}" style="color:#6366f1; text-decoration:none; font-weight:500;">Menu DT</a>
+        <span>&#8250;</span>
+        <span class="topbar-title">Client</span>
+      </div>
+
+      <div class="page-section-card" style="max-width:900px;">
+        <div class="blocage-card-header">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+          <span id="clientTabTitle">Proforma</span>
+        </div>
+
+        <p class="blocage-card-subtitle" id="clientTabSubtitle">
+          Renseignez le BL, la date d'enlevement et la maison de transit pour generer un proforma.
+        </p>
+
+        <div id="clientStatus" style="display:none; margin-bottom:20px; padding:14px 16px; border-radius:12px; font-size:14px; font-weight:600;"></div>
+
+        <div class="tab-pane" data-client-pane="proforma">
+          <form id="proformaForm">
+            <div class="form-group" style="margin-bottom:20px;">
+              <label for="proformaBl" class="form-label">BL</label>
+              <input type="text" id="proformaBl" class="form-input"
+                     placeholder="ex: S329087393" required style="text-transform: uppercase;">
+            </div>
+
+            <div class="form-group" style="margin-bottom:20px;">
+              <label for="proformaDate" class="form-label">Date d'enlevement</label>
+              <input type="date" id="proformaDate" class="form-input" required>
+            </div>
+
+            <div class="form-group" style="margin-bottom:24px;">
+              <label for="proformaTransitSearch" class="form-label">Maison de transit</label>
+              <input type="hidden" id="proformaTransitValue" required>
+              <div style="position:relative;">
+                <input type="text" id="proformaTransitSearch" class="form-input"
+                       placeholder="Rechercher un compte ipaki ou une raison sociale..." autocomplete="off" required>
+                <div id="proformaTransitDropdown"
+                     style="display:none; position:absolute; top:calc(100% + 6px); left:0; right:0; max-height:240px; overflow:auto; background:var(--panel, #fff); border:1px solid rgba(148,163,184,.22); border-radius:14px; box-shadow:0 18px 40px rgba(15,23,42,.14); z-index:20;"></div>
+              </div>
+            </div>
+
+            <div class="blocage-actions">
+              <button type="submit" class="btn-actualiser" id="proformaSubmitBtn">Valider</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="tab-pane" data-client-pane="facture" style="display:none;">
+          <form id="factureForm">
+            <div class="form-group" style="margin-bottom:24px;">
+              <label for="factureBl" class="form-label">BL</label>
+              <input type="text" id="factureBl" class="form-input"
+                     placeholder="ex: S329087393" required style="text-transform: uppercase;">
+            </div>
+
+            <div class="blocage-actions">
+              <button type="button" class="btn-actualiser" id="factureSearchBtn">Rechercher</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="tab-pane" data-client-pane="bad" style="display:none;">
+          <form id="badForm">
+            <div class="form-group" style="margin-bottom:24px;">
+              <label for="badBl" class="form-label">BL</label>
+              <input type="text" id="badBl" class="form-input"
+                     placeholder="ex: S329087393" required style="text-transform: uppercase;">
+            </div>
+
+            <div class="blocage-actions">
+              <button type="button" class="btn-actualiser" id="badSearchBtn">Rechercher</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div id="proformaPreviewCard"
+           class="page-section-card tab-pane"
+           data-client-pane="proforma"
+           data-secondary-card="true"
+           data-visible="true"
+           style="display:none; max-width:900px; margin-top:24px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:16px; flex-wrap:wrap;">
+          <div>
+            <div class="blocage-card-header" style="justify-content:flex-start; margin-bottom:0;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="14" y2="17"/>
+              </svg>
+              <span>Facture Poroforma</span>
+            </div>
+            <div id="proformaPreviewMeta" style="margin-top:6px; font-size:13px; color:#64748b;"></div>
+          </div>
+          <div style="display:flex; gap:12px; flex-wrap:wrap;">
+            <button type="button" class="btn-actualiser" id="validateProformaBtn">
+              Valider
+            </button>
+            <button type="button" class="btn-actualiser" id="changePickupDateBtn" style="background:#0f766e;">
+              Modifier
+            </button>
+          </div>
+        </div>
+
+        <div id="proformaEmptyState"
+             style="padding:20px; border-radius:16px; border:1px solid rgba(148,163,184,.18); background:#f8fafc; color:#334155; line-height:1.6;">
+          Le document de la facture poroforma s'affichera ici apres generation.
+        </div>
+
+        <div id="proformaFrameWrap"
+             style="display:none; border-radius:16px; overflow:hidden; border:1px solid rgba(148,163,184,.18); background:#fff;">
+          <iframe id="proformaPreviewFrame"
+                  title="Apercu du proforma"
+                  style="width:100%; min-height:720px; border:0;"
+                  loading="lazy"></iframe>
+        </div>
+      </div>
+
+      <div id="factureResultCard"
+           class="page-section-card tab-pane"
+           data-client-pane="facture"
+           data-secondary-card="true"
+           data-visible="true"
+           style="display:none; max-width:900px; margin-top:24px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:16px; flex-wrap:wrap;">
+          <div>
+            <div class="blocage-card-header" style="justify-content:flex-start; margin-bottom:0;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="14" y2="17"/>
+              </svg>
+              <span>Facture Definitive</span>
+            </div>
+            <div id="factureResultMeta" style="margin-top:6px; font-size:13px; color:#64748b;"></div>
+          </div>
+        </div>
+
+        <div id="factureResultBody" style="padding:20px; border-radius:16px; border:1px solid rgba(148,163,184,.18); background:#f8fafc; color:#334155; line-height:1.6;">
+          Lancez une recherche pour afficher le resultat ici.
+        </div>
+      </div>
+
+      <div id="badResultCard"
+           class="page-section-card tab-pane"
+           data-client-pane="bad"
+           data-secondary-card="true"
+           data-visible="true"
+           style="display:none; max-width:900px; margin-top:24px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:16px; flex-wrap:wrap;">
+          <div>
+            <div class="blocage-card-header" style="justify-content:flex-start; margin-bottom:0;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="14" y2="17"/>
+              </svg>
+              <span>Bon a delivrer</span>
+            </div>
+            <div id="badResultMeta" style="margin-top:6px; font-size:13px; color:#64748b;"></div>
+          </div>
+        </div>
+
+        <div id="badResultBody" style="padding:20px; border-radius:16px; border:1px solid rgba(148,163,184,.18); background:#f8fafc; color:#334155; line-height:1.6;">
+          Lancez une recherche pour afficher le resultat ici.
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script th:inline="javascript">
+  const CLIENT_TRANSITS = /*[[${clientTransitList}]]*/ [];
+  const proformaState = {
+    blNumber: '',
+    dateValue: '',
+    clientFacture: ''
+  };
+
+  const TAB_CONFIG = {
+    proforma: {
+      title: 'Proforma',
+      subtitle: "Renseignez le BL, la date d'enlevement et la maison de transit pour generer un proforma."
+    },
+    facture: {
+      title: 'Facture',
+      subtitle: "Recherchez d'abord le BL dans IES avant de lancer la facture definitive."
+    },
+    bad: {
+      title: 'BAD',
+      subtitle: "Recherchez d'abord le BL dans IES avant de lancer l'action BAD."
+    }
+  };
+
+  function normalizeBl(value) {
+    return (value || '').trim().toUpperCase();
+  }
+
+  function formatDateForAutomation(value) {
+    if (!value) return '';
+    const parts = value.split('-');
+    return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : value;
+  }
+
+  function showStatus(message, type) {
+    const box = document.getElementById('clientStatus');
+    const palette = {
+      success: { bg: '#dcfce7', border: '#86efac', color: '#166534' },
+      error: { bg: '#fee2e2', border: '#fca5a5', color: '#991b1b' },
+      info: { bg: '#dbeafe', border: '#93c5fd', color: '#1d4ed8' },
+      warning: { bg: '#fef3c7', border: '#fcd34d', color: '#92400e' }
+    };
+    const tone = palette[type] || palette.info;
+    box.style.display = 'block';
+    box.style.background = tone.bg;
+    box.style.border = `1px solid ${tone.border}`;
+    box.style.color = tone.color;
+    box.textContent = message;
+  }
+
+  function clearStatus() {
+    const box = document.getElementById('clientStatus');
+    box.style.display = 'none';
+    box.textContent = '';
+  }
+
+  function syncProformaState() {
+    proformaState.blNumber = normalizeBl(document.getElementById('proformaBl').value);
+    proformaState.dateValue = document.getElementById('proformaDate').value;
+    proformaState.clientFacture = document.getElementById('proformaTransitValue').value.trim();
+  }
+
+  function hideProformaPreview() {
+    setSecondaryCardVisibility('proformaPreviewCard', true);
+    document.getElementById('proformaPreviewFrame').removeAttribute('src');
+    document.getElementById('proformaPreviewMeta').textContent = 'Aucun document genere pour le moment.';
+    document.getElementById('proformaEmptyState').style.display = '';
+    document.getElementById('proformaFrameWrap').style.display = 'none';
+  }
+
+  function setSecondaryCardVisibility(cardId, visible) {
+    const card = document.getElementById(cardId);
+    card.dataset.visible = visible ? 'true' : 'false';
+    card.style.display = visible ? '' : 'none';
+  }
+
+  function updateResultCard(cardId, metaId, bodyId, metaText, bodyHtml) {
+    document.getElementById(metaId).textContent = metaText;
+    document.getElementById(bodyId).innerHTML = bodyHtml;
+    setSecondaryCardVisibility(cardId, true);
+  }
+
+  async function refreshProformaPreview() {
+    try {
+      const response = await fetch('/menu/dt/client/proforma/latest', {
+        headers: { 'Accept': 'application/json' }
+      });
+
+      if (response.status === 204 || response.status === 404) {
+        hideProformaPreview();
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error("Impossible de recuperer le PDF genere.");
+      }
+
+      const data = await response.json();
+      const frame = document.getElementById('proformaPreviewFrame');
+      setSecondaryCardVisibility('proformaPreviewCard', true);
+      document.getElementById('proformaPreviewMeta').textContent = `Fichier : ${data.fileName || 'proforma.pdf'}`;
+      document.getElementById('proformaEmptyState').style.display = 'none';
+      document.getElementById('proformaFrameWrap').style.display = '';
+      frame.src = `${data.documentUrl}?t=${data.updatedAt || Date.now()}`;
+    } catch (error) {
+      showStatus(error.message || "Impossible d'afficher le PDF genere.", 'warning');
+    }
+  }
+
+  async function runProformaGeneration(blNumber, dateValue, clientFacture, successMessage) {
+    const button = document.getElementById('proformaSubmitBtn');
+    button.disabled = true;
+    button.textContent = 'Traitement...';
+    document.getElementById('changePickupDateBtn').disabled = true;
+    document.getElementById('validateProformaBtn').disabled = true;
+    showStatus('Generation du proforma en cours...', 'info');
+
+    try {
+      const result = await executeAutomation('ies:proforma:create_proforma.py', {
+        BL_NUMBER: blNumber,
+        DATE: formatDateForAutomation(dateValue),
+        CLIENT_FACTURE: clientFacture
+      });
+
+      if (result.status === 'success') {
+        proformaState.blNumber = blNumber;
+        proformaState.dateValue = dateValue;
+        proformaState.clientFacture = clientFacture;
+        await refreshProformaPreview();
+        showStatus(successMessage, 'success');
+        return true;
+      }
+
+      showStatus(result.error || "Le lancement du proforma a echoue.", 'error');
+      return false;
+    } catch (error) {
+      showStatus(error.message || "Le lancement du proforma a echoue.", 'error');
+      return false;
+    } finally {
+      button.disabled = false;
+      button.textContent = 'Valider';
+      document.getElementById('changePickupDateBtn').disabled = false;
+      document.getElementById('validateProformaBtn').disabled = false;
+    }
+  }
+
+  function switchTab(tabName) {
+    document.querySelectorAll('[data-client-tab]').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.clientTab === tabName);
+    });
+    document.querySelectorAll('[data-client-pane]').forEach(pane => {
+      if (pane.dataset.clientPane !== tabName) {
+        pane.style.display = 'none';
+        return;
+      }
+
+      if (pane.dataset.secondaryCard === 'true') {
+        pane.style.display = pane.dataset.visible === 'true' ? '' : 'none';
+        return;
+      }
+
+      pane.style.display = '';
+    });
+    document.getElementById('clientTabTitle').textContent = TAB_CONFIG[tabName].title;
+    document.getElementById('clientTabSubtitle').textContent = TAB_CONFIG[tabName].subtitle;
+    clearStatus();
+  }
+
+  function renderTransitOptions(query) {
+    const dropdown = document.getElementById('proformaTransitDropdown');
+    const search = (query || '').trim().toLowerCase();
+    const items = CLIENT_TRANSITS.filter(item => {
+      const raison = (item.raisonSociale || '').toLowerCase();
+      const compte = (item.compteIpaki || '').toLowerCase();
+      return compte && (!search || raison.includes(search) || compte.includes(search));
+    });
+
+    if (!items.length) {
+      dropdown.innerHTML = '<div style="padding:12px 14px; color:#94a3b8;">Aucun resultat</div>';
+      dropdown.style.display = 'block';
+      return;
+    }
+
+    dropdown.innerHTML = items.map(item => `
+      <button type="button"
+              class="transit-option"
+              data-raison="${(item.raisonSociale || '').replace(/"/g, '&quot;')}"
+              data-compte="${(item.compteIpaki || '').replace(/"/g, '&quot;')}"
+              style="width:100%; text-align:left; border:0; background:transparent; padding:12px 14px; cursor:pointer; border-bottom:1px solid rgba(148,163,184,.12); color:inherit;">
+        <strong>${item.compteIpaki || ''}</strong><br>
+        <span style="font-size:13px; color:#64748b;">${item.raisonSociale || ''}</span>
+      </button>
+    `).join('');
+    dropdown.style.display = 'block';
+
+    dropdown.querySelectorAll('.transit-option').forEach(option => {
+      option.addEventListener('click', function () {
+        document.getElementById('proformaTransitValue').value = this.dataset.compte;
+        document.getElementById('proformaTransitSearch').value = `${this.dataset.compte} - ${this.dataset.raison}`;
+        dropdown.style.display = 'none';
+      });
+    });
+  }
+
+  async function executeAutomation(automationId, params) {
+    const response = await fetch('/api/automations/' + encodeURIComponent(automationId) + '/execute', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params || {})
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || "Erreur lors de l'execution");
+    }
+    return data;
+  }
+
+  async function runVerification(blNumber, contextLabel, options = {}) {
+    const normalizedBl = normalizeBl(blNumber);
+    if (!normalizedBl) {
+      showStatus(`Veuillez saisir un BL pour ${contextLabel}.`, 'warning');
+      return;
+    }
+
+    showStatus(`Recherche en cours pour le BL ${normalizedBl}...`, 'info');
+    try {
+      const result = await executeAutomation('ies:verification:verification.py', { BL_NUMBER: normalizedBl });
+      if (result.status === 'success') {
+        showStatus(`BL ${normalizedBl} : aucune facture disponible dans IES.`, 'success');
+        if (options.cardId) {
+          updateResultCard(
+            options.cardId,
+            options.metaId,
+            options.bodyId,
+            `BL : ${normalizedBl}`,
+            `Le BL <strong>${normalizedBl}</strong> ne contient pas encore de facture dans IES.<br>Vous pouvez poursuivre l'etape suivante.`
+          );
+        }
+      } else {
+        showStatus(result.error || result.message || `BL ${normalizedBl} : des factures sont presentes ou l'etat est inconnu.`, 'warning');
+        if (options.cardId) {
+          updateResultCard(
+            options.cardId,
+            options.metaId,
+            options.bodyId,
+            `BL : ${normalizedBl}`,
+            (result.error || result.message || `Le BL ${normalizedBl} contient deja des factures ou l'etat est inconnu.`)
+          );
+        }
+      }
+    } catch (error) {
+      showStatus(error.message || "La recherche a echoue.", 'error');
+      if (options.cardId) {
+        updateResultCard(
+          options.cardId,
+          options.metaId,
+          options.bodyId,
+          `BL : ${normalizedBl}`,
+          error.message || "La recherche a echoue."
+        );
+      }
+    }
+  }
+
+  document.querySelectorAll('[data-client-tab]').forEach(btn => {
+    btn.addEventListener('click', function () {
+      switchTab(this.dataset.clientTab);
+    });
+  });
+
+  const transitInput = document.getElementById('proformaTransitSearch');
+  const transitHidden = document.getElementById('proformaTransitValue');
+  const transitDropdown = document.getElementById('proformaTransitDropdown');
+
+  transitInput.addEventListener('focus', function () {
+    renderTransitOptions(this.value);
+  });
+
+  transitInput.addEventListener('input', function () {
+    transitHidden.value = '';
+    renderTransitOptions(this.value);
+  });
+
+  document.addEventListener('click', function (event) {
+    if (!transitInput.contains(event.target) && !transitDropdown.contains(event.target)) {
+      transitDropdown.style.display = 'none';
+    }
+  });
+
+  document.getElementById('proformaBl').addEventListener('input', function () {
+    this.value = normalizeBl(this.value);
+  });
+  document.getElementById('factureBl').addEventListener('input', function () {
+    this.value = normalizeBl(this.value);
+  });
+  document.getElementById('badBl').addEventListener('input', function () {
+    this.value = normalizeBl(this.value);
+  });
+
+  document.getElementById('proformaForm').addEventListener('submit', async function (event) {
+    event.preventDefault();
+    clearStatus();
+
+    const blNumber = normalizeBl(document.getElementById('proformaBl').value);
+    const dateValue = document.getElementById('proformaDate').value;
+    const clientFacture = transitHidden.value.trim();
+
+    if (!blNumber || !dateValue || !clientFacture) {
+      showStatus("Veuillez renseigner le BL, la date d'enlevement et la maison de transit.", 'warning');
+      return;
+    }
+
+    const ok = await runProformaGeneration(
+      blNumber,
+      dateValue,
+      clientFacture,
+      `Proforma genere pour le BL ${blNumber}.`
+    );
+
+    if (ok) {
+      Swal.fire({
+        icon: 'success',
+        title: 'Proforma genere',
+        text: `Le document du BL ${blNumber} est maintenant affiche ci-dessous.`,
+        confirmButtonColor: '#4f46e5'
+      });
+    }
+  });
+
+  document.getElementById('changePickupDateBtn').addEventListener('click', async function () {
+    syncProformaState();
+    if (!proformaState.blNumber || !proformaState.clientFacture) {
+      showStatus("Veuillez d'abord generer un proforma avant de changer la date d'enlevement.", 'warning');
+      return;
+    }
+
+    const { value: newDate } = await Swal.fire({
+      title: "Changer la date d'enlevement",
+      input: 'date',
+      inputValue: proformaState.dateValue || '',
+      inputLabel: "Nouvelle date d'enlevement",
+      confirmButtonText: 'Valider',
+      confirmButtonColor: '#0f766e',
+      showCancelButton: true,
+      cancelButtonText: 'Annuler',
+      inputValidator: value => !value ? "Veuillez renseigner une date." : undefined
+    });
+
+    if (!newDate) {
+      return;
+    }
+
+    document.getElementById('proformaDate').value = newDate;
+    const ok = await runProformaGeneration(
+      proformaState.blNumber,
+      newDate,
+      proformaState.clientFacture,
+      `Date d'enlevement mise a jour pour le BL ${proformaState.blNumber}.`
+    );
+
+    if (ok) {
+      Swal.fire({
+        icon: 'success',
+        title: 'Date mise a jour',
+        text: "Le proforma a ete regenere avec la nouvelle date d'enlevement.",
+        confirmButtonColor: '#0f766e'
+      });
+    }
+  });
+
+  document.getElementById('validateProformaBtn').addEventListener('click', async function () {
+    syncProformaState();
+    if (!proformaState.blNumber || !proformaState.dateValue || !proformaState.clientFacture) {
+      showStatus("Veuillez d'abord generer un proforma avant de valider.", 'warning');
+      return;
+    }
+
+    const ok = await runProformaGeneration(
+      proformaState.blNumber,
+      proformaState.dateValue,
+      proformaState.clientFacture,
+      `Proforma confirme pour le BL ${proformaState.blNumber}.`
+    );
+
+    if (ok) {
+      Swal.fire({
+        icon: 'success',
+        title: 'Proforma valide',
+        text: `Le proforma du BL ${proformaState.blNumber} a ete relance puis confirme.`,
+        confirmButtonColor: '#4f46e5'
+      });
+    }
+  });
+
+  document.getElementById('factureSearchBtn').addEventListener('click', function () {
+    runVerification(document.getElementById('factureBl').value, 'la facture', {
+      cardId: 'factureResultCard',
+      metaId: 'factureResultMeta',
+      bodyId: 'factureResultBody'
+    });
+  });
+
+  document.getElementById('badSearchBtn').addEventListener('click', function () {
+    runVerification(document.getElementById('badBl').value, 'le BAD', {
+      cardId: 'badResultCard',
+      metaId: 'badResultMeta',
+      bodyId: 'badResultBody'
+    });
+  });
+
+  document.getElementById('factureDefinitiveBtn').addEventListener('click', function () {
+    Swal.fire({
+      icon: 'info',
+      title: 'Automatisation a brancher',
+      text: "Le bouton FACTURE DEFINITIVE est pret dans l'interface, mais aucune automatisation dediee n'existe encore dans le projet."
+    });
+  });
+
+  document.getElementById('badActionBtn').addEventListener('click', function () {
+    Swal.fire({
+      icon: 'info',
+      title: 'Automatisation a brancher',
+      text: "Le bouton BAD est pret dans l'interface, mais aucune automatisation dediee n'existe encore dans le projet."
+    });
+  });
+
+  refreshProformaPreview();
+</script>
+
+</body>
+</html>

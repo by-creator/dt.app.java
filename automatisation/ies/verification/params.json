@@ -1,0 +1,8 @@
+[
+  {
+    "name": "BL_NUMBER",
+    "label": "Numéro de BL",
+    "placeholder": "ex: S329087393",
+    "required": "true"
+  }
+]

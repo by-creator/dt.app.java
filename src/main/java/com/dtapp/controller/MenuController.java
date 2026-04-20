@@ -21,6 +21,11 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Controller;
@@ -33,15 +38,23 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.IOException;
+import java.io.File;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Controller
 public class MenuController {
+    private static final Path PROFORMA_DOWNLOADS_DIR = Paths.get("automatisation", "ies", "proforma", "results", "downloads")
+            .toAbsolutePath()
+            .normalize();
 
     private final UserRepository userRepository;
     private final RattachementBlRepository rattachementBlRepository;
@@ -117,6 +130,71 @@ public class MenuController {
         model.addAttribute("loggedUser", loggedUser);
         model.addAttribute("menuView", "dt");
         return "menu";
+    }
+
+    @GetMapping("/menu/dt/client")
+    public String dtClient(Model model, Authentication auth) {
+        Set<String> roles = auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority).collect(Collectors.toSet());
+        String redirect = redirectIfInformatiqueOnly(roles);
+        if (redirect != null) {
+            return "redirect:" + redirect;
+        }
+
+        User loggedUser = userRepository.findByEmail(auth.getName()).orElseThrow();
+        List<TiersUnify> clientTransitList = tiersUnifyRepository.findAll(Sort.by(Sort.Direction.ASC, "raisonSociale"))
+                .stream()
+                .filter(t -> StringUtils.hasText(t.getCompteIpaki()))
+                .toList();
+
+        model.addAttribute("loggedUser", loggedUser);
+        model.addAttribute("clientTransitList", clientTransitList);
+        return "dt/client";
+    }
+
+    @GetMapping("/menu/dt/client/proforma/latest")
+    public ResponseEntity<Map<String, String>> latestProformaMetadata() {
+        Path latestPdf = resolveLatestProformaPdf();
+        if (latestPdf == null) {
+            return ResponseEntity.noContent().build();
+        }
+
+        Map<String, String> body = new HashMap<>();
+        body.put("fileName", latestPdf.getFileName().toString());
+        body.put("documentUrl", "/menu/dt/client/proforma/document");
+        body.put("updatedAt", String.valueOf(latestPdf.toFile().lastModified()));
+        return ResponseEntity.ok(body);
+    }
+
+    @GetMapping("/menu/dt/client/proforma/document")
+    public ResponseEntity<Resource> latestProformaDocument() {
+        Path latestPdf = resolveLatestProformaPdf();
+        if (latestPdf == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        File pdfFile = latestPdf.toFile();
+        Resource resource = new FileSystemResource(pdfFile);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + pdfFile.getName() + "\"")
+                .body(resource);
+    }
+
+    private Path resolveLatestProformaPdf() {
+        if (!Files.isDirectory(PROFORMA_DOWNLOADS_DIR)) {
+            return null;
+        }
+
+        try (Stream<Path> files = Files.list(PROFORMA_DOWNLOADS_DIR)) {
+            return files
+                    .filter(Files::isRegularFile)
+                    .filter(path -> path.getFileName().toString().toLowerCase().endsWith(".pdf"))
+                    .max(Comparator.comparingLong(path -> path.toFile().lastModified()))
+                    .orElse(null);
+        } catch (IOException e) {
+            return null;
+        }
     }
 
     @GetMapping("/menu/facturation")

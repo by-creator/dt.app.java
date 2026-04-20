@@ -9,6 +9,8 @@ import com.dtapp.repository.AuthorityDefinitionRepository;
 import com.dtapp.repository.AuthorityRepository;
 import com.dtapp.repository.CompagnieRepository;
 import com.dtapp.repository.UserRepository;
+import com.dtapp.service.AutomationService;
+import com.dtapp.service.AutomationInfo;
 import com.dtapp.service.B2StorageService;
 import com.dtapp.util.PaginationUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -53,6 +55,7 @@ public class AdminController {
     private final B2StorageService b2StorageService;
     private final PasswordEncoder passwordEncoder;
     private final RequestMappingHandlerMapping handlerMapping;
+    private final AutomationService automationService;
 
     public AdminController(UserRepository userRepository,
                            CompagnieRepository compagnieRepository,
@@ -61,7 +64,8 @@ public class AdminController {
                            AuditLogRepository auditLogRepository,
                            B2StorageService b2StorageService,
                            PasswordEncoder passwordEncoder,
-                           @Qualifier("requestMappingHandlerMapping") RequestMappingHandlerMapping handlerMapping) {
+                           @Qualifier("requestMappingHandlerMapping") RequestMappingHandlerMapping handlerMapping,
+                           AutomationService automationService) {
         this.userRepository                 = userRepository;
         this.compagnieRepository            = compagnieRepository;
         this.authorityRepository            = authorityRepository;
@@ -70,6 +74,7 @@ public class AdminController {
         this.b2StorageService               = b2StorageService;
         this.passwordEncoder                = passwordEncoder;
         this.handlerMapping                 = handlerMapping;
+        this.automationService              = automationService;
     }
 
     public record RouteInfo(String name, String description, String url, String controllerName, String methodName, String httpMethod) {}
@@ -273,6 +278,15 @@ public class AdminController {
         model.addAttribute("auditSearch",      auditSearch != null ? auditSearch : "");
         model.addAttribute("auditTotalItems",  auditPageData.getTotalElements());
         PaginationUtils.addPageAttributes(model, auditPageData, "audit");
+
+        // Ajouter les automatisations
+        try {
+            java.util.List<AutomationInfo> automations = automationService.getAvailableAutomations();
+            model.addAttribute("automations", automations);
+        } catch (Exception e) {
+            log.warn("Erreur lors du chargement des automatisations", e);
+            model.addAttribute("automations", java.util.List.of());
+        }
 
         return "admin/index";
     }
