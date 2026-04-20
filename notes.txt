@@ -1,3 +1,6 @@
-Pour cette route /menu/dt/client au niveau de l'onglet FACTURE je veux un deuxième card que tu rajoutes manuellement
-dont le titre sera Facture définitive et au niveau de l'onglet BAD je veux un deuxième card que tu rajoutes manuellement
-dont le titre sera Bon à délivrer
+au niveau de l'automatisation create_proforma.py je vois que tu enregistres dans un fichier downloads je 
+souhaite que tu utilises ma configuration B2 pour les stocker dans un dossier qui sera généré de la sorte
+Facturation/Proforma/date du jour(dd-mm-yyyy)/BL_NUMBER/{fichier}
+
+ensuite je souhaite que le bouton Generer dans la route /menu/dt/client au niveau de l'onglet PROFORMA execute 
+create_proforma.py et affiche les documents téléchargés 

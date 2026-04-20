@@ -4,12 +4,14 @@ import com.dtapp.entity.RapportSuiviVides;
 import com.dtapp.entity.RattachementBl;
 import com.dtapp.entity.SatisfactionReponse;
 import com.dtapp.entity.TiersUnify;
+import com.dtapp.entity.UpdateIesAccount;
 import com.dtapp.entity.User;
 import com.dtapp.repository.GfaGuichetRepository;
 import com.dtapp.repository.RapportSuiviVidesRepository;
 import com.dtapp.repository.RattachementBlRepository;
 import com.dtapp.repository.SatisfactionReponseRepository;
 import com.dtapp.repository.TiersUnifyRepository;
+import com.dtapp.repository.UpdateIesAccountRepository;
 import com.dtapp.repository.UserRepository;
 import com.dtapp.service.B2StorageService;
 import com.dtapp.service.BulkInsertService;
@@ -62,6 +64,7 @@ public class MenuController {
     private final GfaGuichetRepository gfaGuichetRepository;
     private final TiersUnifyRepository tiersUnifyRepository;
     private final RapportSuiviVidesRepository rapportSuiviVidesRepository;
+    private final UpdateIesAccountRepository updateIesAccountRepository;
     private final EmailService emailService;
     private final BulkInsertService bulkInsertService;
     private final B2StorageService b2StorageService;
@@ -72,6 +75,7 @@ public class MenuController {
                           GfaGuichetRepository gfaGuichetRepository,
                           TiersUnifyRepository tiersUnifyRepository,
                           RapportSuiviVidesRepository rapportSuiviVidesRepository,
+                          UpdateIesAccountRepository updateIesAccountRepository,
                           EmailService emailService,
                           BulkInsertService bulkInsertService,
                           B2StorageService b2StorageService) {
@@ -81,6 +85,7 @@ public class MenuController {
         this.gfaGuichetRepository = gfaGuichetRepository;
         this.tiersUnifyRepository = tiersUnifyRepository;
         this.rapportSuiviVidesRepository = rapportSuiviVidesRepository;
+        this.updateIesAccountRepository = updateIesAccountRepository;
         this.emailService = emailService;
         this.bulkInsertService = bulkInsertService;
         this.b2StorageService = b2StorageService;
@@ -355,9 +360,12 @@ public class MenuController {
                 .map(GrantedAuthority::getAuthority).collect(Collectors.toSet());
         boolean isAdmin = roles.contains("ROLE_ADMIN");
         model.addAttribute("loggedUser", loggedUser);
-        model.addAttribute("activeTab", normalizeIesTab(tab));
+        model.addAttribute("activeTab", normalizeIesTab(tab, isAdmin));
         model.addAttribute("isAdmin", isAdmin);
         model.addAttribute("sidebarMenuUrl", isAdmin ? "/menu" : "/menu/facturation");
+        if (isAdmin) {
+            model.addAttribute("updateIesAccounts", updateIesAccountRepository.findAllForAdmin());
+        }
         return "facturation/ies";
     }
 
@@ -968,7 +976,80 @@ public class MenuController {
         return "redirect:/menu/facturation/ies?tab=reinitialisation-compte";
     }
 
-    private String normalizeIesTab(String tab) {
+    @PostMapping("/menu/facturation/ies/admin/create")
+    public String createUpdateIesAccount(@RequestParam String compte,
+                                         @RequestParam String statut,
+                                         Authentication auth,
+                                         RedirectAttributes redirectAttributes) {
+        if (!hasAdminRole(auth)) {
+            redirectAttributes.addFlashAttribute("error", "Acces refuse.");
+            return "redirect:/menu/facturation/ies";
+        }
+        if (!StringUtils.hasText(compte) || !StringUtils.hasText(statut)) {
+            redirectAttributes.addFlashAttribute("error", "Les champs compte et statut sont obligatoires.");
+            return "redirect:/menu/facturation/ies?tab=admin";
+        }
+
+        UpdateIesAccount account = new UpdateIesAccount();
+        account.setCompte(compte.trim());
+        account.setStatut(statut.trim());
+        updateIesAccountRepository.save(account);
+        redirectAttributes.addFlashAttribute("success", "Compte IES ajoute avec succes.");
+        return "redirect:/menu/facturation/ies?tab=admin";
+    }
+
+    @PostMapping("/menu/facturation/ies/admin/{id}/edit")
+    public String editUpdateIesAccount(@PathVariable Long id,
+                                       @RequestParam String compte,
+                                       @RequestParam String statut,
+                                       Authentication auth,
+                                       RedirectAttributes redirectAttributes) {
+        if (!hasAdminRole(auth)) {
+            redirectAttributes.addFlashAttribute("error", "Acces refuse.");
+            return "redirect:/menu/facturation/ies";
+        }
+        if (!StringUtils.hasText(compte) || !StringUtils.hasText(statut)) {
+            redirectAttributes.addFlashAttribute("error", "Les champs compte et statut sont obligatoires.");
+            return "redirect:/menu/facturation/ies?tab=admin";
+        }
+
+        UpdateIesAccount account = updateIesAccountRepository.findById(id).orElse(null);
+        if (account == null) {
+            redirectAttributes.addFlashAttribute("error", "Compte IES introuvable.");
+            return "redirect:/menu/facturation/ies?tab=admin";
+        }
+
+        account.setCompte(compte.trim());
+        account.setStatut(statut.trim());
+        updateIesAccountRepository.save(account);
+        redirectAttributes.addFlashAttribute("success", "Compte IES mis a jour avec succes.");
+        return "redirect:/menu/facturation/ies?tab=admin";
+    }
+
+    @PostMapping("/menu/facturation/ies/admin/{id}/delete")
+    public String deleteUpdateIesAccount(@PathVariable Long id,
+                                         Authentication auth,
+                                         RedirectAttributes redirectAttributes) {
+        if (!hasAdminRole(auth)) {
+            redirectAttributes.addFlashAttribute("error", "Acces refuse.");
+            return "redirect:/menu/facturation/ies";
+        }
+
+        UpdateIesAccount account = updateIesAccountRepository.findById(id).orElse(null);
+        if (account == null) {
+            redirectAttributes.addFlashAttribute("error", "Compte IES introuvable.");
+            return "redirect:/menu/facturation/ies?tab=admin";
+        }
+
+        updateIesAccountRepository.delete(account);
+        redirectAttributes.addFlashAttribute("success", "Compte IES supprime avec succes.");
+        return "redirect:/menu/facturation/ies?tab=admin";
+    }
+
+    private String normalizeIesTab(String tab, boolean isAdmin) {
+        if (isAdmin && "admin".equalsIgnoreCase(tab)) {
+            return "admin";
+        }
         if ("creation-compte".equalsIgnoreCase(tab)) {
             return "creation-compte";
         }
@@ -976,6 +1057,12 @@ public class MenuController {
             return "reinitialisation-compte";
         }
         return "lien-acces";
+    }
+
+    private boolean hasAdminRole(Authentication auth) {
+        return auth != null && auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch("ROLE_ADMIN"::equals);
     }
 
     private String normalizeReportsTab(String tab) {

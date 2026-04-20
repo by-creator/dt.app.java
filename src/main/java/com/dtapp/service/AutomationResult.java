@@ -3,6 +3,7 @@ package com.dtapp.service;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Résultat d'exécution d'une automatisation
@@ -18,4 +19,5 @@ public class AutomationResult {
     private String logPath;
     private long executionTime;        // en ms
     private LocalDateTime executedAt;
+    private List<AutomationDocumentLink> documents;
 }

@@ -211,6 +211,18 @@ public class EmailService {
         sendSimpleMail(to, "Reinitialisation de votre compte IES - Dakar Terminal", html);
     }
 
+    public void sendIesClientFacturationNotFound(String compte) {
+        String html = buildSimpleHtml(
+            "Ajout client a facturer IES",
+            "Bonjour,<br>Merci d'ajouter le client a facturer <strong>" + safe(compte)
+                + "</strong> au compte generique <strong>IES</strong>.",
+            new String[]{"Compte client", "Compte generique", "Statut"},
+            new String[]{compte, "IES", "not found"},
+            null, null);
+        sendSimpleMail("marc.bongoyeba@dakar-terminal.com",
+            "Ajout client a facturer IES - " + compte, html);
+    }
+
     public void sendRepasMenu(String plat1, String plat2) {
         String[] targets = {
             "assane.diouf@dakar-terminal.com",

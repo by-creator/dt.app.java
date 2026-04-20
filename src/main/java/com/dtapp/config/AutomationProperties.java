@@ -21,4 +21,9 @@ public class AutomationProperties {
      * Timeout d'exécution en secondes (par défaut: 600 = 10 minutes)
      */
     private int timeout = 600;
+
+    /**
+     * Token interne utilise par les scripts d'automatisation pour appeler l'application.
+     */
+    private String internalToken = "dt-app-internal-automation-token";
 }

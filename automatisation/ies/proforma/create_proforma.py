@@ -1,15 +1,21 @@
 """Génère un proforma pour un BL sur le portail IES AGL Group."""
 
+import json
 import os
 import re
+import smtplib
+import subprocess
 import sys
 import time
 from datetime import datetime
+from email.message import EmailMessage
 from pathlib import Path
+from urllib import error, request
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait, Select
 
@@ -22,7 +28,7 @@ TIMEOUT = 20
 
 RESULTS_DIR = Path(__file__).parent / "results"
 RESULTS_DIR.mkdir(exist_ok=True)
-DOWNLOAD_DIR = RESULTS_DIR / "downloads"
+DOWNLOAD_DIR = Path(os.environ.get("DOWNLOAD_DIR", str(RESULTS_DIR / "downloads"))).expanduser()
 DOWNLOAD_DIR.mkdir(exist_ok=True)
 SCREENSHOT = RESULTS_DIR / f"proforma_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
 
@@ -35,6 +41,136 @@ for val, name in [(BL_NUMBER, "BL_NUMBER"), (DATE, "DATE"), (CLIENT_FACTURE, "CL
     if not val:
         print(f"✗ Erreur : paramètre {name} manquant")
         sys.exit(1)
+
+
+def load_properties() -> dict[str, str]:
+    properties = {}
+    app_props = Path(__file__).resolve().parents[3] / "src" / "main" / "resources" / "application.properties"
+    if not app_props.exists():
+        return properties
+    for line in app_props.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        properties[key.strip()] = value.strip()
+    return properties
+
+
+def resolve_property(raw_value: str, env: dict[str, str]) -> str:
+    match = re.fullmatch(r"\$\{([^:}]+)(?::([^}]*))?\}", raw_value)
+    if not match:
+        return raw_value
+    env_name, default_value = match.groups()
+    return env.get(env_name, default_value or "")
+
+
+def send_not_found_email(compte: str, properties: dict[str, str]) -> None:
+    smtp_host = properties.get("spring.mail.host", "smtp.gmail.com")
+    smtp_port = int(properties.get("spring.mail.port", "587"))
+    username = resolve_property(properties.get("spring.mail.username", ""), os.environ)
+    password = resolve_property(properties.get("spring.mail.password", ""), os.environ)
+
+    if not username or not password:
+        raise RuntimeError("Configuration SMTP introuvable")
+
+    message = EmailMessage()
+    message["From"] = username
+    message["To"] = "marc.bongoyeba@dakar-terminal.com"
+    message["Subject"] = f"Ajout client a facturer IES - {compte}"
+    message.set_content(
+        "Bonjour,\n\n"
+        f"Merci d'ajouter le client a facturer {compte} au compte generique IES.\n"
+        "Statut: not found\n"
+    )
+
+    with smtplib.SMTP(smtp_host, smtp_port, timeout=30) as server:
+        server.starttls()
+        server.login(username, password)
+        server.send_message(message)
+
+
+def find_mysql_connector_jar() -> str | None:
+    m2_repo = Path.home() / ".m2" / "repository" / "com" / "mysql" / "mysql-connector-j"
+    if not m2_repo.exists():
+        return None
+    jars = sorted(m2_repo.glob("*/mysql-connector-j-*.jar"), reverse=True)
+    return str(jars[0]) if jars else None
+
+
+def insert_not_found_in_db(compte: str) -> None:
+    mysql_jar = find_mysql_connector_jar()
+    if not mysql_jar:
+        raise RuntimeError("Driver MySQL introuvable dans ~/.m2")
+
+    helper_java = Path(__file__).parent / "UpdateIesAccountFallback.java"
+    app_props = Path(__file__).resolve().parents[3] / "src" / "main" / "resources" / "application.properties"
+    command = [
+        "java",
+        "--class-path",
+        mysql_jar,
+        str(helper_java),
+        compte,
+        "not found",
+        str(app_props),
+    ]
+    completed = subprocess.run(command, capture_output=True, text=True, timeout=30)
+    if completed.returncode != 0:
+        error_output = (completed.stderr or completed.stdout).strip()
+        raise RuntimeError(error_output or "Insertion SQL impossible")
+
+
+def notify_not_found_via_app(compte: str, properties: dict[str, str]) -> bool:
+    base_url = resolve_property(properties.get("app.base-url", "http://localhost:8080"), os.environ).rstrip("/")
+    token = resolve_property(
+        properties.get("app.automation.internal-token", "dt-app-internal-automation-token"),
+        os.environ,
+    )
+    payload = json.dumps({"compte": compte}).encode("utf-8")
+    req = request.Request(
+        f"{base_url}/api/ies/accounts/not-found",
+        data=payload,
+        headers={
+            "Content-Type": "application/json",
+            "X-Automation-Token": token,
+        },
+        method="POST",
+    )
+    try:
+        with request.urlopen(req, timeout=10) as response:
+            return 200 <= response.status < 300
+    except error.URLError:
+        return False
+
+
+def handle_client_not_found(compte: str) -> None:
+    properties = load_properties()
+    app_notified = notify_not_found_via_app(compte, properties)
+    if app_notified:
+        print(f"✓ Notification envoyée et table update_ies_accounts mise à jour pour {compte}")
+        return
+
+    db_inserted = False
+    try:
+        insert_not_found_in_db(compte)
+        db_inserted = True
+        print(f"✓ Insertion effectuée dans update_ies_accounts pour {compte} avec statut not found")
+    except Exception as db_error:
+        print(f"✗ Impossible d'insérer {compte} dans update_ies_accounts : {db_error}")
+
+    try:
+        send_not_found_email(compte, properties)
+        print(
+            f"✓ Email de rajout envoyé pour {compte}"
+        )
+    except Exception as mail_error:
+        print(
+            f"✗ Impossible d'envoyer la notification de client introuvable pour {compte} : {mail_error}"
+        )
+        return
+
+    if db_inserted:
+        print(f"✓ Mail envoyé et insertion SQL enregistrée pour {compte}")
 
 
 def wait_for_download(directory: Path, timeout: int = 30) -> bool:
@@ -54,6 +190,126 @@ def to_date_input(date_str: str) -> str:
     if len(parts) == 3:
         return f"{parts[2]}-{parts[1]}-{parts[0]}"
     return date_str
+
+
+def clear_download_dir(directory: Path) -> None:
+    for old_file in directory.iterdir():
+        if old_file.is_file():
+            old_file.unlink(missing_ok=True)
+
+
+def list_downloaded_files(directory: Path) -> list[Path]:
+    return sorted(
+        [
+            file_path for file_path in directory.iterdir()
+            if file_path.is_file() and file_path.suffix != ".crdownload" and not file_path.name.startswith(".")
+        ]
+    )
+
+
+def wait_for_new_download(directory: Path, previous_files: set[str], timeout: int = 30) -> Path | None:
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        current_files = list_downloaded_files(directory)
+        for file_path in current_files:
+            if file_path.name not in previous_files:
+                return file_path
+        time.sleep(1)
+    return None
+
+
+def download_proforma_pdf(driver, wait, invoices_url: str, screenshot_path: Path) -> bool:
+    # Revenir sur la page des factures pour utiliser le même scénario de téléchargement.
+    driver.get(invoices_url)
+    wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
+    time.sleep(2)
+    driver.save_screenshot(str(RESULTS_DIR / "step_invoices_page.png"))
+    print(f"✓ Page des factures — URL : {driver.current_url}")
+    print("  → capture : step_invoices_page.png")
+
+    clear_download_dir(DOWNLOAD_DIR)
+
+    candidates = driver.find_elements(By.XPATH,
+        "//*[@title='Télécharger Proforma' or @title='Telecharger Proforma'"
+        " or contains(@href,'GenerateProformaReport')"
+        " or contains(@onclick,'GenerateProformaReport')]"
+    )
+    print(f"  → boutons téléchargement trouvés : {len(candidates)}")
+    visible_indexes = []
+    for index, candidate in enumerate(candidates, start=1):
+        print(
+            f"      tag={candidate.tag_name} title='{candidate.get_attribute('title')}' "
+            f"href='{candidate.get_attribute('href')}' displayed={candidate.is_displayed()}"
+        )
+        if candidate.is_displayed():
+            visible_indexes.append(index)
+
+    if not visible_indexes:
+        driver.save_screenshot(str(screenshot_path))
+        print("✗ Bouton de téléchargement non trouvé")
+        return False
+
+    print(f"✓ Boutons visibles à traiter : {len(visible_indexes)}")
+
+    downloaded_files = []
+    failed_indexes = []
+
+    for button_position in visible_indexes:
+        current_candidates = driver.find_elements(By.XPATH,
+            "//*[@title='Télécharger Proforma' or @title='Telecharger Proforma'"
+            " or contains(@href,'GenerateProformaReport')"
+            " or contains(@onclick,'GenerateProformaReport')]"
+        )
+        if len(current_candidates) < button_position:
+            failed_indexes.append(button_position)
+            print(f"✗ Bouton de téléchargement #{button_position} introuvable au moment du clic")
+            continue
+
+        download_btn = current_candidates[button_position - 1]
+        if not download_btn.is_displayed():
+            failed_indexes.append(button_position)
+            print(f"✗ Bouton de téléchargement #{button_position} non visible au moment du clic")
+            continue
+
+        previous_files = {file_path.name for file_path in list_downloaded_files(DOWNLOAD_DIR)}
+        handles_before = set(driver.window_handles)
+
+        driver.execute_script("arguments[0].scrollIntoView({block:'center'});", download_btn)
+        time.sleep(0.5)
+        download_btn.click()
+        print(f"✓ Clic sur Télécharger Proforma #{button_position}")
+        time.sleep(2)
+
+        new_handles = set(driver.window_handles) - handles_before
+        for handle in new_handles:
+            driver.switch_to.window(handle)
+            driver.close()
+        driver.switch_to.window(driver.window_handles[0])
+
+        downloaded_file = wait_for_new_download(DOWNLOAD_DIR, previous_files, timeout=30)
+        if downloaded_file:
+            downloaded_files.append(downloaded_file.name)
+            print(f"✓ Document téléchargé #{button_position} : {downloaded_file.name}")
+            continue
+
+        failed_indexes.append(button_position)
+        print(f"✗ Téléchargement non détecté pour le bouton #{button_position} dans le délai imparti")
+
+    driver.save_screenshot(str(screenshot_path))
+
+    if downloaded_files and not failed_indexes:
+        print(f"✓ Téléchargements terminés : {len(downloaded_files)} fichier(s)")
+        return True
+
+    if downloaded_files:
+        print(
+            f"✗ Téléchargements partiels : {len(downloaded_files)} réussi(s), "
+            f"{len(failed_indexes)} échec(s)"
+        )
+        return False
+
+    print("✗ Aucun téléchargement n'a abouti")
+    return False
 
 
 def main():
@@ -104,8 +360,10 @@ def main():
         time.sleep(2)
 
         if "Il n'y a pas encore de factures" not in driver.page_source:
-            driver.save_screenshot(str(SCREENSHOT))
             print(f"✗ BL {BL_NUMBER} : des factures existent déjà — génération annulée")
+            print("→ tentative de téléchargement automatique du PDF existant")
+            if download_proforma_pdf(driver, wait, invoices_url, SCREENSHOT):
+                sys.exit(0)
             sys.exit(1)
         print(f"✓ BL {BL_NUMBER} : aucune facture — génération du proforma possible")
 
@@ -229,6 +487,12 @@ def main():
         sel = Select(client_sel_el)
         try:
             sel.select_by_value(CLIENT_FACTURE)
+        except NoSuchElementException:
+            try:
+                sel.select_by_visible_text(CLIENT_FACTURE)
+            except NoSuchElementException:
+                handle_client_not_found(CLIENT_FACTURE)
+                raise
         except Exception:
             sel.select_by_visible_text(CLIENT_FACTURE)
         time.sleep(0.3)
@@ -250,61 +514,9 @@ def main():
         time.sleep(3)
         print("✓ Proforma généré")
 
-        # --- Retour sur la page des factures ---
-        driver.get(invoices_url)
-        wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
-        time.sleep(2)
-        driver.save_screenshot(str(RESULTS_DIR / "step_invoices_page.png"))
-        print(f"✓ Page des factures — URL : {driver.current_url}")
-        print(f"  → capture : step_invoices_page.png")
-
-        # Vider le dossier de téléchargement avant de cliquer
-        for old_file in DOWNLOAD_DIR.iterdir():
-            old_file.unlink(missing_ok=True)
-
-        # Chercher le bouton de téléchargement du proforma
-        download_btn = None
-        candidates = driver.find_elements(By.XPATH,
-            "//*[@title='Télécharger Proforma' or @title='Telecharger Proforma'"
-            " or contains(@href,'GenerateProformaReport')"
-            " or contains(@onclick,'GenerateProformaReport')]"
-        )
-        print(f"  → boutons téléchargement trouvés : {len(candidates)}")
-        for c in candidates:
-            print(f"      tag={c.tag_name} title='{c.get_attribute('title')}' href='{c.get_attribute('href')}' displayed={c.is_displayed()}")
-            if c.is_displayed():
-                download_btn = c
-                break
-
-        if not download_btn:
-            driver.save_screenshot(str(SCREENSHOT))
-            print("✗ Bouton de téléchargement non trouvé")
-            sys.exit(1)
-
-        # Conserver les handles d'onglets avant le clic
-        handles_before = set(driver.window_handles)
-
-        download_btn.click()
-        print("✓ Clic sur Télécharger Proforma")
-        time.sleep(2)
-
-        # Si le clic a ouvert un nouvel onglet, le fermer (le téléchargement CDP suffit)
-        new_handles = set(driver.window_handles) - handles_before
-        for h in new_handles:
-            driver.switch_to.window(h)
-            driver.close()
-        driver.switch_to.window(driver.window_handles[0])
-
-        driver.save_screenshot(str(SCREENSHOT))
-
-        # Attendre la fin du téléchargement
-        if wait_for_download(DOWNLOAD_DIR, timeout=30):
-            downloaded = [f.name for f in DOWNLOAD_DIR.iterdir() if f.is_file()]
-            print(f"✓ Document téléchargé : {downloaded[0]}")
+        if download_proforma_pdf(driver, wait, invoices_url, SCREENSHOT):
             sys.exit(0)
-        else:
-            print("✗ Téléchargement non détecté dans le délai imparti")
-            sys.exit(1)
+        sys.exit(1)
 
     except Exception as e:
         try:

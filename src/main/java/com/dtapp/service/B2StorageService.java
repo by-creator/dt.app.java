@@ -20,6 +20,8 @@ import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignReques
 import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -131,6 +133,23 @@ public class B2StorageService {
                         .contentLength(file.getSize())
                         .build(),
                 RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
+    }
+
+    public void uploadFile(String key, Path filePath) throws IOException {
+        S3Client s3Client = s3ClientProvider.getIfAvailable();
+        if (s3Client == null) throw new IllegalStateException("S3 client non disponible");
+        String contentType = Files.probeContentType(filePath);
+        if (contentType == null || contentType.isBlank()) {
+            contentType = "application/octet-stream";
+        }
+        s3Client.putObject(
+                PutObjectRequest.builder()
+                        .bucket(bucketName)
+                        .key(key)
+                        .contentType(contentType)
+                        .contentLength(Files.size(filePath))
+                        .build(),
+                RequestBody.fromFile(filePath));
     }
 
     public record FileLinks(String fileName, String viewUrl, String downloadUrl) {}

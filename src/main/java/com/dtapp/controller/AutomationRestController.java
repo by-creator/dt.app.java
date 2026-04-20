@@ -76,7 +76,8 @@ public class AutomationRestController {
                     result.getErrorMessage(),
                     result.getScreenshotPath(),
                     result.getLogPath(),
-                    result.getExecutionTime()
+                    result.getExecutionTime(),
+                    result.getDocuments()
             );
             
             log.info("Automatisation {} - Résultat: {}", id, result.isSuccess() ? "succès" : "échec");
@@ -92,7 +93,8 @@ public class AutomationRestController {
                     "Erreur: " + e.getMessage(),
                     null,
                     null,
-                    0
+                    0,
+                    java.util.Collections.emptyList()
             );
             return ResponseEntity.status(500).body(response);
         }

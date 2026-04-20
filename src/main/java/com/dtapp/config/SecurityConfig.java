@@ -62,6 +62,7 @@ public class SecurityConfig {
                 .requestMatchers("/login", "/css/**", "/js/**", "/img/**",
                                  "/gfa/display", "/gfa/ticket/**", "/api/gfa/display/state", "/demat/**",
                                  "/escale-code-barres", "/escale-code-barres/**",
+                                 "/api/ies/accounts/not-found",
                                  "/images/**", "/actuator/health", "/actuator/health/**",
                                  "/api/health/**").permitAll()
                 .anyRequest().authenticated()

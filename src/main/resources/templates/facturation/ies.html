@@ -7,6 +7,7 @@
   <th:block th:replace="~{fragments/pwa-head :: pwaMeta}"></th:block>
   <script th:src="@{/js/theme.js}"></script>
   <link rel="stylesheet" th:href="@{/css/style.css}">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
 
@@ -79,6 +80,12 @@
          th:classappend="${activeTab == 'reinitialisation-compte'} ? ' active' : ''">
         Reinitialisation de compte
       </a>
+      <a th:if="${isAdmin}"
+         th:href="@{/menu/facturation/ies(tab='admin')}"
+         class="subpage-tab"
+         th:classappend="${activeTab == 'admin'} ? ' active' : ''">
+        Admin
+      </a>
     </div>
 
     <div style="padding: 32px 36px;">
@@ -95,8 +102,9 @@
       </div>
 
       <span th:if="${success}" id="_flashSuccess" th:text="${success}" style="display:none"></span>
+      <span th:if="${error}" id="_flashError" th:text="${error}" style="display:none"></span>
 
-      <div class="page-section-card" style="max-width:760px;">
+      <div class="page-section-card" style="max-width:760px; margin-bottom:28px;">
         <div class="blocage-card-header">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
@@ -104,6 +112,7 @@
           <span th:if="${activeTab == 'lien-acces'}">Lien d'acces</span>
           <span th:if="${activeTab == 'creation-compte'}">Creation de compte</span>
           <span th:if="${activeTab == 'reinitialisation-compte'}">Reinitialisation de compte</span>
+          <span th:if="${activeTab == 'admin'}">Administration des comptes IES</span>
         </div>
 
         <p class="blocage-card-subtitle" th:if="${activeTab == 'lien-acces'}">
@@ -114,6 +123,9 @@
         </p>
         <p class="blocage-card-subtitle" th:if="${activeTab == 'reinitialisation-compte'}">
           Renseignez l'email et le nouveau mot de passe pour preparer la reinitialisation.
+        </p>
+        <p class="blocage-card-subtitle" th:if="${activeTab == 'admin'}">
+          Gere la liste des comptes IES et leur statut. Cet onglet est reserve aux administrateurs.
         </p>
 
         <form th:if="${activeTab == 'lien-acces'}"
@@ -164,10 +176,173 @@
             <button type="submit" class="btn-actualiser">Envoyer</button>
           </div>
         </form>
+
+        <form th:if="${activeTab == 'admin' and isAdmin}"
+              id="updateIesAccountForm"
+              th:action="@{/menu/facturation/ies/admin/create}"
+              method="post">
+          <input type="hidden" id="updateIesAccountId" name="id" value="">
+          <div class="form-group" style="margin-bottom:20px;">
+            <label for="updateIesAccountCompte" class="form-label">Compte</label>
+            <textarea id="updateIesAccountCompte" name="compte" class="form-input" rows="3"
+                      placeholder="Saisissez le compte IES" required></textarea>
+          </div>
+          <div class="form-group" style="margin-bottom:24px;">
+            <label for="updateIesAccountStatut" class="form-label">Statut</label>
+            <textarea id="updateIesAccountStatut" name="statut" class="form-input" rows="3"
+                      placeholder="Saisissez le statut" required></textarea>
+          </div>
+          <div class="blocage-actions">
+            <button type="submit" class="btn-debloquer">
+              <span id="updateIesAccountSubmitLabel">Enregistrer</span>
+            </button>
+            <button type="button" id="updateIesAccountCancelBtn" class="btn-actualiser" style="display:none;">
+              Annuler
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div th:if="${activeTab == 'admin' and isAdmin}" class="page-section-card" style="padding:0; overflow:hidden; max-width:980px;">
+        <div class="table-toolbar">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 3h18v18H3z"/><path d="M3 9h18"/><path d="M9 21V9"/>
+            </svg>
+            <span style="font-weight:600; font-size:14px;">Liste des comptes IES</span>
+          </div>
+          <span class="pagination-info"
+                th:text="${#lists.size(updateIesAccounts)} + ' compte(s)'">0 compte(s)</span>
+        </div>
+
+        <div class="table-wrapper">
+          <table id="updateIesAccountsTable" class="data-table">
+            <thead>
+            <tr>
+              <th>Compte</th>
+              <th>Statut</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:if="${#lists.isEmpty(updateIesAccounts)}">
+              <td colspan="4" style="text-align:center; color:#94a3b8; padding:32px;">
+                Aucun compte IES enregistre.
+              </td>
+            </tr>
+            <tr th:each="item : ${updateIesAccounts}"
+                th:data-id="${item.id}"
+                th:data-compte="${item.compte}"
+                th:data-statut="${item.statut}">
+              <td th:text="${item.compte}" style="white-space:pre-wrap;"></td>
+              <td th:text="${item.statut}" style="white-space:pre-wrap;"></td>
+              <td th:text="${item.formattedDate}"></td>
+              <td style="white-space:nowrap;">
+                <button type="button" class="btn-table-action debloque js-edit-update-ies-account">
+                  Modifier
+                </button>
+                <form th:action="@{/menu/facturation/ies/admin/{id}/delete(id=${item.id})}"
+                      method="post"
+                      style="display:inline;"
+                      class="js-delete-update-ies-account-form">
+                  <button type="submit" class="btn-table-action bloquer">
+                    Supprimer
+                  </button>
+                </form>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </main>
 </div>
+
+<script th:inline="javascript">
+  function showToast(msg, type) {
+    if (!msg) {
+      return;
+    }
+    const toast = document.createElement('div');
+    toast.className = (type === 'error') ? 'alert-error' : 'alert-success';
+    toast.style.cssText = 'position:fixed;top:20px;right:20px;z-index:9999;min-width:260px;box-shadow:0 4px 16px rgba(0,0,0,.2);border-radius:8px;';
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      toast.style.transition = 'opacity 0.4s';
+      toast.style.opacity = '0';
+      setTimeout(() => toast.remove(), 400);
+    }, 3000);
+  }
+
+  const flashSuccess = document.getElementById('_flashSuccess');
+  const flashError = document.getElementById('_flashError');
+  if (flashSuccess) showToast(flashSuccess.textContent, 'success');
+  if (flashError) showToast(flashError.textContent, 'error');
+
+  const updateIesAccountTable = document.getElementById('updateIesAccountsTable');
+  const updateIesAccountForm = document.getElementById('updateIesAccountForm');
+
+  function resetUpdateIesAccountForm() {
+    if (!updateIesAccountForm) {
+      return;
+    }
+    document.getElementById('updateIesAccountForm').action = '/menu/facturation/ies/admin/create';
+    document.getElementById('updateIesAccountId').value = '';
+    document.getElementById('updateIesAccountCompte').value = '';
+    document.getElementById('updateIesAccountStatut').value = '';
+    document.getElementById('updateIesAccountSubmitLabel').textContent = 'Enregistrer';
+    document.getElementById('updateIesAccountCancelBtn').style.display = 'none';
+  }
+
+  if (updateIesAccountForm) {
+    document.getElementById('updateIesAccountCancelBtn').addEventListener('click', function () {
+      resetUpdateIesAccountForm();
+    });
+  }
+
+  if (updateIesAccountTable) {
+    updateIesAccountTable.addEventListener('click', function (event) {
+      const btn = event.target.closest('.js-edit-update-ies-account');
+      if (!btn) {
+        return;
+      }
+      const row = btn.closest('tr');
+      const data = row.dataset;
+      document.getElementById('updateIesAccountForm').action = '/menu/facturation/ies/admin/' + data.id + '/edit';
+      document.getElementById('updateIesAccountId').value = data.id || '';
+      document.getElementById('updateIesAccountCompte').value = data.compte || '';
+      document.getElementById('updateIesAccountStatut').value = data.statut || '';
+      document.getElementById('updateIesAccountSubmitLabel').textContent = 'Mettre a jour';
+      document.getElementById('updateIesAccountCancelBtn').style.display = '';
+      document.getElementById('updateIesAccountForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    updateIesAccountTable.addEventListener('submit', function (event) {
+      if (!event.target.classList.contains('js-delete-update-ies-account-form')) {
+        return;
+      }
+      event.preventDefault();
+      const form = event.target;
+      Swal.fire({
+        title: 'Supprimer ce compte IES ?',
+        text: 'Cette action est irreversible.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'Oui, supprimer',
+        cancelButtonText: 'Annuler'
+      }).then(result => {
+        if (result.isConfirmed) {
+          form.submit();
+        }
+      });
+    });
+  }
+</script>
 
 </body>
 </html>

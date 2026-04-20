@@ -94,7 +94,7 @@
 
         <div id="clientStatus" style="display:none; margin-bottom:20px; padding:14px 16px; border-radius:12px; font-size:14px; font-weight:600;"></div>
 
-        <div class="tab-pane" data-client-pane="proforma">
+        <div class="tab-pane" data-client-pane="proforma" style="display:none;">
           <form id="proformaForm">
             <div class="form-group" style="margin-bottom:20px;">
               <label for="proformaBl" class="form-label">BL</label>
@@ -119,7 +119,7 @@
             </div>
 
             <div class="blocage-actions">
-              <button type="submit" class="btn-actualiser" id="proformaSubmitBtn">Valider</button>
+              <button type="submit" class="btn-actualiser" id="proformaSearchBtn">Generer</button>
             </div>
           </form>
         </div>
@@ -153,7 +153,7 @@
         </div>
       </div>
 
-      <div id="proformaPreviewCard"
+      <div id="proformaResultCard"
            class="page-section-card tab-pane"
            data-client-pane="proforma"
            data-secondary-card="true"
@@ -165,31 +165,14 @@
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="14" y2="17"/>
               </svg>
-              <span>Facture Poroforma</span>
+              <span>Facture Proforma</span>
             </div>
-            <div id="proformaPreviewMeta" style="margin-top:6px; font-size:13px; color:#64748b;"></div>
-          </div>
-          <div style="display:flex; gap:12px; flex-wrap:wrap;">
-            <button type="button" class="btn-actualiser" id="validateProformaBtn">
-              Valider
-            </button>
-            <button type="button" class="btn-actualiser" id="changePickupDateBtn" style="background:#0f766e;">
-              Modifier
-            </button>
+            <div id="proformaResultMeta" style="margin-top:6px; font-size:13px; color:#64748b;"></div>
           </div>
         </div>
 
-        <div id="proformaEmptyState"
-             style="padding:20px; border-radius:16px; border:1px solid rgba(148,163,184,.18); background:#f8fafc; color:#334155; line-height:1.6;">
-          Le document de la facture poroforma s'affichera ici apres generation.
-        </div>
-
-        <div id="proformaFrameWrap"
-             style="display:none; border-radius:16px; overflow:hidden; border:1px solid rgba(148,163,184,.18); background:#fff;">
-          <iframe id="proformaPreviewFrame"
-                  title="Apercu du proforma"
-                  style="width:100%; min-height:720px; border:0;"
-                  loading="lazy"></iframe>
+        <div id="proformaResultBody" style="padding:20px; border-radius:16px; border:1px solid rgba(148,163,184,.18); background:#f8fafc; color:#334155; line-height:1.6;">
+          Lancez une generation pour afficher le resultat ici.
         </div>
       </div>
 
@@ -244,11 +227,6 @@
 
 <script th:inline="javascript">
   const CLIENT_TRANSITS = /*[[${clientTransitList}]]*/ [];
-  const proformaState = {
-    blNumber: '',
-    dateValue: '',
-    clientFacture: ''
-  };
 
   const TAB_CONFIG = {
     proforma: {
@@ -297,116 +275,38 @@
     box.textContent = '';
   }
 
-  function syncProformaState() {
-    proformaState.blNumber = normalizeBl(document.getElementById('proformaBl').value);
-    proformaState.dateValue = document.getElementById('proformaDate').value;
-    proformaState.clientFacture = document.getElementById('proformaTransitValue').value.trim();
+  function escapeHtml(value) {
+    return String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
-  function hideProformaPreview() {
-    setSecondaryCardVisibility('proformaPreviewCard', true);
-    document.getElementById('proformaPreviewFrame').removeAttribute('src');
-    document.getElementById('proformaPreviewMeta').textContent = 'Aucun document genere pour le moment.';
-    document.getElementById('proformaEmptyState').style.display = '';
-    document.getElementById('proformaFrameWrap').style.display = 'none';
+  function formatDisplayDate(value) {
+    if (!value) return '';
+    const parts = value.split('-');
+    return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : value;
+  }
+
+  function formatTimestamp(value) {
+    if (!value) return '';
+    const date = new Date(Number(value));
+    if (Number.isNaN(date.getTime())) return '';
+    return date.toLocaleString('fr-FR');
   }
 
   function setSecondaryCardVisibility(cardId, visible) {
     const card = document.getElementById(cardId);
     card.dataset.visible = visible ? 'true' : 'false';
-    card.style.display = visible ? '' : 'none';
+    card.style.display = visible ? 'block' : 'none';
   }
 
   function updateResultCard(cardId, metaId, bodyId, metaText, bodyHtml) {
     document.getElementById(metaId).textContent = metaText;
     document.getElementById(bodyId).innerHTML = bodyHtml;
     setSecondaryCardVisibility(cardId, true);
-  }
-
-  async function refreshProformaPreview() {
-    try {
-      const response = await fetch('/menu/dt/client/proforma/latest', {
-        headers: { 'Accept': 'application/json' }
-      });
-
-      if (response.status === 204 || response.status === 404) {
-        hideProformaPreview();
-        return;
-      }
-
-      if (!response.ok) {
-        throw new Error("Impossible de recuperer le PDF genere.");
-      }
-
-      const data = await response.json();
-      const frame = document.getElementById('proformaPreviewFrame');
-      setSecondaryCardVisibility('proformaPreviewCard', true);
-      document.getElementById('proformaPreviewMeta').textContent = `Fichier : ${data.fileName || 'proforma.pdf'}`;
-      document.getElementById('proformaEmptyState').style.display = 'none';
-      document.getElementById('proformaFrameWrap').style.display = '';
-      frame.src = `${data.documentUrl}?t=${data.updatedAt || Date.now()}`;
-    } catch (error) {
-      showStatus(error.message || "Impossible d'afficher le PDF genere.", 'warning');
-    }
-  }
-
-  async function runProformaGeneration(blNumber, dateValue, clientFacture, successMessage) {
-    const button = document.getElementById('proformaSubmitBtn');
-    button.disabled = true;
-    button.textContent = 'Traitement...';
-    document.getElementById('changePickupDateBtn').disabled = true;
-    document.getElementById('validateProformaBtn').disabled = true;
-    showStatus('Generation du proforma en cours...', 'info');
-
-    try {
-      const result = await executeAutomation('ies:proforma:create_proforma.py', {
-        BL_NUMBER: blNumber,
-        DATE: formatDateForAutomation(dateValue),
-        CLIENT_FACTURE: clientFacture
-      });
-
-      if (result.status === 'success') {
-        proformaState.blNumber = blNumber;
-        proformaState.dateValue = dateValue;
-        proformaState.clientFacture = clientFacture;
-        await refreshProformaPreview();
-        showStatus(successMessage, 'success');
-        return true;
-      }
-
-      showStatus(result.error || "Le lancement du proforma a echoue.", 'error');
-      return false;
-    } catch (error) {
-      showStatus(error.message || "Le lancement du proforma a echoue.", 'error');
-      return false;
-    } finally {
-      button.disabled = false;
-      button.textContent = 'Valider';
-      document.getElementById('changePickupDateBtn').disabled = false;
-      document.getElementById('validateProformaBtn').disabled = false;
-    }
-  }
-
-  function switchTab(tabName) {
-    document.querySelectorAll('[data-client-tab]').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.clientTab === tabName);
-    });
-    document.querySelectorAll('[data-client-pane]').forEach(pane => {
-      if (pane.dataset.clientPane !== tabName) {
-        pane.style.display = 'none';
-        return;
-      }
-
-      if (pane.dataset.secondaryCard === 'true') {
-        pane.style.display = pane.dataset.visible === 'true' ? '' : 'none';
-        return;
-      }
-
-      pane.style.display = '';
-    });
-    document.getElementById('clientTabTitle').textContent = TAB_CONFIG[tabName].title;
-    document.getElementById('clientTabSubtitle').textContent = TAB_CONFIG[tabName].subtitle;
-    clearStatus();
   }
 
   function renderTransitOptions(query) {
@@ -427,11 +327,11 @@
     dropdown.innerHTML = items.map(item => `
       <button type="button"
               class="transit-option"
-              data-raison="${(item.raisonSociale || '').replace(/"/g, '&quot;')}"
-              data-compte="${(item.compteIpaki || '').replace(/"/g, '&quot;')}"
+              data-raison="${escapeHtml(item.raisonSociale || '')}"
+              data-compte="${escapeHtml(item.compteIpaki || '')}"
               style="width:100%; text-align:left; border:0; background:transparent; padding:12px 14px; cursor:pointer; border-bottom:1px solid rgba(148,163,184,.12); color:inherit;">
-        <strong>${item.compteIpaki || ''}</strong><br>
-        <span style="font-size:13px; color:#64748b;">${item.raisonSociale || ''}</span>
+        <strong>${escapeHtml(item.compteIpaki || '')}</strong><br>
+        <span style="font-size:13px; color:#64748b;">${escapeHtml(item.raisonSociale || '')}</span>
       </button>
     `).join('');
     dropdown.style.display = 'block';
@@ -443,6 +343,28 @@
         dropdown.style.display = 'none';
       });
     });
+  }
+
+  function switchTab(tabName) {
+    document.querySelectorAll('[data-client-tab]').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.clientTab === tabName);
+    });
+    document.querySelectorAll('[data-client-pane]').forEach(pane => {
+      if (pane.dataset.clientPane !== tabName) {
+        pane.style.display = 'none';
+        return;
+      }
+
+      if (pane.dataset.secondaryCard === 'true') {
+        pane.style.display = pane.dataset.visible === 'true' ? 'block' : 'none';
+        return;
+      }
+
+      pane.style.display = 'block';
+    });
+    document.getElementById('clientTabTitle').textContent = TAB_CONFIG[tabName].title;
+    document.getElementById('clientTabSubtitle').textContent = TAB_CONFIG[tabName].subtitle;
+    clearStatus();
   }
 
   async function executeAutomation(automationId, params) {
@@ -457,6 +379,115 @@
       throw new Error(data.error || "Erreur lors de l'execution");
     }
     return data;
+  }
+
+  function renderProformaDocuments(documents) {
+    if (!Array.isArray(documents) || !documents.length) {
+      return `
+        <div style="margin-top:16px; font-size:13px; color:#64748b;">
+          Aucun document n'a ete retourne apres l'upload B2.
+        </div>
+      `;
+    }
+
+    return `
+      <div style="margin-top:18px;">
+        <div style="font-weight:600; margin-bottom:10px; color:#0f172a;">Documents telecharges</div>
+        <div style="display:grid; gap:12px;">
+          ${documents.map(document => `
+            <div style="padding:14px 16px; border:1px solid rgba(148,163,184,.18); border-radius:14px; background:#fff; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+              <div style="min-width:220px;">
+                <div style="font-weight:600; color:#0f172a;">${escapeHtml(document.fileName || 'Document')}</div>
+                <div style="font-size:12px; color:#64748b;">Stocke dans Backblaze B2</div>
+              </div>
+              <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <a href="${escapeHtml(document.viewUrl || '#')}"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   class="btn-actualiser"
+                   style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">
+                  Ouvrir
+                </a>
+                <a href="${escapeHtml(document.downloadUrl || '#')}"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   class="btn-actualiser"
+                   style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">
+                  Telecharger
+                </a>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  async function runProformaGeneration() {
+    const blNumber = normalizeBl(document.getElementById('proformaBl').value);
+    const dateValue = document.getElementById('proformaDate').value;
+    const clientFacture = document.getElementById('proformaTransitValue').value.trim();
+    const transitLabel = document.getElementById('proformaTransitSearch').value.trim();
+    const button = document.getElementById('proformaSearchBtn');
+
+    if (!blNumber || !dateValue || !clientFacture) {
+      showStatus("Veuillez renseigner le BL, la date d'enlevement et la maison de transit.", 'warning');
+      return;
+    }
+
+    button.disabled = true;
+    button.textContent = 'Traitement...';
+    showStatus(`Generation du proforma en cours pour le BL ${blNumber}...`, 'info');
+
+    try {
+      const result = await executeAutomation('ies:proforma:create_proforma.py', {
+        BL_NUMBER: blNumber,
+        DATE: formatDateForAutomation(dateValue),
+        CLIENT_FACTURE: clientFacture
+      });
+
+      if (result.status !== 'success') {
+        const errorMessage = result.error || result.message || "Le lancement du proforma a echoue.";
+        showStatus(errorMessage, 'error');
+        updateResultCard(
+          'proformaResultCard',
+          'proformaResultMeta',
+          'proformaResultBody',
+          `BL : ${blNumber}`,
+          escapeHtml(errorMessage)
+        );
+        return;
+      }
+
+      const metaText = `BL : ${blNumber} | Date : ${formatDisplayDate(dateValue)} | Client : ${clientFacture}`;
+      let bodyHtml = `
+        Le proforma du BL <strong>${escapeHtml(blNumber)}</strong> a ete genere avec succes.<br>
+        Client facture : <strong>${escapeHtml(transitLabel || clientFacture)}</strong>.
+      `;
+      bodyHtml += renderProformaDocuments(result.documents);
+
+      updateResultCard(
+        'proformaResultCard',
+        'proformaResultMeta',
+        'proformaResultBody',
+        metaText,
+        bodyHtml
+      );
+      showStatus(`Proforma genere pour le BL ${blNumber}.`, 'success');
+    } catch (error) {
+      const errorMessage = error.message || "Le lancement du proforma a echoue.";
+      showStatus(errorMessage, 'error');
+      updateResultCard(
+        'proformaResultCard',
+        'proformaResultMeta',
+        'proformaResultBody',
+        `BL : ${blNumber || '-'}`,
+        escapeHtml(errorMessage)
+      );
+    } finally {
+      button.disabled = false;
+      button.textContent = 'Generer';
+    }
   }
 
   async function runVerification(blNumber, contextLabel, options = {}) {
@@ -511,7 +542,6 @@
       switchTab(this.dataset.clientTab);
     });
   });
-
   const transitInput = document.getElementById('proformaTransitSearch');
   const transitHidden = document.getElementById('proformaTransitValue');
   const transitDropdown = document.getElementById('proformaTransitDropdown');
@@ -541,99 +571,10 @@
     this.value = normalizeBl(this.value);
   });
 
-  document.getElementById('proformaForm').addEventListener('submit', async function (event) {
+  document.getElementById('proformaForm').addEventListener('submit', function (event) {
     event.preventDefault();
     clearStatus();
-
-    const blNumber = normalizeBl(document.getElementById('proformaBl').value);
-    const dateValue = document.getElementById('proformaDate').value;
-    const clientFacture = transitHidden.value.trim();
-
-    if (!blNumber || !dateValue || !clientFacture) {
-      showStatus("Veuillez renseigner le BL, la date d'enlevement et la maison de transit.", 'warning');
-      return;
-    }
-
-    const ok = await runProformaGeneration(
-      blNumber,
-      dateValue,
-      clientFacture,
-      `Proforma genere pour le BL ${blNumber}.`
-    );
-
-    if (ok) {
-      Swal.fire({
-        icon: 'success',
-        title: 'Proforma genere',
-        text: `Le document du BL ${blNumber} est maintenant affiche ci-dessous.`,
-        confirmButtonColor: '#4f46e5'
-      });
-    }
-  });
-
-  document.getElementById('changePickupDateBtn').addEventListener('click', async function () {
-    syncProformaState();
-    if (!proformaState.blNumber || !proformaState.clientFacture) {
-      showStatus("Veuillez d'abord generer un proforma avant de changer la date d'enlevement.", 'warning');
-      return;
-    }
-
-    const { value: newDate } = await Swal.fire({
-      title: "Changer la date d'enlevement",
-      input: 'date',
-      inputValue: proformaState.dateValue || '',
-      inputLabel: "Nouvelle date d'enlevement",
-      confirmButtonText: 'Valider',
-      confirmButtonColor: '#0f766e',
-      showCancelButton: true,
-      cancelButtonText: 'Annuler',
-      inputValidator: value => !value ? "Veuillez renseigner une date." : undefined
-    });
-
-    if (!newDate) {
-      return;
-    }
-
-    document.getElementById('proformaDate').value = newDate;
-    const ok = await runProformaGeneration(
-      proformaState.blNumber,
-      newDate,
-      proformaState.clientFacture,
-      `Date d'enlevement mise a jour pour le BL ${proformaState.blNumber}.`
-    );
-
-    if (ok) {
-      Swal.fire({
-        icon: 'success',
-        title: 'Date mise a jour',
-        text: "Le proforma a ete regenere avec la nouvelle date d'enlevement.",
-        confirmButtonColor: '#0f766e'
-      });
-    }
-  });
-
-  document.getElementById('validateProformaBtn').addEventListener('click', async function () {
-    syncProformaState();
-    if (!proformaState.blNumber || !proformaState.dateValue || !proformaState.clientFacture) {
-      showStatus("Veuillez d'abord generer un proforma avant de valider.", 'warning');
-      return;
-    }
-
-    const ok = await runProformaGeneration(
-      proformaState.blNumber,
-      proformaState.dateValue,
-      proformaState.clientFacture,
-      `Proforma confirme pour le BL ${proformaState.blNumber}.`
-    );
-
-    if (ok) {
-      Swal.fire({
-        icon: 'success',
-        title: 'Proforma valide',
-        text: `Le proforma du BL ${proformaState.blNumber} a ete relance puis confirme.`,
-        confirmButtonColor: '#4f46e5'
-      });
-    }
+    runProformaGeneration();
   });
 
   document.getElementById('factureSearchBtn').addEventListener('click', function () {
@@ -652,23 +593,8 @@
     });
   });
 
-  document.getElementById('factureDefinitiveBtn').addEventListener('click', function () {
-    Swal.fire({
-      icon: 'info',
-      title: 'Automatisation a brancher',
-      text: "Le bouton FACTURE DEFINITIVE est pret dans l'interface, mais aucune automatisation dediee n'existe encore dans le projet."
-    });
-  });
-
-  document.getElementById('badActionBtn').addEventListener('click', function () {
-    Swal.fire({
-      icon: 'info',
-      title: 'Automatisation a brancher',
-      text: "Le bouton BAD est pret dans l'interface, mais aucune automatisation dediee n'existe encore dans le projet."
-    });
-  });
-
-  refreshProformaPreview();
+  document.getElementById('proformaDate').value = new Date().toISOString().split('T')[0];
+  switchTab('proforma');
 </script>
 
 </body>

@@ -97,6 +97,12 @@
       "type": "java.lang.Integer",
       "description": "Execution timeout for automation scripts in seconds.",
       "defaultValue": 600
+    },
+    {
+      "name": "app.automation.internal-token",
+      "type": "java.lang.String",
+      "description": "Internal token used by automation scripts to call protected application endpoints.",
+      "defaultValue": "dt-app-internal-automation-token"
     }
   ]
 }
