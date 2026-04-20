@@ -405,9 +405,9 @@
           </div>
           <div class="step-qr">
             <div class="qr-box" aria-hidden="true">
-              <img th:src="'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + ${wifiQrPayload}" alt="QR Wi-Fi">
+              <img th:src="${wifiQrBase64}" alt="QR Wi-Fi">
             </div>
-            <div class="qr-caption" id="wifiSsidCaption" th:text="'SSID : ' + ${wifiSettings.ssid}">SSID : DakarTerminal_WiFi</div>
+            <div class="qr-caption" id="wifiSsidCaption" th:text="|SSID : ${wifiSettings.ssid}|">SSID : DakarTerminal_WiFi</div>
           </div>
         </div>
 
@@ -425,7 +425,7 @@
           </div>
           <div class="step-qr">
             <div class="qr-box" aria-hidden="true">
-              <img th:src="'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + ${ticketEntryUrl}" alt="QR Ticket">
+              <img th:src="${ticketQrBase64}" alt="QR Ticket">
             </div>
             <div class="qr-caption">Scanner pour un ticket</div>
           </div>

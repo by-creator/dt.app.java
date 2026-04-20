@@ -41,6 +41,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Locale;
 import java.util.NoSuchElementException;
@@ -49,6 +50,12 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.WriterException;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
 
 @Controller
 public class GfaDisplayController {
@@ -94,9 +101,12 @@ public class GfaDisplayController {
         String token = uniqueToken(null);
         String dynamicBaseUrl = org.springframework.web.servlet.support.ServletUriComponentsBuilder
                 .fromCurrentContextPath().build().toUriString();
+        String wifiQrPayload = buildWifiQrPayload(wifiSettings);
+        String ticketEntryUrl = dynamicBaseUrl + "/gfa/ticket?token=" + token;
+        
         model.addAttribute("wifiSettings", wifiSettings);
-        model.addAttribute("wifiQrPayload", buildWifiQrPayload(wifiSettings));
-        model.addAttribute("ticketEntryUrl", dynamicBaseUrl + "/gfa/ticket?token=" + token);
+        model.addAttribute("wifiQrBase64", generateQrCodeBase64(wifiQrPayload, 180));
+        model.addAttribute("ticketQrBase64", generateQrCodeBase64(ticketEntryUrl, 180));
         model.addAttribute("displayState", displayState);
         model.addAttribute("pusherKey", pusherService.getKey());
         model.addAttribute("pusherCluster", pusherService.getCluster());
@@ -769,8 +779,7 @@ public class GfaDisplayController {
     private String buildWifiQrPayload(GfaWifiSettings settings) {
         String ssid = settings.getSsid() == null ? "" : settings.getSsid();
         String password = settings.getPassword() == null ? "" : settings.getPassword();
-        String payload = "WIFI:T:WPA;S:" + escapeWifi(ssid) + ";P:" + escapeWifi(password) + ";;";
-        return URLEncoder.encode(payload, StandardCharsets.UTF_8);
+        return "WIFI:T:WPA;S:" + escapeWifi(ssid) + ";P:" + escapeWifi(password) + ";;";
     }
 
     private String generateTicketNumber(GfaService service) {
@@ -799,6 +808,19 @@ public class GfaDisplayController {
                 .replace(";", "\\;")
                 .replace(",", "\\,")
                 .replace(":", "\\:");
+    }
+
+    private String generateQrCodeBase64(String text, int size) {
+        try {
+            QRCodeWriter qrCodeWriter = new QRCodeWriter();
+            BitMatrix bitMatrix = qrCodeWriter.encode(text, BarcodeFormat.QR_CODE, size, size);
+            ByteArrayOutputStream pngOutputStream = new ByteArrayOutputStream();
+            MatrixToImageWriter.writeToStream(bitMatrix, "PNG", pngOutputStream);
+            byte[] pngData = pngOutputStream.toByteArray();
+            return "data:image/png;base64," + Base64.getEncoder().encodeToString(pngData);
+        } catch (WriterException | IOException e) {
+            return "";
+        }
     }
 
     private String normalizeTab(String tab) {
