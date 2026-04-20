@@ -65,13 +65,13 @@
     <h1>Escale : <span th:text="${escale}"></span></h1>
     <div class="print-actions">
       <button th:if="${!pages.isEmpty()}" type="button" onclick="triggerPrint()">Imprimer</button>
-      <a th:href="@{/teks}">Retour</a>
+      <a th:href="@{/escale-code-barres}">Retour</a>
     </div>
   </div>
 
   <div th:if="${!pages.isEmpty()}">
     <div th:each="page : ${pages}" class="page-image">
-      <img th:src="@{/teks/files/{id}(id=${page.id})}"
+      <img th:src="@{/escale-code-barres/files/{id}(id=${page.id})}"
            th:alt="${page.bl}"
            onload="imageLoaded()">
     </div>

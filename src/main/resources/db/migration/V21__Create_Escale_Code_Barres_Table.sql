@@ -1,4 +1,4 @@
-CREATE TABLE teks (
+CREATE TABLE IF NOT EXISTS escale_code_barres (
     id BIGINT NOT NULL AUTO_INCREMENT,
     bl VARCHAR(100) NOT NULL,
     chassis VARCHAR(100) NOT NULL,
@@ -9,8 +9,8 @@ CREATE TABLE teks (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
-    INDEX idx_teks_bl (bl),
-    INDEX idx_teks_chassis (chassis),
-    INDEX idx_teks_escale (escale(100)),
-    INDEX idx_teks_created_at (created_at)
+    INDEX idx_escale_code_barres_bl (bl),
+    INDEX idx_escale_code_barres_chassis (chassis),
+    INDEX idx_escale_code_barres_escale (escale(100)),
+    INDEX idx_escale_code_barres_created_at (created_at)
 );

@@ -1,6 +1,6 @@
 package com.dtapp.repository;
 
-import com.dtapp.entity.Teks;
+import com.dtapp.entity.EscaleCodeBarres;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,10 +11,10 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface TeksRepository extends JpaRepository<Teks, Long> {
+public interface EscaleCodeBarresRepository extends JpaRepository<EscaleCodeBarres, Long> {
 
     @Query("""
-            SELECT t FROM Teks t
+            SELECT t FROM EscaleCodeBarres t
             WHERE (:search = '' OR LOWER(t.bl) LIKE LOWER(CONCAT('%', :search, '%'))
                    OR LOWER(t.chassis) LIKE LOWER(CONCAT('%', :search, '%'))
                    OR LOWER(t.fileName) LIKE LOWER(CONCAT('%', :search, '%')))
@@ -22,13 +22,13 @@ public interface TeksRepository extends JpaRepository<Teks, Long> {
               AND (:filterChassis = '' OR LOWER(t.chassis) LIKE LOWER(CONCAT('%', :filterChassis, '%')))
             ORDER BY t.createdAt DESC
             """)
-    Page<Teks> search(@Param("search") String search,
+    Page<EscaleCodeBarres> search(@Param("search") String search,
                       @Param("filterBl") String filterBl,
                       @Param("filterChassis") String filterChassis,
                       Pageable pageable);
 
-    List<Teks> findByEscaleOrderByCreatedAtAsc(String escale);
+    List<EscaleCodeBarres> findByEscaleOrderByCreatedAtAsc(String escale);
 
-    @Query("SELECT DISTINCT t.escale FROM Teks t WHERE t.escale IS NOT NULL AND t.escale <> '' ORDER BY t.escale")
+    @Query("SELECT DISTINCT t.escale FROM EscaleCodeBarres t WHERE t.escale IS NOT NULL AND t.escale <> '' ORDER BY t.escale")
     List<String> findDistinctEscales();
 }

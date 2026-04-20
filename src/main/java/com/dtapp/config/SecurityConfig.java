@@ -61,7 +61,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(authz -> authz
                 .requestMatchers("/login", "/css/**", "/js/**", "/img/**",
                                  "/gfa/display", "/gfa/ticket/**", "/api/gfa/display/state", "/demat/**",
-                                 "/teks", "/teks/**",
+                                 "/escale-code-barres", "/escale-code-barres/**",
                                  "/images/**", "/actuator/health", "/actuator/health/**",
                                  "/api/health/**").permitAll()
                 .anyRequest().authenticated()

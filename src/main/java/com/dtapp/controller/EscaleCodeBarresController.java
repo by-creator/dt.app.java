@@ -1,8 +1,8 @@
 package com.dtapp.controller;
 
-import com.dtapp.entity.Teks;
+import com.dtapp.entity.EscaleCodeBarres;
 import com.dtapp.entity.User;
-import com.dtapp.repository.TeksRepository;
+import com.dtapp.repository.EscaleCodeBarresRepository;
 import com.dtapp.repository.UserRepository;
 import com.dtapp.util.PaginationUtils;
 import jakarta.servlet.http.HttpSession;
@@ -43,18 +43,18 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Controller
-public class TeksController {
+public class EscaleCodeBarresController {
 
-    private final TeksRepository teksRepository;
+    private final EscaleCodeBarresRepository escaleCodeBarresRepository;
     private final UserRepository userRepository;
 
-    public TeksController(TeksRepository teksRepository,
+    public EscaleCodeBarresController(EscaleCodeBarresRepository escaleCodeBarresRepository,
                           UserRepository userRepository) {
-        this.teksRepository = teksRepository;
+        this.escaleCodeBarresRepository = escaleCodeBarresRepository;
         this.userRepository = userRepository;
     }
 
-    @GetMapping("/menu/informatique/teks")
+    @GetMapping("/menu/informatique/escale-code-barres")
     public String adminIndex(@RequestParam(required = false) String search,
                              @RequestParam(required = false) String filterBl,
                              @RequestParam(required = false) String filterChassis,
@@ -63,14 +63,14 @@ public class TeksController {
                              Model model,
                              Authentication auth,
                              HttpSession session) {
-        Page<Teks> teksPage = teksRepository.search(
+        Page<EscaleCodeBarres> teksPage = escaleCodeBarresRepository.search(
                 safe(search),
                 safe(filterBl),
                 safe(filterChassis),
                 PaginationUtils.pageable(page, size));
 
         model.addAttribute("loggedUser", loggedUser(auth));
-        model.addAttribute("teksList", teksPage.getContent());
+        model.addAttribute("escaleCodeBarresList", teksPage.getContent());
         model.addAttribute("search", value(search));
         model.addAttribute("filterBl", value(filterBl));
         model.addAttribute("filterChassis", value(filterChassis));
@@ -87,47 +87,47 @@ public class TeksController {
             model.addAttribute("escalePreview", previews);
         }
 
-        return "informatique/teks";
+        return "informatique/escale-code-barres";
     }
 
-    @PostMapping("/menu/informatique/teks/create")
+    @PostMapping("/menu/informatique/escale-code-barres/create")
     public String create(@RequestParam String bl,
                          @RequestParam String chassis,
                          @RequestParam("file") MultipartFile file,
                          RedirectAttributes ra) {
         if (isBlank(bl) || isBlank(chassis) || file == null || file.isEmpty()) {
             ra.addFlashAttribute("error", "Les champs BL, chassis et fichier sont obligatoires.");
-            return "redirect:/menu/informatique/teks";
+            return "redirect:/menu/informatique/escale-code-barres";
         }
 
         try {
-            Teks teks = new Teks();
+            EscaleCodeBarres teks = new EscaleCodeBarres();
             teks.setBl(bl.trim());
             teks.setChassis(chassis.trim());
             updateFile(teks, file);
-            teksRepository.save(teks);
-            ra.addFlashAttribute("success", "Teks ajoute avec succes.");
+            escaleCodeBarresRepository.save(teks);
+            ra.addFlashAttribute("success", "Escale Code Barres ajoute avec succes.");
         } catch (IOException e) {
             ra.addFlashAttribute("error", "Impossible de lire le fichier televerse.");
         }
-        return "redirect:/menu/informatique/teks";
+        return "redirect:/menu/informatique/escale-code-barres";
     }
 
-    @PostMapping("/menu/informatique/teks/{id}/edit")
+    @PostMapping("/menu/informatique/escale-code-barres/{id}/edit")
     public String edit(@PathVariable long id,
                        @RequestParam String bl,
                        @RequestParam String chassis,
                        @RequestParam("file") MultipartFile file,
                        RedirectAttributes ra) {
-        Teks teks = teksRepository.findById(id).orElse(null);
+        EscaleCodeBarres teks = escaleCodeBarresRepository.findById(id).orElse(null);
         if (teks == null) {
-            ra.addFlashAttribute("error", "Teks introuvable.");
-            return "redirect:/menu/informatique/teks";
+            ra.addFlashAttribute("error", "Escale Code Barres introuvable.");
+            return "redirect:/menu/informatique/escale-code-barres";
         }
 
         if (isBlank(bl) || isBlank(chassis)) {
             ra.addFlashAttribute("error", "Les champs BL et chassis sont obligatoires.");
-            return "redirect:/menu/informatique/teks";
+            return "redirect:/menu/informatique/escale-code-barres";
         }
 
         try {
@@ -136,37 +136,37 @@ public class TeksController {
             if (file != null && !file.isEmpty()) {
                 updateFile(teks, file);
             }
-            teksRepository.save(teks);
-            ra.addFlashAttribute("success", "Teks mis a jour avec succes.");
+            escaleCodeBarresRepository.save(teks);
+            ra.addFlashAttribute("success", "Escale Code Barres mis a jour avec succes.");
         } catch (IOException e) {
             ra.addFlashAttribute("error", "Impossible de lire le nouveau fichier.");
         }
-        return "redirect:/menu/informatique/teks";
+        return "redirect:/menu/informatique/escale-code-barres";
     }
 
-    @PostMapping("/menu/informatique/teks/{id}/delete")
+    @PostMapping("/menu/informatique/escale-code-barres/{id}/delete")
     public String delete(@PathVariable long id,
                          RedirectAttributes ra) {
-        Teks teks = teksRepository.findById(id).orElse(null);
+        EscaleCodeBarres teks = escaleCodeBarresRepository.findById(id).orElse(null);
         if (teks != null) {
-            teksRepository.delete(teks);
-            ra.addFlashAttribute("success", "Teks supprime avec succes.");
+            escaleCodeBarresRepository.delete(teks);
+            ra.addFlashAttribute("success", "Escale Code Barres supprime avec succes.");
         }
-        return "redirect:/menu/informatique/teks";
+        return "redirect:/menu/informatique/escale-code-barres";
     }
 
-    @GetMapping("/teks/print-all")
+    @GetMapping("/escale-code-barres/print-all")
     public String printAllView(Model model) {
-        boolean hasPdfs = teksRepository.findAll().stream()
+        boolean hasPdfs = escaleCodeBarresRepository.findAll().stream()
                 .anyMatch(t -> MediaType.APPLICATION_PDF_VALUE.equalsIgnoreCase(t.getFileContentType()));
         model.addAttribute("hasPdfs", hasPdfs);
-        return "public/teks-print-all";
+        return "public/escale-code-barres-print-all";
     }
 
-    @GetMapping("/teks/print-all/file")
+    @GetMapping("/escale-code-barres/print-all/file")
     @ResponseBody
     public ResponseEntity<ByteArrayResource> printAllFile() throws IOException {
-        List<Teks> pdfs = teksRepository.findAll().stream()
+        List<EscaleCodeBarres> pdfs = escaleCodeBarresRepository.findAll().stream()
                 .filter(t -> MediaType.APPLICATION_PDF_VALUE.equalsIgnoreCase(t.getFileContentType()))
                 .toList();
 
@@ -181,7 +181,7 @@ public class TeksController {
             PDFMergerUtility merger = new PDFMergerUtility();
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             merger.setDestinationStream(out);
-            for (Teks t : pdfs) {
+            for (EscaleCodeBarres t : pdfs) {
                 merger.addSource(new RandomAccessReadBuffer(t.getFileData()));
             }
             merger.mergeDocuments(null);
@@ -189,7 +189,7 @@ public class TeksController {
         }
 
         ContentDisposition disposition = ContentDisposition.inline()
-                .filename("teks-complet.pdf", StandardCharsets.UTF_8)
+                .filename("escale-code-barres-complet.pdf", StandardCharsets.UTF_8)
                 .build();
 
         return ResponseEntity.ok()
@@ -199,43 +199,43 @@ public class TeksController {
                 .body(new ByteArrayResource(merged));
     }
 
-    @GetMapping("/teks")
+    @GetMapping("/escale-code-barres")
     public String publicIndex(@RequestParam(required = false) String search,
                               @RequestParam(defaultValue = "0") int page,
                               @RequestParam(defaultValue = "12") int size,
                               Model model) {
-        Page<Teks> teksPage = teksRepository.search(safe(search), "", "", PaginationUtils.pageable(page, size));
-        model.addAttribute("teksList", teksPage.getContent());
+        Page<EscaleCodeBarres> teksPage = escaleCodeBarresRepository.search(safe(search), "", "", PaginationUtils.pageable(page, size));
+        model.addAttribute("escaleCodeBarresList", teksPage.getContent());
         model.addAttribute("search", value(search));
-        model.addAttribute("escales", teksRepository.findDistinctEscales());
+        model.addAttribute("escales", escaleCodeBarresRepository.findDistinctEscales());
         PaginationUtils.addPageAttributes(model, teksPage);
-        return "public/teks";
+        return "public/escale-code-barres";
     }
 
-    @GetMapping("/teks/print-escale")
+    @GetMapping("/escale-code-barres/print-escale")
     public String printEscaleView(@RequestParam String escale, Model model) {
-        List<Teks> pages = teksRepository.findByEscaleOrderByCreatedAtAsc(escale).stream()
+        List<EscaleCodeBarres> pages = escaleCodeBarresRepository.findByEscaleOrderByCreatedAtAsc(escale).stream()
                 .filter(t -> t.getFileContentType() != null && t.getFileContentType().startsWith("image/"))
                 .toList();
         model.addAttribute("escale", escale);
         model.addAttribute("pages", pages);
-        return "public/teks-print-escale";
+        return "public/escale-code-barres-print-escale";
     }
 
-    @GetMapping("/teks/{id}/print")
+    @GetMapping("/escale-code-barres/{id}/print")
     public String printView(@PathVariable long id, Model model) {
-        Teks teks = teksRepository.findById(id).orElseThrow();
-        model.addAttribute("teks", teks);
-        model.addAttribute("fileUrl", "/teks/files/" + id);
+        EscaleCodeBarres teks = escaleCodeBarresRepository.findById(id).orElseThrow();
+        model.addAttribute("escaleCodeBarres", teks);
+        model.addAttribute("fileUrl", "/escale-code-barres/files/" + id);
         model.addAttribute("printable", isPrintable(teks));
-        return "public/teks-print";
+        return "public/escale-code-barres-print";
     }
 
-    @GetMapping("/teks/files/{id}")
+    @GetMapping("/escale-code-barres/files/{id}")
     @ResponseBody
     public ResponseEntity<ByteArrayResource> file(@PathVariable long id,
                                                   @RequestParam(defaultValue = "false") boolean download) {
-        Teks teks = teksRepository.findById(id).orElseThrow();
+        EscaleCodeBarres teks = escaleCodeBarresRepository.findById(id).orElseThrow();
         MediaType mediaType = resolveMediaType(teks.getFileContentType());
         ContentDisposition disposition = (download ? ContentDisposition.attachment() : ContentDisposition.inline())
                 .filename(teks.getFileName(), StandardCharsets.UTF_8)
@@ -252,8 +252,8 @@ public class TeksController {
         return userRepository.findByEmail(auth.getName()).orElseThrow();
     }
 
-    private void updateFile(Teks teks, MultipartFile file) throws IOException {
-        teks.setFileName(file.getOriginalFilename() != null ? file.getOriginalFilename().trim() : "teks-file");
+    private void updateFile(EscaleCodeBarres teks, MultipartFile file) throws IOException {
+        teks.setFileName(file.getOriginalFilename() != null ? file.getOriginalFilename().trim() : "escale-code-barres-file");
         teks.setFileContentType(file.getContentType());
         teks.setFileData(file.getBytes());
     }
@@ -270,7 +270,7 @@ public class TeksController {
         return value == null || value.isBlank();
     }
 
-    private boolean isPrintable(Teks teks) {
+    private boolean isPrintable(EscaleCodeBarres teks) {
         String contentType = teks.getFileContentType();
         if (contentType == null) {
             return false;
@@ -294,60 +294,60 @@ public class TeksController {
     // Upload Escale
     // -------------------------------------------------------------------------
 
-    @PostMapping("/menu/informatique/teks/upload-escale/preview")
+    @PostMapping("/menu/informatique/escale-code-barres/upload-escale/preview")
     public String escalePreview(@RequestParam("escaleFile") MultipartFile file,
                                 HttpSession session,
                                 RedirectAttributes ra) {
         if (file == null || file.isEmpty()) {
             ra.addFlashAttribute("error", "Veuillez selectionner un fichier PDF.");
-            return "redirect:/menu/informatique/teks";
+            return "redirect:/menu/informatique/escale-code-barres";
         }
         if (!"application/pdf".equalsIgnoreCase(file.getContentType())) {
             ra.addFlashAttribute("error", "Seuls les fichiers PDF sont acceptes.");
-            return "redirect:/menu/informatique/teks";
+            return "redirect:/menu/informatique/escale-code-barres";
         }
         try {
             List<EscalePageData> pages = parseEscalePdf(file.getBytes());
             if (pages.isEmpty()) {
                 ra.addFlashAttribute("error", "Aucune page extractable dans ce PDF.");
-                return "redirect:/menu/informatique/teks";
+                return "redirect:/menu/informatique/escale-code-barres";
             }
             session.setAttribute("ESCALE_PREVIEW", pages);
         } catch (IOException e) {
             ra.addFlashAttribute("error", "Impossible de lire le fichier PDF : " + e.getMessage());
         }
-        return "redirect:/menu/informatique/teks";
+        return "redirect:/menu/informatique/escale-code-barres";
     }
 
-    @PostMapping("/menu/informatique/teks/upload-escale/confirm")
+    @PostMapping("/menu/informatique/escale-code-barres/upload-escale/confirm")
     public String escaleConfirm(HttpSession session, RedirectAttributes ra) {
         @SuppressWarnings("unchecked")
         List<EscalePageData> pages = (List<EscalePageData>) session.getAttribute("ESCALE_PREVIEW");
         if (pages == null || pages.isEmpty()) {
             ra.addFlashAttribute("error", "Aucune donnee a importer. Veuillez re-uploader le fichier.");
-            return "redirect:/menu/informatique/teks";
+            return "redirect:/menu/informatique/escale-code-barres";
         }
         int count = 0;
         for (EscalePageData d : pages) {
-            Teks teks = new Teks();
+            EscaleCodeBarres teks = new EscaleCodeBarres();
             teks.setBl(d.bl);
             teks.setChassis(d.chassis);
             teks.setEscale(d.escale);
             teks.setFileName(d.fileName);
             teks.setFileContentType(MediaType.IMAGE_PNG_VALUE);
             teks.setFileData(d.pdfBytes);
-            teksRepository.save(teks);
+            escaleCodeBarresRepository.save(teks);
             count++;
         }
         session.removeAttribute("ESCALE_PREVIEW");
         ra.addFlashAttribute("success", count + " enregistrement(s) importe(s) avec succes depuis Escale.");
-        return "redirect:/menu/informatique/teks";
+        return "redirect:/menu/informatique/escale-code-barres";
     }
 
-    @PostMapping("/menu/informatique/teks/upload-escale/cancel")
+    @PostMapping("/menu/informatique/escale-code-barres/upload-escale/cancel")
     public String escaleCancel(HttpSession session) {
         session.removeAttribute("ESCALE_PREVIEW");
-        return "redirect:/menu/informatique/teks";
+        return "redirect:/menu/informatique/escale-code-barres";
     }
 
     private List<EscalePageData> parseEscalePdf(byte[] pdfBytes) throws IOException {

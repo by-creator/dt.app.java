@@ -62,21 +62,21 @@
 </head>
 <body>
   <div class="print-topbar">
-    <h1>Document complet - tous les teks</h1>
+    <h1>Document complet - tous les escale-code-barres</h1>
     <div class="print-actions">
       <button th:if="${hasPdfs}" type="button" onclick="window.print()">Imprimer</button>
-      <a th:href="@{/teks/print-all/file}" th:if="${hasPdfs}">Telecharger le fichier</a>
-      <a th:href="@{/teks}">Retour</a>
+      <a th:href="@{/escale-code-barres/print-all/file}" th:if="${hasPdfs}">Telecharger le fichier</a>
+      <a th:href="@{/escale-code-barres}">Retour</a>
     </div>
   </div>
 
   <iframe th:if="${hasPdfs}"
-          th:src="@{|/teks/print-all/file#toolbar=0&navpanes=0|}"
+          th:src="@{|/escale-code-barres/print-all/file#toolbar=0&navpanes=0|}"
           onload="setTimeout(function(){ window.print(); }, 500)"></iframe>
 
   <div th:if="${!hasPdfs}" class="print-fallback">
     <h2>Aucun document disponible</h2>
-    <p>Il n'y a pas encore de fichiers PDF importes. <a th:href="@{/teks}" style="color:#6366f1;">Retour</a></p>
+    <p>Il n'y a pas encore de fichiers PDF importes. <a th:href="@{/escale-code-barres}" style="color:#6366f1;">Retour</a></p>
   </div>
 </body>
 </html>

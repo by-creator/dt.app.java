@@ -16,10 +16,10 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 @Entity
-@Table(name = "teks")
+@Table(name = "escale_code_barres")
 @Data
 @NoArgsConstructor
-public class Teks {
+public class EscaleCodeBarres {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

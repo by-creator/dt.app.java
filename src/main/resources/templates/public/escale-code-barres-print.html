@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title th:text="'Impression - ' + ${teks.bl}">Impression teks</title>
+  <title th:text="'Impression - ' + ${escaleCodeBarres.bl}">Impression escale-code-barres</title>
   <style>
     body {
       margin: 0;
@@ -78,21 +78,21 @@
 </head>
 <body>
   <div class="print-topbar">
-    <h1 th:text="'BL ' + ${teks.bl} + ' - ' + ${teks.chassis}">BL</h1>
+    <h1 th:text="'BL ' + ${escaleCodeBarres.bl} + ' - ' + ${escaleCodeBarres.chassis}">BL</h1>
     <div class="print-actions">
       <button th:if="${printable}" type="button" onclick="window.print()">Imprimer</button>
-      <a th:href="@{/teks/files/{id}(id=${teks.id}, download=true)}">Telecharger le fichier</a>
-      <a th:href="@{/teks}">Retour</a>
+      <a th:href="@{/escale-code-barres/files/{id}(id=${escaleCodeBarres.id}, download=true)}">Telecharger le fichier</a>
+      <a th:href="@{/escale-code-barres}">Retour</a>
     </div>
   </div>
 
-  <iframe th:if="${printable and teks.fileContentType == 'application/pdf'}"
+  <iframe th:if="${printable and escaleCodeBarres.fileContentType == 'application/pdf'}"
           th:src="@{|${fileUrl}#toolbar=0&navpanes=0|}"
           onload="setTimeout(function(){ window.print(); }, 500)"></iframe>
 
-  <img th:if="${printable and teks.fileContentType != 'application/pdf'}"
+  <img th:if="${printable and escaleCodeBarres.fileContentType != 'application/pdf'}"
        th:src="@{${fileUrl}}"
-       alt="Apercu du teks"
+       alt="Apercu du escale-code-barres"
        onload="setTimeout(function(){ window.print(); }, 500)">
 
   <div th:if="${!printable}" class="print-fallback">
