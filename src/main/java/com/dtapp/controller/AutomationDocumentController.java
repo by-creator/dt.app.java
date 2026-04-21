@@ -52,13 +52,26 @@ public class AutomationDocumentController {
         }
 
         Resource resource = new FileSystemResource(filePath);
-        ContentDisposition disposition = (download != null)
-                ? ContentDisposition.attachment().filename(filename, StandardCharsets.UTF_8).build()
-                : ContentDisposition.inline().filename(filename, StandardCharsets.UTF_8).build();
+
+        if (download != null) {
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION,
+                            ContentDisposition.attachment().filename(filename, StandardCharsets.UTF_8).build().toString())
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .body(resource);
+        }
+
+        // Pour l'affichage inline, détecter le vrai type MIME
+        MediaType mediaType = MediaType.APPLICATION_OCTET_STREAM;
+        try {
+            String mimeType = Files.probeContentType(filePath);
+            if (mimeType != null) mediaType = MediaType.parseMediaType(mimeType);
+        } catch (Exception ignored) {}
 
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, disposition.toString())
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.inline().filename(filename, StandardCharsets.UTF_8).build().toString())
+                .contentType(mediaType)
                 .body(resource);
     }
 }
