@@ -219,107 +219,51 @@ def wait_for_new_download(directory: Path, previous_files: set[str], timeout: in
 
 
 def download_proforma_pdf(driver, wait, invoices_url: str, screenshot_path: Path) -> bool:
-    # Revenir sur la page des factures pour utiliser le même scénario de téléchargement.
     driver.get(invoices_url)
     wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
     time.sleep(2)
     driver.save_screenshot(str(RESULTS_DIR / "step_invoices_page.png"))
     print(f"✓ Page des factures — URL : {driver.current_url}")
-    print("  → capture : step_invoices_page.png")
 
-    clear_download_dir(DOWNLOAD_DIR)
-
-    candidates = driver.find_elements(By.XPATH,
-        "//*[@title='Télécharger Proforma' or @title='Telecharger Proforma'"
-        " or contains(@href,'GenerateProformaReport')"
-        " or contains(@onclick,'GenerateProformaReport')]"
+    # Collecter les URLs GenerateProformaReport
+    proforma_links = driver.find_elements(By.XPATH,
+        "//a[contains(@href,'GenerateProformaReport')]"
     )
-    print(f"  → boutons téléchargement trouvés : {len(candidates)}")
-    visible_indexes = []
-    for index, candidate in enumerate(candidates, start=1):
-        print(
-            f"      tag={candidate.tag_name} title='{candidate.get_attribute('title')}' "
-            f"href='{candidate.get_attribute('href')}' displayed={candidate.is_displayed()}"
-        )
-        if candidate.is_displayed():
-            visible_indexes.append(index)
+    print(f"  → liens proforma trouvés : {len(proforma_links)}")
+    for lnk in proforma_links:
+        print(f"      href='{lnk.get_attribute('href')}'")
 
-    if not visible_indexes:
+    proforma_urls = [lnk.get_attribute("href") for lnk in proforma_links if lnk.get_attribute("href")]
+    if not proforma_urls:
         driver.save_screenshot(str(screenshot_path))
-        print("✗ Bouton de téléchargement non trouvé")
+        print("✗ Aucun lien GenerateProformaReport trouvé")
         return False
 
-    print(f"✓ Boutons visibles à traiter : {len(visible_indexes)}")
-
+    clear_download_dir(DOWNLOAD_DIR)
     downloaded_files = []
-    failed_indexes = []
 
-    for button_position in visible_indexes:
-        current_candidates = driver.find_elements(By.XPATH,
-            "//*[@title='Télécharger Proforma' or @title='Telecharger Proforma'"
-            " or contains(@href,'GenerateProformaReport')"
-            " or contains(@onclick,'GenerateProformaReport')]"
-        )
-        if len(current_candidates) < button_position:
-            failed_indexes.append(button_position)
-            print(f"✗ Bouton de téléchargement #{button_position} introuvable au moment du clic")
-            continue
-
-        download_btn = current_candidates[button_position - 1]
-        if not download_btn.is_displayed():
-            failed_indexes.append(button_position)
-            print(f"✗ Bouton de téléchargement #{button_position} non visible au moment du clic")
-            continue
-
-        # Re-fetch pour éviter le StaleElementReferenceException avant la vérification
-        fresh_candidates = driver.find_elements(By.XPATH,
-            "//*[@title='Télécharger Proforma' or @title='Telecharger Proforma'"
-            " or contains(@href,'GenerateProformaReport')"
-            " or contains(@onclick,'GenerateProformaReport')]"
-        )
-        if len(fresh_candidates) < button_position:
-            failed_indexes.append(button_position)
-            print(f"✗ Bouton #{button_position} introuvable après re-fetch")
-            continue
-        download_btn = fresh_candidates[button_position - 1]
-
-        print("  → download without label check")
-
-        previous_files = {file_path.name for file_path in list_downloaded_files(DOWNLOAD_DIR)}
-        handles_before = set(driver.window_handles)
-
-        driver.execute_script("arguments[0].scrollIntoView({block:'center'});", download_btn)
-        time.sleep(0.5)
-        download_btn.click()
-        print(f"✓ Clic sur Télécharger Proforma #{button_position}")
+    for idx, url in enumerate(proforma_urls, start=1):
+        previous_files = {f.name for f in list_downloaded_files(DOWNLOAD_DIR)}
+        print(f"  → navigation proforma #{idx} : {url}")
+        driver.get(url)
         time.sleep(2)
 
-        new_handles = set(driver.window_handles) - handles_before
-        for handle in new_handles:
-            driver.switch_to.window(handle)
-            driver.close()
-        driver.switch_to.window(driver.window_handles[0])
+        new_file = wait_for_new_download(DOWNLOAD_DIR, previous_files, timeout=30)
+        if new_file:
+            downloaded_files.append(new_file.name)
+            print(f"✓ Proforma téléchargé #{idx} : {new_file.name}")
+        else:
+            print(f"✗ Téléchargement non détecté pour proforma #{idx}")
 
-        downloaded_file = wait_for_new_download(DOWNLOAD_DIR, previous_files, timeout=30)
-        if downloaded_file:
-            downloaded_files.append(downloaded_file.name)
-            print(f"✓ Document téléchargé #{button_position} : {downloaded_file.name}")
-            continue
-
-        failed_indexes.append(button_position)
-        print(f"✗ Téléchargement non détecté pour le bouton #{button_position} dans le délai imparti")
+        if idx < len(proforma_urls):
+            driver.get(invoices_url)
+            wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
+            time.sleep(1.5)
 
     driver.save_screenshot(str(screenshot_path))
 
-    if downloaded_files and not failed_indexes:
-        print(f"✓ Téléchargements terminés : {len(downloaded_files)} fichier(s)")
-        return True
-
     if downloaded_files:
-        print(
-            f"✓ Téléchargements partiels : {len(downloaded_files)} réussi(s), "
-            f"{len(failed_indexes)} échec(s)"
-        )
+        print(f"✓ Téléchargements terminés : {len(downloaded_files)} fichier(s)")
         return True
 
     print("✗ Aucun téléchargement n'a abouti")
@@ -377,12 +321,7 @@ def main():
             print(f"✗ BL {BL_NUMBER} : des factures existent déjà — génération annulée")
             print("→ tentative de téléchargement automatique du PDF existant")
             if download_proforma_pdf(driver, wait, invoices_url, SCREENSHOT):
-                upload_script = Path(__file__).parent / "upload_to_b2.py"
-                result = subprocess.run(
-                    [sys.executable, str(upload_script)],
-                    env={**os.environ, "BL_NUMBER": BL_NUMBER, "DATE": DATE},
-                )
-                sys.exit(result.returncode)
+                sys.exit(0)
             sys.exit(1)
         print(f"✓ BL {BL_NUMBER} : aucune facture — génération du proforma possible")
 
@@ -534,12 +473,7 @@ def main():
         print("✓ Proforma généré")
 
         if download_proforma_pdf(driver, wait, invoices_url, SCREENSHOT):
-            upload_script = Path(__file__).parent / "upload_to_b2.py"
-            result = subprocess.run(
-                [sys.executable, str(upload_script)],
-                env={**os.environ, "BL_NUMBER": BL_NUMBER, "DATE": DATE},
-            )
-            sys.exit(result.returncode)
+            sys.exit(0)
         sys.exit(1)
 
     except Exception as e:

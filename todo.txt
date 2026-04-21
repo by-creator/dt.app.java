@@ -1,6 +1,4 @@
 - automatiser validation proforma 
-- automatiser suppression proforma 
-- automatiser facture defintive
 - automatiser bad
 - automatiser update ies account
 - import des users avec choix de authority

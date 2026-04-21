@@ -7,7 +7,6 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
-import subprocess
 from urllib import error, request
 
 from selenium import webdriver
@@ -67,63 +66,40 @@ def download_facture_pdf(driver, wait, invoices_url: str, screenshot_path: Path)
     driver.save_screenshot(str(RESULTS_DIR / "step_factures_page.png"))
     print(f"✓ Page des factures — URL : {driver.current_url}")
 
-    clear_download_dir(DOWNLOAD_DIR)
-
-    # Updated for Facture buttons
-    candidates = driver.find_elements(By.XPATH,
-        "//*[@title='Télécharger Facture' or @title='Telecharger Facture' or "
-        "contains(@href,'GenerateFactureReport') or contains(@href,'GenerateInvoiceReport') or "
-        "contains(@onclick,'GenerateFactureReport') or contains(@onclick,'GenerateInvoiceReport')]"
+    # Collecter les URLs GenerateInvoiceReport
+    invoice_links = driver.find_elements(By.XPATH,
+        "//a[contains(@href,'GenerateInvoiceReport') or contains(@href,'GenerateFactureReport')]"
     )
-    print(f"  → boutons téléchargement trouvés : {len(candidates)}")
-    
-    visible_indexes = [i+1 for i, c in enumerate(candidates) if c.is_displayed()]
+    print(f"  → liens facture trouvés : {len(invoice_links)}")
+    for lnk in invoice_links:
+        print(f"      href='{lnk.get_attribute('href')}'")
 
-    if not visible_indexes:
+    invoice_urls = [lnk.get_attribute("href") for lnk in invoice_links if lnk.get_attribute("href")]
+    if not invoice_urls:
         driver.save_screenshot(str(screenshot_path))
-        print("✗ Aucun bouton de téléchargement Facture trouvé")
+        print("✗ Aucun lien GenerateInvoiceReport trouvé")
         return False
 
-    print(f"✓ Boutons visibles : {len(visible_indexes)}")
-
+    clear_download_dir(DOWNLOAD_DIR)
     downloaded_files = []
-    previous_files = {f.name for f in list_downloaded_files(DOWNLOAD_DIR)}
-    handles_before = set(driver.window_handles)
 
-    for button_position in visible_indexes:
-        current_candidates = driver.find_elements(By.XPATH,
-            "//*[@title='Télécharger Facture' or @title='Telecharger Facture' or "
-            "contains(@href,'GenerateFactureReport') or contains(@href,'GenerateInvoiceReport')]"
-        )
-        if len(current_candidates) < button_position:
-            print(f"✗ Bouton #{button_position} introuvable")
-            continue
+    for idx, url in enumerate(invoice_urls, start=1):
+        previous_files = {f.name for f in list_downloaded_files(DOWNLOAD_DIR)}
+        print(f"  → navigation facture #{idx} : {url}")
+        driver.get(url)
+        time.sleep(2)
 
-        download_btn = current_candidates[button_position - 1]
-        if not download_btn.is_displayed():
-            continue
-
-        # No label check as per user request
-
-        # Download
-        driver.execute_script("arguments[0].scrollIntoView({block:'center'});", download_btn)
-        time.sleep(0.5)
-        download_btn.click()
-        print(f"✓ Clic Télécharger Facture #{button_position}")
-
-        # Handle popup if any
-        new_handles = set(driver.window_handles) - handles_before
-        for handle in new_handles:
-            driver.switch_to.window(handle)
-            driver.close()
-        driver.switch_to.window(driver.window_handles[0])
-
-        new_file = wait_for_new_download(DOWNLOAD_DIR, previous_files)
+        new_file = wait_for_new_download(DOWNLOAD_DIR, previous_files, timeout=30)
         if new_file:
             downloaded_files.append(new_file)
-            previous_files.add(new_file.name)
-            print(f"✓ Facture téléchargée : {new_file.name}")
-        time.sleep(1)
+            print(f"✓ Facture téléchargée #{idx} : {new_file.name}")
+        else:
+            print(f"✗ Téléchargement non détecté pour facture #{idx}")
+
+        if idx < len(invoice_urls):
+            driver.get(invoices_url)
+            wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
+            time.sleep(1.5)
 
     driver.save_screenshot(str(screenshot_path))
 
@@ -175,14 +151,8 @@ def main():
         # Download factures
         invoices_url = INVOICES_URL.format(BL_NUMBER)
         if download_facture_pdf(driver, wait, invoices_url, SCREENSHOT):
-            upload_script = Path(__file__).parent / "upload_to_b2.py"
-            result = subprocess.run(
-                [sys.executable, str(upload_script)],
-                env={**os.environ, "BL_NUMBER": BL_NUMBER, "DATE": DATE},
-            )
-            if result.returncode == 0:
-                print("✓ Success")
-            sys.exit(result.returncode)
+            print("✓ Success")
+            sys.exit(0)
         else:
             print("✗ No factures found/downloaded")
             sys.exit(1)

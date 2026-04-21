@@ -70,6 +70,7 @@
     <div class="subpage-tabs">
       <button type="button" class="subpage-tab active" data-client-tab="proforma" style="background:none; border:none;">PROFORMA</button>
       <button type="button" class="subpage-tab" data-client-tab="facture" style="background:none; border:none;">FACTURE</button>
+      <button type="button" class="subpage-tab" data-client-tab="paiement" style="background:none; border:none;">PAIEMENT</button>
       <button type="button" class="subpage-tab" data-client-tab="bad" style="background:none; border:none;">BAD</button>
     </div>
 
@@ -135,9 +136,34 @@
             </div>
 
             <div class="blocage-actions">
-              <button type="button" class="btn-actualiser" id="factureSearchBtn">Rechercher</button>
+              <button type="button" class="btn-actualiser" id="factureSearchBtn">Telecharger</button>
             </div>
           </form>
+        </div>
+
+        <div class="tab-pane" data-client-pane="paiement" style="display:none;">
+          <div style="display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; max-width:480px; margin:0 auto;">
+            <a href="#" style="display:flex; align-items:center; justify-content:center;
+                               min-height:130px; border-radius:16px; padding:18px;
+                               background:rgba(99,102,241,0.08); border:1px solid rgba(148,163,184,.18);
+                               text-decoration:none; transition:transform .18s,box-shadow .18s;"
+               onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 12px 28px rgba(0,0,0,0.12)';"
+               onmouseout="this.style.transform=''; this.style.boxShadow='';"
+               aria-label="SycaPay">
+              <img th:src="@{/img/operateur/sycapay.png}" alt="SycaPay"
+                   style="max-width:130px; max-height:64px; object-fit:contain;">
+            </a>
+            <a href="#" style="display:flex; align-items:center; justify-content:center;
+                               min-height:130px; border-radius:16px; padding:18px;
+                               background:rgba(99,102,241,0.08); border:1px solid rgba(148,163,184,.18);
+                               text-decoration:none; transition:transform .18s,box-shadow .18s;"
+               onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 12px 28px rgba(0,0,0,0.12)';"
+               onmouseout="this.style.transform=''; this.style.boxShadow='';"
+               aria-label="InTouch">
+              <img th:src="@{/img/operateur/intouch.png}" alt="InTouch"
+                   style="max-width:130px; max-height:64px; object-fit:contain;">
+            </a>
+          </div>
         </div>
 
         <div class="tab-pane" data-client-pane="bad" style="display:none;">
@@ -149,7 +175,7 @@
             </div>
 
             <div class="blocage-actions">
-              <button type="button" class="btn-actualiser" id="badSearchBtn">Rechercher</button>
+              <button type="button" class="btn-actualiser" id="badSearchBtn">Telecharger</button>
             </div>
           </form>
         </div>
@@ -170,6 +196,16 @@
               <span>Facture Proforma</span>
             </div>
             <div id="proformaResultMeta" style="margin-top:6px; font-size:13px; color:#64748b;"></div>
+          </div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button type="button" id="validateProformaBtn" class="btn-actualiser"
+                    style="background:#f59e0b; border-color:#f59e0b;">
+              Valider
+            </button>
+            <button type="button" id="deleteProformaBtn" class="btn-actualiser"
+                    style="background:#ef4444; border-color:#ef4444;">
+              Supprimer
+            </button>
           </div>
         </div>
 
@@ -197,7 +233,7 @@
         </div>
 
         <div id="factureResultBody" style="padding:20px; border-radius:16px; border:1px solid rgba(148,163,184,.18); background:#f8fafc; color:#334155; line-height:1.6;">
-          Lancez une recherche pour afficher le resultat ici.
+          Lancez un telechargement pour afficher le resultat ici.
         </div>
       </div>
 
@@ -220,7 +256,7 @@
         </div>
 
         <div id="badResultBody" style="padding:20px; border-radius:16px; border:1px solid rgba(148,163,184,.18); background:#f8fafc; color:#334155; line-height:1.6;">
-          Lancez une recherche pour afficher le resultat ici.
+          Lancez un telechargement pour afficher le resultat ici.
         </div>
       </div>
     </div>
@@ -237,11 +273,15 @@
     },
     facture: {
       title: 'Facture',
-      subtitle: "Recherchez d'abord le BL dans IES avant de lancer la facture definitive."
+      subtitle: "Renseignez le BL pour telecharger la facture definitive depuis IES et l'uploader dans B2."
+    },
+    paiement: {
+      title: 'Paiement',
+      subtitle: 'Choisissez votre operateur de paiement.'
     },
     bad: {
       title: 'BAD',
-      subtitle: "Recherchez d'abord le BL dans IES avant de lancer l'action BAD."
+      subtitle: "Renseignez le BL pour telecharger le Bon a Delivrer depuis IES et l'uploader dans B2."
     }
   };
 
@@ -387,36 +427,32 @@
 
   function renderProformaDocuments(documents) {
     if (!Array.isArray(documents) || !documents.length) {
-      return `
-        <div style="margin-top:16px; font-size:13px; color:#64748b;">
-          Aucun document n'a ete retourne apres l'upload B2.
-        </div>
-      `;
+      return `<div style="margin-top:16px; font-size:13px; opacity:.7;">Aucun document disponible.</div>`;
     }
 
     return `
       <div style="margin-top:18px;">
-        <div style="font-weight:600; margin-bottom:10px; color:#0f172a;">Documents telecharges</div>
+        <div style="font-weight:600; margin-bottom:10px;">Documents telecharges</div>
         <div style="display:grid; gap:12px;">
-          ${documents.map(document => `
-            <div style="padding:14px 16px; border:1px solid rgba(148,163,184,.18); border-radius:14px; background:#fff; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
-              <div style="min-width:220px;">
-                <div style="font-weight:600; color:#0f172a;">${escapeHtml(document.fileName || 'Document')}</div>
-                <div style="font-size:12px; color:#64748b;">Stocke dans Backblaze B2</div>
+          ${documents.map(doc => `
+            <div style="padding:14px 16px; border:1px solid rgba(148,163,184,.18); border-radius:14px;
+                        background:rgba(99,102,241,0.06);
+                        display:flex; flex-direction:column; gap:10px;">
+              <div style="min-width:0; overflow-wrap:anywhere; word-break:break-all;">
+                <div style="font-weight:600;">${escapeHtml(doc.fileName || 'Document')}</div>
+                <div style="font-size:12px; opacity:.6; margin-top:2px;">Stocke localement</div>
               </div>
               <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                <a href="${escapeHtml(document.viewUrl || '#')}"
-                   target="_blank"
-                   rel="noopener noreferrer"
+                <a href="${escapeHtml(doc.viewUrl || '#')}"
+                   target="_blank" rel="noopener noreferrer"
                    class="btn-actualiser"
-                   style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">
+                   style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center; flex:1; min-width:90px;">
                   Ouvrir
                 </a>
-                <a href="${escapeHtml(document.downloadUrl || '#')}"
-                   target="_blank"
-                   rel="noopener noreferrer"
+                <a href="${escapeHtml(doc.downloadUrl || '#')}"
+                   target="_blank" rel="noopener noreferrer"
                    class="btn-actualiser"
-                   style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">
+                   style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center; flex:1; min-width:90px;">
                   Telecharger
                 </a>
               </div>
@@ -485,50 +521,129 @@
     }
   }
 
-  async function runVerification(blNumber, contextLabel, options = {}) {
-    const normalizedBl = normalizeBl(blNumber);
-    if (!normalizedBl) {
-      showStatus(`Veuillez saisir un BL pour ${contextLabel}.`, 'warning');
+  async function runProformaAction(automationId, actionLabel, btnId, successMsg) {
+    const blNumber = normalizeBl(document.getElementById('proformaBl').value);
+    const button = document.getElementById(btnId);
+
+    if (!blNumber) {
+      showStatus('Veuillez renseigner le BL dans le formulaire avant de ' + actionLabel + '.', 'warning');
       return;
     }
 
-    showStatus(`Recherche en cours pour le BL ${normalizedBl}...`, 'info');
+    button.disabled = true;
+    button.textContent = 'Traitement en cours...';
+
     try {
-      const result = await executeAutomation('ies:verification:verification.py', { BL_NUMBER: normalizedBl });
+      const result = await executeAutomation(automationId, { BL_NUMBER: blNumber });
       if (result.status === 'success') {
-        showStatus(`BL ${normalizedBl} : aucune facture disponible dans IES.`, 'success');
-        if (options.cardId) {
-          updateResultCard(
-            options.cardId,
-            options.metaId,
-            options.bodyId,
-            `BL : ${normalizedBl}`,
-            `Le BL <strong>${normalizedBl}</strong> ne contient pas encore de facture dans IES.<br>Vous pouvez poursuivre l'etape suivante.`
-          );
-        }
-      } else {
-        showStatus(result.error || result.message || `BL ${normalizedBl} : des factures sont presentes ou l'etat est inconnu.`, 'warning');
-        if (options.cardId) {
-          updateResultCard(
-            options.cardId,
-            options.metaId,
-            options.bodyId,
-            `BL : ${normalizedBl}`,
-            (result.error || result.message || `Le BL ${normalizedBl} contient deja des factures ou l'etat est inconnu.`)
-          );
-        }
-      }
-    } catch (error) {
-      showStatus(error.message || "La recherche a echoue.", 'error');
-      if (options.cardId) {
+        showStatus(`BL ${blNumber} : ${successMsg}`, 'success');
         updateResultCard(
-          options.cardId,
-          options.metaId,
-          options.bodyId,
-          `BL : ${normalizedBl}`,
-          error.message || "La recherche a echoue."
+          'proformaResultCard', 'proformaResultMeta', 'proformaResultBody',
+          `BL : ${blNumber}`,
+          `<span style="color:#166534;">${successMsg}</span>`
+        );
+      } else {
+        const errorMessage = result.error || result.message || `L'action a echoue pour le BL ${blNumber}.`;
+        showStatus(errorMessage, 'error');
+        updateResultCard(
+          'proformaResultCard', 'proformaResultMeta', 'proformaResultBody',
+          `BL : ${blNumber}`, escapeHtml(errorMessage)
         );
       }
+    } catch (error) {
+      const errorMessage = error.message || `L'action a echoue pour le BL ${blNumber}.`;
+      showStatus(errorMessage, 'error');
+      updateResultCard(
+        'proformaResultCard', 'proformaResultMeta', 'proformaResultBody',
+        `BL : ${blNumber}`, escapeHtml(errorMessage)
+      );
+    } finally {
+      button.disabled = false;
+      button.textContent = actionLabel.charAt(0).toUpperCase() + actionLabel.slice(1);
+    }
+  }
+
+  function todayForAutomation() {
+    const now = new Date();
+    const dd = String(now.getDate()).padStart(2, '0');
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const yyyy = now.getFullYear();
+    return `${dd}/${mm}/${yyyy}`;
+  }
+
+  async function runFactureDownload() {
+    const blNumber = normalizeBl(document.getElementById('factureBl').value);
+    const button = document.getElementById('factureSearchBtn');
+
+    if (!blNumber) {
+      showStatus('Veuillez saisir un BL pour la facture.', 'warning');
+      return;
+    }
+
+    button.disabled = true;
+    button.textContent = 'Traitement en cours (veuillez patienter)';
+
+    try {
+      const result = await executeAutomation('ies:facture:create_facture.py', {
+        BL_NUMBER: blNumber,
+        DATE: todayForAutomation()
+      });
+
+      if (result.status !== 'success' && (!result.documents || !result.documents.length)) {
+        const errorMessage = result.error || result.message || 'Le telechargement de la facture a echoue.';
+        updateResultCard('factureResultCard', 'factureResultMeta', 'factureResultBody',
+          `BL : ${blNumber}`, escapeHtml(errorMessage));
+        return;
+      }
+
+      updateResultCard('factureResultCard', 'factureResultMeta', 'factureResultBody',
+        `BL : ${blNumber} | Date : ${todayForAutomation()}`,
+        renderProformaDocuments(result.documents));
+    } catch (error) {
+      const errorMessage = error.message || 'Le telechargement de la facture a echoue.';
+      updateResultCard('factureResultCard', 'factureResultMeta', 'factureResultBody',
+        `BL : ${blNumber || '-'}`, escapeHtml(errorMessage));
+    } finally {
+      button.disabled = false;
+      button.textContent = 'Telecharger';
+    }
+  }
+
+  async function runBadDownload() {
+    const blNumber = normalizeBl(document.getElementById('badBl').value);
+    const button = document.getElementById('badSearchBtn');
+
+    if (!blNumber) {
+      showStatus('Veuillez saisir un BL pour le BAD.', 'warning');
+      return;
+    }
+
+    button.disabled = true;
+    button.textContent = 'Traitement en cours (veuillez patienter)';
+
+    try {
+      const result = await executeAutomation('ies:bad:create_bad.py', {
+        BL_NUMBER: blNumber,
+        DATE: todayForAutomation()
+      });
+
+      if (result.status !== 'success' && (!result.documents || !result.documents.length)) {
+        const errorMessage = result.error || result.message || 'Le telechargement du BAD a echoue.';
+        updateResultCard('badResultCard', 'badResultMeta', 'badResultBody',
+          `BL : ${blNumber}`, escapeHtml(errorMessage));
+        return;
+      }
+
+      updateResultCard('badResultCard', 'badResultMeta', 'badResultBody',
+        `BL : ${blNumber} | Date : ${todayForAutomation()}`,
+        renderProformaDocuments(result.documents));
+    } catch (error) {
+      const errorMessage = error.message || 'Le telechargement du BAD a echoue.';
+      updateResultCard('badResultCard', 'badResultMeta', 'badResultBody',
+        `BL : ${blNumber || '-'}`, escapeHtml(errorMessage));
+    } finally {
+      button.disabled = false;
+      button.textContent = 'Telecharger';
     }
   }
 
@@ -572,20 +687,34 @@
     runProformaGeneration();
   });
 
+  document.getElementById('validateProformaBtn').addEventListener('click', function () {
+    clearStatus();
+    runProformaAction(
+      'ies:proforma:validate_proforma.py',
+      'valider',
+      'validateProformaBtn',
+      'Proforma validee avec succes.'
+    );
+  });
+
+  document.getElementById('deleteProformaBtn').addEventListener('click', function () {
+    clearStatus();
+    runProformaAction(
+      'ies:proforma:delete_proforma.py',
+      'supprimer',
+      'deleteProformaBtn',
+      'Proforma supprimee avec succes.'
+    );
+  });
+
   document.getElementById('factureSearchBtn').addEventListener('click', function () {
-    runVerification(document.getElementById('factureBl').value, 'la facture', {
-      cardId: 'factureResultCard',
-      metaId: 'factureResultMeta',
-      bodyId: 'factureResultBody'
-    });
+    clearStatus();
+    runFactureDownload();
   });
 
   document.getElementById('badSearchBtn').addEventListener('click', function () {
-    runVerification(document.getElementById('badBl').value, 'le BAD', {
-      cardId: 'badResultCard',
-      metaId: 'badResultMeta',
-      bodyId: 'badResultBody'
-    });
+    clearStatus();
+    runBadDownload();
   });
 
   document.getElementById('proformaDate').value = new Date().toISOString().split('T')[0];

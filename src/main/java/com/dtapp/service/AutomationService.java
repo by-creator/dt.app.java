@@ -7,9 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import java.io.*;
 import java.nio.file.*;
-import java.time.LocalDate;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -20,19 +19,19 @@ import java.util.stream.Stream;
 @Slf4j
 @Service
 public class AutomationService {
-    private static final String PROFORMA_AUTOMATION_ID = "ies:proforma:create_proforma.py";
-    private static final DateTimeFormatter PROFORMA_FOLDER_DATE_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+    private static final Set<String> DOCUMENT_AUTOMATIONS = Set.of(
+            "ies:proforma:create_proforma.py",
+            "ies:facture:create_facture.py",
+            "ies:bad:create_bad.py"
+    );
 
     private final AutomationProperties automationProperties;
-    private final B2StorageService b2StorageService;
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final Map<String, AutomationInfo> automationCache = new HashMap<>();
     private final Map<String, AutomationResult> lastResults = new HashMap<>();
 
-    public AutomationService(AutomationProperties automationProperties,
-                             B2StorageService b2StorageService) {
+    public AutomationService(AutomationProperties automationProperties) {
         this.automationProperties = automationProperties;
-        this.b2StorageService = b2StorageService;
     }
 
     /**
@@ -266,17 +265,17 @@ public class AutomationService {
 
             if (downloadDirectory != null) {
                 try {
-                    documents = uploadProformaDocuments(downloadDirectory, params);
+                    documents = collectLocalDocuments(downloadDirectory);
                     if (documents.isEmpty()) {
                         success = false;
                         message = null;
-                        errorMessage = "Aucun document telecharge n'a ete trouve apres la generation du proforma.";
+                        errorMessage = "Aucun document telecharge n'a ete trouve apres l'execution.";
                     }
                 } catch (Exception e) {
-                    log.error("Erreur lors de l'upload B2 des documents proforma", e);
+                    log.error("Erreur lors de la collecte des documents locaux", e);
                     success = false;
                     message = null;
-                    errorMessage = "Le proforma a ete genere, mais l'upload vers B2 a echoue: " + e.getMessage();
+                    errorMessage = "L'execution a abouti mais les documents sont introuvables: " + e.getMessage();
                 }
             }
 
@@ -310,57 +309,37 @@ public class AutomationService {
     }
 
     private Path prepareDownloadDirectory(String automationId) throws IOException {
-        if (!PROFORMA_AUTOMATION_ID.equals(automationId)) {
+        if (!DOCUMENT_AUTOMATIONS.contains(automationId)) {
             return null;
         }
-        return Files.createTempDirectory("dtapp-proforma-downloads-");
+        return Files.createTempDirectory("dtapp-downloads-");
     }
 
-    private List<AutomationDocumentLink> uploadProformaDocuments(Path downloadDirectory,
-                                                                 Map<String, String> params) throws IOException {
-        String blNumber = sanitizePathSegment(params != null ? params.get("BL_NUMBER") : null);
-        if (blNumber.isBlank()) {
-            throw new IllegalArgumentException("Le parametre BL_NUMBER est obligatoire pour l'upload B2.");
-        }
-
-        String folderDate = LocalDate.now().format(PROFORMA_FOLDER_DATE_FORMATTER);
-        String b2Prefix = "Facturation/Proforma/" + folderDate + "/" + blNumber + "/";
+    private List<AutomationDocumentLink> collectLocalDocuments(Path downloadDirectory) throws IOException {
+        String uuid = UUID.randomUUID().toString();
+        Path docsDir = Paths.get(automationProperties.getBasepath())
+                .toAbsolutePath()
+                .resolve("docs")
+                .resolve(uuid);
+        Files.createDirectories(docsDir);
 
         try (Stream<Path> files = Files.list(downloadDirectory)) {
             return files
                     .filter(Files::isRegularFile)
-                    .sorted(Comparator.comparing(path -> path.getFileName().toString().toLowerCase()))
-                    .map(path -> uploadProformaDocument(path, b2Prefix))
-                    .filter(Objects::nonNull)
+                    .sorted(Comparator.comparing(p -> p.getFileName().toString().toLowerCase()))
+                    .map(path -> {
+                        try {
+                            String fileName = path.getFileName().toString();
+                            Files.copy(path, docsDir.resolve(fileName), StandardCopyOption.REPLACE_EXISTING);
+                            String viewUrl = "/api/automation-docs/" + uuid + "/" + fileName;
+                            String downloadUrl = viewUrl + "?download=true";
+                            return new AutomationDocumentLink(fileName, viewUrl, downloadUrl, uuid + "/" + fileName);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    })
                     .collect(Collectors.toList());
         }
-    }
-
-    private AutomationDocumentLink uploadProformaDocument(Path filePath, String b2Prefix) {
-        try {
-            String fileName = filePath.getFileName().toString();
-            String key = b2Prefix + fileName;
-            b2StorageService.uploadFile(key, filePath);
-            B2StorageService.FileLinks links = b2StorageService.fileLinks(key);
-            if (links == null) {
-                throw new IllegalStateException("Impossible de generer les liens B2 pour " + fileName);
-            }
-            return new AutomationDocumentLink(
-                    links.fileName(),
-                    links.viewUrl(),
-                    links.downloadUrl(),
-                    key
-            );
-        } catch (Exception e) {
-            throw new RuntimeException("Upload B2 impossible pour " + filePath.getFileName() + ": " + e.getMessage(), e);
-        }
-    }
-
-    private String sanitizePathSegment(String rawValue) {
-        if (rawValue == null) {
-            return "";
-        }
-        return rawValue.trim().replaceAll("[\\\\/]+", "-");
     }
 
     /**

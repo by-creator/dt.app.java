@@ -1,17 +1,18 @@
-Concernant l'upload dans B2 quand je lance create_facture.py j'ai cette erreur
-✗ B2 upload error: [Errno 2] No such file or directory: 'aws'
-compare create_facture.py à create_proforma.py concernant la gestion des uploas dans B2
-je rappelle l'ordre pour le stockage des informations : 
+Sur la route /menu/dt/client : 
 
-- pour create_proforma.py : Facturation/Proforma/date(dd-mm-yyyy)/BL_NUMBER/{file}
-- pour create_facture.py : Facturation/Facture/date(dd-mm-yyyy)/BL_NUMBER/{file}
+- selon la capture sous format mobile sur tous 
+les onglets je souhaite le card où se trouve les 
+boutons Ovrir et Téléchager ne dépasse pas la 
+largeur du card Documents telecharges
 
+- je souhaite que tu respectes le thème couleur 
+pour qu'on voit bien les écrits
 
+- je souhaite que tu rajoutes un onglet PAIEMENT
+juste après FACTURE qui va afficher les cards 
+de paiement qui redirigent vers "#" pour le moment
 
-
-effectue ces tâches
-
-1- concernant create_facture.py je souhaite que tu rajoutes le paramètre DATE pour que la configuration
-de l'upload B2 soit respectée conformément à create_proforma.py
-
-2- pour l'upload dans B2 de create_proforma.py et create_facture.py le paramètre DATE sera la date du jour 
+- je souhaite savoir s'il y'a une configuration
+supplémentaire à faire sur heroku ou alors on peut
+tout configurer depuis l'application et juste
+redéployer (à faire si possible)
