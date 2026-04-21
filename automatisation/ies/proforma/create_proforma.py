@@ -15,7 +15,7 @@ from urllib import error, request
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait, Select
 
@@ -271,6 +271,20 @@ def download_proforma_pdf(driver, wait, invoices_url: str, screenshot_path: Path
             print(f"✗ Bouton de téléchargement #{button_position} non visible au moment du clic")
             continue
 
+        # Re-fetch pour éviter le StaleElementReferenceException avant la vérification
+        fresh_candidates = driver.find_elements(By.XPATH,
+            "//*[@title='Télécharger Proforma' or @title='Telecharger Proforma'"
+            " or contains(@href,'GenerateProformaReport')"
+            " or contains(@onclick,'GenerateProformaReport')]"
+        )
+        if len(fresh_candidates) < button_position:
+            failed_indexes.append(button_position)
+            print(f"✗ Bouton #{button_position} introuvable après re-fetch")
+            continue
+        download_btn = fresh_candidates[button_position - 1]
+
+        print("  → download without label check")
+
         previous_files = {file_path.name for file_path in list_downloaded_files(DOWNLOAD_DIR)}
         handles_before = set(driver.window_handles)
 
@@ -363,7 +377,12 @@ def main():
             print(f"✗ BL {BL_NUMBER} : des factures existent déjà — génération annulée")
             print("→ tentative de téléchargement automatique du PDF existant")
             if download_proforma_pdf(driver, wait, invoices_url, SCREENSHOT):
-                sys.exit(0)
+                upload_script = Path(__file__).parent / "upload_to_b2.py"
+                result = subprocess.run(
+                    [sys.executable, str(upload_script)],
+                    env={**os.environ, "BL_NUMBER": BL_NUMBER, "DATE": DATE},
+                )
+                sys.exit(result.returncode)
             sys.exit(1)
         print(f"✓ BL {BL_NUMBER} : aucune facture — génération du proforma possible")
 
@@ -515,7 +534,12 @@ def main():
         print("✓ Proforma généré")
 
         if download_proforma_pdf(driver, wait, invoices_url, SCREENSHOT):
-            sys.exit(0)
+            upload_script = Path(__file__).parent / "upload_to_b2.py"
+            result = subprocess.run(
+                [sys.executable, str(upload_script)],
+                env={**os.environ, "BL_NUMBER": BL_NUMBER, "DATE": DATE},
+            )
+            sys.exit(result.returncode)
         sys.exit(1)
 
     except Exception as e:

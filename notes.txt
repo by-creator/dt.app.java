@@ -1,6 +1,17 @@
-au niveau de l'automatisation create_proforma.py je vois que tu enregistres dans un fichier downloads je 
-souhaite que tu utilises ma configuration B2 pour les stocker dans un dossier qui sera généré de la sorte
-Facturation/Proforma/date du jour(dd-mm-yyyy)/BL_NUMBER/{fichier}
+Concernant l'upload dans B2 quand je lance create_facture.py j'ai cette erreur
+✗ B2 upload error: [Errno 2] No such file or directory: 'aws'
+compare create_facture.py à create_proforma.py concernant la gestion des uploas dans B2
+je rappelle l'ordre pour le stockage des informations : 
 
-ensuite je souhaite que le bouton Generer dans la route /menu/dt/client au niveau de l'onglet PROFORMA execute 
-create_proforma.py et affiche les documents téléchargés 
+- pour create_proforma.py : Facturation/Proforma/date(dd-mm-yyyy)/BL_NUMBER/{file}
+- pour create_facture.py : Facturation/Facture/date(dd-mm-yyyy)/BL_NUMBER/{file}
+
+
+
+
+effectue ces tâches
+
+1- concernant create_facture.py je souhaite que tu rajoutes le paramètre DATE pour que la configuration
+de l'upload B2 soit respectée conformément à create_proforma.py
+
+2- pour l'upload dans B2 de create_proforma.py et create_facture.py le paramètre DATE sera la date du jour 

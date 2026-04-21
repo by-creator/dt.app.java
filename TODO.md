@@ -1,6 +1,13 @@
-# TODO - Ajustements onglets validations/remises
+# Task: Create create_facture.py automation
 
-- [x] Aligner les onglets sur le pattern `/admin` (subpage-tabs/subpage-tab/tab-pane + ?tab=...)
-- [x] Retirer le CSS/JS custom des onglets précédents
-- [x] Ajouter une marge entre la barre d'onglets et les tables (même hauteur pour les deux onglets)
-- [x] Assurer la persistance de l'onglet actif après actualisation du navigateur (actions de formulaire)
+## Steps:
+- [x] Create automatisation/ies/facture/params.json
+- [x] Create automatisation/ies/facture/create_facture.py
+- [ ] Verify aws cli configured for B2 (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY env vars)
+- [ ] Test: export BL_NUMBER=S329087393; python automatisation/ies/facture/create_facture.py
+- [ ] Integrate with Spring Boot app if needed (endpoint to trigger)
+
+## Notes:
+- Uses today date %d-%m-%Y for B2 path.
+- Assumes `aws` CLI installed and B2 creds in env.
+- Direct download, no generation.

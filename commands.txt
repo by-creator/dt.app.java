@@ -1,5 +1,6 @@
 mvn clean package -DskipTests &&  git add . && git commit -m "update" && git push -u origin main
 
 
-HEADLESS=false BL_NUMBER=S329087393 DATE=20/04/2026 CLIENT_FACTURE=299772 python3 create_proforma.py
-BL_NUMBER=S329087393 DATE=20/04/2026 CLIENT_FACTURE=299772 python3 create_proforma.py
+HEADLESS=false BL_NUMBER=S329087393 DATE=21/04/2026 CLIENT_FACTURE=299772 python3 create_proforma.py
+BL_NUMBER=S329087393 DATE=21/04/2026 CLIENT_FACTURE=299772 python3 create_proforma.py
+BL_NUMBER=S329364816 python3 create_facture.py
