@@ -214,8 +214,9 @@ public class AutomationService {
 
             // Préparer la commande
             String pythonCmd = getPythonCommand();
-            ProcessBuilder pb = new ProcessBuilder(pythonCmd, scriptPath.toString());
-            pb.directory(scriptPath.getParent().toFile());
+            Path absoluteScript = scriptPath.toAbsolutePath();
+            ProcessBuilder pb = new ProcessBuilder(pythonCmd, absoluteScript.toString());
+            pb.directory(absoluteScript.getParent().toFile());
             if (params != null && !params.isEmpty()) {
                 pb.environment().putAll(params);
             }
@@ -263,7 +264,7 @@ public class AutomationService {
             String message = success ? "Exécution réussie" : "Exécution échouée (code: " + exitCode + ")";
             String errorMessage = success ? null : parseErrorMessage(output.toString());
 
-            if (success && downloadDirectory != null) {
+            if (downloadDirectory != null) {
                 try {
                     documents = uploadProformaDocuments(downloadDirectory, params);
                     if (documents.isEmpty()) {
@@ -300,15 +301,12 @@ public class AutomationService {
         }
     }
 
-    /**
-     * Récupère la commande Python appropriée
-     */
     private String getPythonCommand() {
-        String osName = System.getProperty("os.name").toLowerCase();
-        if (osName.contains("win")) {
-            return "python";
+        String configured = automationProperties.getPythonPath();
+        if (configured != null && !configured.isBlank()) {
+            return Paths.get(configured).toAbsolutePath().toString();
         }
-        return "python3";
+        return System.getProperty("os.name").toLowerCase().contains("win") ? "python" : "python3";
     }
 
     private Path prepareDownloadDirectory(String automationId) throws IOException {

@@ -303,10 +303,10 @@ def download_proforma_pdf(driver, wait, invoices_url: str, screenshot_path: Path
 
     if downloaded_files:
         print(
-            f"✗ Téléchargements partiels : {len(downloaded_files)} réussi(s), "
+            f"✓ Téléchargements partiels : {len(downloaded_files)} réussi(s), "
             f"{len(failed_indexes)} échec(s)"
         )
-        return False
+        return True
 
     print("✗ Aucun téléchargement n'a abouti")
     return False

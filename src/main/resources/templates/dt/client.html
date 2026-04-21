@@ -8,6 +8,8 @@
   <script th:src="@{/js/theme.js}"></script>
   <link rel="stylesheet" th:href="@{/css/style.css}">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <meta name="_csrf" th:content="${_csrf.token}">
+  <meta name="_csrf_header" th:content="${_csrf.headerName}">
 </head>
 <body>
 
@@ -368,9 +370,11 @@
   }
 
   async function executeAutomation(automationId, params) {
+    const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
     const response = await fetch('/api/automations/' + encodeURIComponent(automationId) + '/execute', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken },
       body: JSON.stringify(params || {})
     });
 
@@ -436,8 +440,7 @@
     }
 
     button.disabled = true;
-    button.textContent = 'Traitement...';
-    showStatus(`Generation du proforma en cours pour le BL ${blNumber}...`, 'info');
+    button.textContent = 'Traitement en cours (veuillez patienter)';
 
     try {
       const result = await executeAutomation('ies:proforma:create_proforma.py', {
@@ -446,9 +449,10 @@
         CLIENT_FACTURE: clientFacture
       });
 
-      if (result.status !== 'success') {
+      const metaText = `BL : ${blNumber} | Date : ${formatDisplayDate(dateValue)} | Client : ${clientFacture}`;
+
+      if (result.status !== 'success' && (!result.documents || !result.documents.length)) {
         const errorMessage = result.error || result.message || "Le lancement du proforma a echoue.";
-        showStatus(errorMessage, 'error');
         updateResultCard(
           'proformaResultCard',
           'proformaResultMeta',
@@ -459,24 +463,15 @@
         return;
       }
 
-      const metaText = `BL : ${blNumber} | Date : ${formatDisplayDate(dateValue)} | Client : ${clientFacture}`;
-      let bodyHtml = `
-        Le proforma du BL <strong>${escapeHtml(blNumber)}</strong> a ete genere avec succes.<br>
-        Client facture : <strong>${escapeHtml(transitLabel || clientFacture)}</strong>.
-      `;
-      bodyHtml += renderProformaDocuments(result.documents);
-
       updateResultCard(
         'proformaResultCard',
         'proformaResultMeta',
         'proformaResultBody',
         metaText,
-        bodyHtml
+        renderProformaDocuments(result.documents)
       );
-      showStatus(`Proforma genere pour le BL ${blNumber}.`, 'success');
     } catch (error) {
       const errorMessage = error.message || "Le lancement du proforma a echoue.";
-      showStatus(errorMessage, 'error');
       updateResultCard(
         'proformaResultCard',
         'proformaResultMeta',

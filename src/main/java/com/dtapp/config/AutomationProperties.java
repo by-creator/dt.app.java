@@ -23,6 +23,12 @@ public class AutomationProperties {
     private int timeout = 600;
 
     /**
+     * Chemin vers l'exécutable Python (ex: automatisation/venv/bin/python3).
+     * Si vide, utilise python3/python du PATH système.
+     */
+    private String pythonPath = "";
+
+    /**
      * Token interne utilise par les scripts d'automatisation pour appeler l'application.
      */
     private String internalToken = "dt-app-internal-automation-token";

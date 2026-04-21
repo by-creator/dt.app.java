@@ -103,6 +103,12 @@
       "type": "java.lang.String",
       "description": "Internal token used by automation scripts to call protected application endpoints.",
       "defaultValue": "dt-app-internal-automation-token"
+    },
+    {
+      "name": "app.automation.python-path",
+      "type": "java.lang.String",
+      "description": "Path to the Python executable (e.g. automatisation/venv/bin/python3). Falls back to python3/python from PATH if empty.",
+      "defaultValue": ""
     }
   ]
 }

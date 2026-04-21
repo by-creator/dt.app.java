@@ -2,3 +2,4 @@ mvn clean package -DskipTests &&  git add . && git commit -m "update" && git pus
 
 
 HEADLESS=false BL_NUMBER=S329087393 DATE=20/04/2026 CLIENT_FACTURE=299772 python3 create_proforma.py
+BL_NUMBER=S329087393 DATE=20/04/2026 CLIENT_FACTURE=299772 python3 create_proforma.py
