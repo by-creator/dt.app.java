@@ -1,11 +1,13 @@
 """Télécharge le BAD (Bon à Délivrer / DN) pour un BL sur le portail IES AGL Group."""
 
 import os
+import re
 import sys
 import time
 from datetime import datetime
 from pathlib import Path
 
+import requests
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
@@ -33,39 +35,51 @@ if not BL_NUMBER:
     sys.exit(1)
 
 
-def clear_download_dir(directory: Path) -> None:
-    for old_file in directory.iterdir():
-        if old_file.is_file():
-            old_file.unlink(missing_ok=True)
+def build_driver() -> webdriver.Chrome:
+    options = Options()
+    if HEADLESS:
+        options.add_argument("--headless=new")
+        options.add_argument("--disable-gpu")
+        options.add_argument("--disable-software-rasterizer")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--no-first-run")
+    options.add_argument("--window-size=1920,1080")
+    print(f"Mode : {'headless' if HEADLESS else 'navigateur visible'}")
+    return webdriver.Chrome(options=options)
 
 
-def list_downloaded_files(directory: Path) -> list[Path]:
-    return sorted([
-        f for f in directory.iterdir()
-        if f.is_file() and f.suffix != ".crdownload" and not f.name.startswith(".")
-    ])
+def login_and_get_dn_links(driver: webdriver.Chrome) -> tuple[list[str], dict]:
+    """Login, navigate, expand accordion, collect DN links + cookies, then ready to quit."""
+    wait = WebDriverWait(driver, TIMEOUT)
 
+    print(f"Connexion à {LOGIN_URL}")
+    driver.get(LOGIN_URL)
 
-def wait_for_new_download(directory: Path, previous_files: set[str], timeout: int = 30) -> Path | None:
-    deadline = time.time() + timeout
-    while time.time() < deadline:
-        for f in list_downloaded_files(directory):
-            if f.name not in previous_files:
-                return f
-        time.sleep(1)
-    return None
+    email_field = wait.until(EC.presence_of_element_located(
+        (By.CSS_SELECTOR, "input[type='email'], input[name*='email'], input[id*='email'], input[placeholder*='mail']")
+    ))
+    email_field.clear()
+    email_field.send_keys(EMAIL)
+    driver.find_element(By.CSS_SELECTOR, "input[type='password']").send_keys(PASSWORD)
+    driver.find_element(By.CSS_SELECTOR, "button[type='submit'], input[type='submit']").click()
+    time.sleep(2)
 
+    if "login" in driver.current_url.lower():
+        driver.save_screenshot(str(SCREENSHOT))
+        print("✗ Erreur : échec de la connexion")
+        sys.exit(1)
+    print("✓ Connecté")
 
-def download_bad(driver, wait, invoices_url: str) -> bool:
+    invoices_url = INVOICES_URL.format(BL_NUMBER)
     driver.get(invoices_url)
     wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
     time.sleep(2)
     driver.save_screenshot(str(RESULTS_DIR / "step_bad_invoices_page.png"))
     print(f"✓ Page des factures — URL : {driver.current_url}")
 
-    # --- Étape 1 : trouver et cliquer sur la flèche déroulante de la ligne "Facture" ---
+    # Trouver et cliquer sur la flèche déroulante de la ligne "Facture"
     expand_candidates = driver.find_elements(By.XPATH,
-        # Bouton/lien à l'intérieur d'une ligne contenant le texte "Facture"
         "//tr[.//*[contains(text(),'Facture')] or contains(.,'Facture')]"
         "  //*[self::button or self::a or self::span or self::i]"
         "  [contains(@class,'collapse') or contains(@class,'expand') or contains(@class,'toggle')"
@@ -73,11 +87,9 @@ def download_bad(driver, wait, invoices_url: str) -> bool:
         "   or contains(@class,'bi-chevron') or contains(@class,'fa-chevron')"
         "   or contains(@class,'bi-caret') or contains(@class,'accordion')]"
         " | "
-        # Ou premier élément cliquable (icône circulaire) au début de la ligne Facture
         "//tr[.//*[contains(text(),'Facture')] or contains(.,'Facture')]"
         "  //td[1]//*[self::button or self::a or self::span or self::i]"
         " | "
-        # Fallback : div/span avec classe d'accordéon dans la ligne
         "//*[contains(text(),'Facture') or .//*[contains(text(),'Facture')]]"
         "  [self::tr or contains(@class,'row') or contains(@class,'item')]"
         "  //*[contains(@class,'toggle') or contains(@class,'expand') or contains(@class,'accordion')"
@@ -90,121 +102,86 @@ def download_bad(driver, wait, invoices_url: str) -> bool:
     if not expand_candidates:
         driver.save_screenshot(str(SCREENSHOT))
         print("✗ Impossible de trouver la flèche déroulante de la ligne Facture")
-        return False
+        sys.exit(1)
 
-    # Utiliser le premier candidat trouvé — clic JS pour contourner is_displayed()=False
     expand_btn = expand_candidates[0]
     driver.execute_script("arguments[0].scrollIntoView({block:'center'});", expand_btn)
     time.sleep(0.3)
     driver.execute_script("arguments[0].click();", expand_btn)
     print(f"  → clic JS sur : tag={expand_btn.tag_name} class='{expand_btn.get_attribute('class')}'")
-
-
     print("✓ Clic sur la flèche déroulante")
     time.sleep(1.5)
     driver.save_screenshot(str(RESULTS_DIR / "step_bad_expanded.png"))
 
-    # --- Étape 2 : collecter les URLs PrintDeliveryNoteWithtout2Fa ---
+    # Collecter les liens DN
     dn_links = driver.find_elements(By.XPATH,
         "//a[contains(@href,'PrintDeliveryNoteWithtout2Fa')]"
     )
     print(f"  → liens DN trouvés : {len(dn_links)}")
+    dn_urls = []
     for lnk in dn_links:
-        print(f"      href='{lnk.get_attribute('href')}'")
+        href = lnk.get_attribute("href")
+        if href:
+            print(f"      href='{href}'")
+            dn_urls.append(href)
 
-    dn_urls = [lnk.get_attribute("href") for lnk in dn_links if lnk.get_attribute("href")]
     if not dn_urls:
         driver.save_screenshot(str(SCREENSHOT))
         print("✗ Aucun lien PrintDeliveryNoteWithtout2Fa trouvé")
-        return False
+        sys.exit(1)
 
-    clear_download_dir(DOWNLOAD_DIR)
-    downloaded_files = []
+    cookies = {c["name"]: c["value"] for c in driver.get_cookies()}
+    return dn_urls, cookies
 
+
+def download_with_requests(dn_urls: list[str], cookies: dict) -> list[Path]:
+    session = requests.Session()
+    session.cookies.update(cookies)
+    session.headers.update({
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/120 Safari/537.36",
+        "Referer": INVOICES_URL.format(BL_NUMBER),
+    })
+
+    downloaded = []
     for idx, url in enumerate(dn_urls, start=1):
-        previous_files = {f.name for f in list_downloaded_files(DOWNLOAD_DIR)}
-        print(f"  → navigation DN #{idx} : {url}")
-        driver.get(url)
-        time.sleep(2)
+        print(f"  → téléchargement BAD #{idx} : {url}")
+        try:
+            resp = session.get(url, timeout=60, allow_redirects=True)
+            resp.raise_for_status()
 
-        new_file = wait_for_new_download(DOWNLOAD_DIR, previous_files, timeout=30)
-        if new_file:
-            downloaded_files.append(new_file)
-            print(f"✓ BAD téléchargé #{idx} : {new_file.name}")
-        else:
-            print(f"✗ Téléchargement non détecté pour DN #{idx}")
+            filename = None
+            cd = resp.headers.get("Content-Disposition", "")
+            if cd:
+                m = re.search(r'filename[^;=\n]*=(["\']?)([^"\';\n]+)\1', cd)
+                if m:
+                    filename = m.group(2).strip()
+            if not filename:
+                filename = f"bad_{BL_NUMBER}_{idx}.pdf"
 
-        # Revenir sur la page des factures pour le prochain lien éventuel
-        if idx < len(dn_urls):
-            driver.get(invoices_url)
-            wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
-            time.sleep(1.5)
+            dest = DOWNLOAD_DIR / filename
+            dest.write_bytes(resp.content)
+            downloaded.append(dest)
+            print(f"✓ BAD téléchargé #{idx} : {filename} ({len(resp.content)} bytes)")
+        except Exception as e:
+            print(f"✗ Erreur téléchargement #{idx} : {e}")
 
-    driver.save_screenshot(str(SCREENSHOT))
-
-    if downloaded_files:
-        print(f"✓ {len(downloaded_files)} BAD téléchargé(s)")
-        return True
-
-    print("✗ Aucun téléchargement n'a abouti")
-    return False
+    return downloaded
 
 
 def main():
-    options = Options()
-    if HEADLESS:
-        options.add_argument("--headless=new")
-        options.add_argument("--disable-gpu")
-        options.add_argument("--disable-software-rasterizer")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--no-first-run")
-    options.add_argument("--disable-popup-blocking")
-    options.add_argument("--window-size=1920,1080")
-    print(f"Mode : {'headless' if HEADLESS else 'navigateur visible'}")
-
-    driver = webdriver.Chrome(options=options)
-    driver.execute_cdp_cmd("Browser.setDownloadBehavior", {
-        "behavior": "allow",
-        "downloadPath": str(DOWNLOAD_DIR.absolute()),
-    })
-    wait = WebDriverWait(driver, TIMEOUT)
-
+    driver = build_driver()
     try:
-        print(f"Connexion à {LOGIN_URL}")
-        driver.get(LOGIN_URL)
-
-        email_field = wait.until(EC.presence_of_element_located(
-            (By.CSS_SELECTOR, "input[type='email'], input[name*='email'], input[id*='email'], input[placeholder*='mail']")
-        ))
-        email_field.clear()
-        email_field.send_keys(EMAIL)
-        driver.find_element(By.CSS_SELECTOR, "input[type='password']").send_keys(PASSWORD)
-        driver.find_element(By.CSS_SELECTOR, "button[type='submit'], input[type='submit']").click()
-        time.sleep(2)
-
-        if "login" in driver.current_url.lower():
-            driver.save_screenshot(str(SCREENSHOT))
-            print("✗ Erreur : échec de la connexion")
-            sys.exit(1)
-        print("✓ Connecté")
-
-        invoices_url = INVOICES_URL.format(BL_NUMBER)
-        if download_bad(driver, wait, invoices_url):
-            print("✓ Success")
-            sys.exit(0)
-        sys.exit(1)
-
-    except Exception as e:
-        try:
-            driver.save_screenshot(str(SCREENSHOT))
-        except Exception:
-            pass
-        print(f"✗ Erreur : {e}")
-        sys.exit(1)
-
+        dn_urls, cookies = login_and_get_dn_links(driver)
     finally:
         driver.quit()
+
+    downloaded = download_with_requests(dn_urls, cookies)
+    if downloaded:
+        print(f"✓ {len(downloaded)} BAD téléchargé(s)")
+        sys.exit(0)
+    else:
+        print("✗ Aucun téléchargement n'a abouti")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

@@ -12,10 +12,11 @@ from email.message import EmailMessage
 from pathlib import Path
 from urllib import error, request
 
+import requests
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait, Select
 
@@ -41,6 +42,20 @@ for val, name in [(BL_NUMBER, "BL_NUMBER"), (DATE, "DATE"), (CLIENT_FACTURE, "CL
     if not val:
         print(f"✗ Erreur : paramètre {name} manquant")
         sys.exit(1)
+
+
+def build_driver() -> webdriver.Chrome:
+    options = Options()
+    if HEADLESS:
+        options.add_argument("--headless=new")
+        options.add_argument("--disable-gpu")
+        options.add_argument("--disable-software-rasterizer")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--no-first-run")
+    options.add_argument("--window-size=1920,1080")
+    print(f"Mode : {'headless' if HEADLESS else 'navigateur visible'}")
+    return webdriver.Chrome(options=options)
 
 
 def load_properties() -> dict[str, str]:
@@ -106,13 +121,8 @@ def insert_not_found_in_db(compte: str) -> None:
     helper_java = Path(__file__).parent / "UpdateIesAccountFallback.java"
     app_props = Path(__file__).resolve().parents[3] / "src" / "main" / "resources" / "application.properties"
     command = [
-        "java",
-        "--class-path",
-        mysql_jar,
-        str(helper_java),
-        compte,
-        "not found",
-        str(app_props),
+        "java", "--class-path", mysql_jar,
+        str(helper_java), compte, "not found", str(app_props),
     ]
     completed = subprocess.run(command, capture_output=True, text=True, timeout=30)
     if completed.returncode != 0:
@@ -130,10 +140,7 @@ def notify_not_found_via_app(compte: str, properties: dict[str, str]) -> bool:
     req = request.Request(
         f"{base_url}/api/ies/accounts/not-found",
         data=payload,
-        headers={
-            "Content-Type": "application/json",
-            "X-Automation-Token": token,
-        },
+        headers={"Content-Type": "application/json", "X-Automation-Token": token},
         method="POST",
     )
     try:
@@ -160,136 +167,75 @@ def handle_client_not_found(compte: str) -> None:
 
     try:
         send_not_found_email(compte, properties)
-        print(
-            f"✓ Email de rajout envoyé pour {compte}"
-        )
+        print(f"✓ Email de rajout envoyé pour {compte}")
     except Exception as mail_error:
-        print(
-            f"✗ Impossible d'envoyer la notification de client introuvable pour {compte} : {mail_error}"
-        )
+        print(f"✗ Impossible d'envoyer la notification de client introuvable pour {compte} : {mail_error}")
         return
 
     if db_inserted:
         print(f"✓ Mail envoyé et insertion SQL enregistrée pour {compte}")
 
 
-def wait_for_download(directory: Path, timeout: int = 30) -> bool:
-    deadline = time.time() + timeout
-    while time.time() < deadline:
-        files = [f for f in directory.iterdir()
-                 if f.is_file() and not f.suffix == ".crdownload" and not f.name.startswith(".")]
-        if files:
-            return True
-        time.sleep(1)
-    return False
-
-
-def to_date_input(date_str: str) -> str:
-    """Convertit JJ/MM/AAAA en AAAA-MM-JJ pour input[type='date']."""
-    parts = date_str.split("/")
-    if len(parts) == 3:
-        return f"{parts[2]}-{parts[1]}-{parts[0]}"
-    return date_str
-
-
-def clear_download_dir(directory: Path) -> None:
-    for old_file in directory.iterdir():
-        if old_file.is_file():
-            old_file.unlink(missing_ok=True)
-
-
-def list_downloaded_files(directory: Path) -> list[Path]:
-    return sorted(
-        [
-            file_path for file_path in directory.iterdir()
-            if file_path.is_file() and file_path.suffix != ".crdownload" and not file_path.name.startswith(".")
-        ]
-    )
-
-
-def wait_for_new_download(directory: Path, previous_files: set[str], timeout: int = 30) -> Path | None:
-    deadline = time.time() + timeout
-    while time.time() < deadline:
-        current_files = list_downloaded_files(directory)
-        for file_path in current_files:
-            if file_path.name not in previous_files:
-                return file_path
-        time.sleep(1)
-    return None
-
-
-def download_proforma_pdf(driver, wait, invoices_url: str, screenshot_path: Path) -> bool:
+def find_proforma_links(driver: webdriver.Chrome, wait, invoices_url: str) -> list[str]:
+    """Navigate to invoice page and collect proforma links."""
     driver.get(invoices_url)
     wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
     time.sleep(2)
     driver.save_screenshot(str(RESULTS_DIR / "step_invoices_page.png"))
     print(f"✓ Page des factures — URL : {driver.current_url}")
 
-    # Collecter les URLs GenerateProformaReport
     proforma_links = driver.find_elements(By.XPATH,
         "//a[contains(@href,'GenerateProformaReport')]"
     )
     print(f"  → liens proforma trouvés : {len(proforma_links)}")
+    urls = []
     for lnk in proforma_links:
-        print(f"      href='{lnk.get_attribute('href')}'")
+        href = lnk.get_attribute("href")
+        if href:
+            print(f"      href='{href}'")
+            urls.append(href)
+    return urls
 
-    proforma_urls = [lnk.get_attribute("href") for lnk in proforma_links if lnk.get_attribute("href")]
-    if not proforma_urls:
-        driver.save_screenshot(str(screenshot_path))
-        print("✗ Aucun lien GenerateProformaReport trouvé")
-        return False
 
-    clear_download_dir(DOWNLOAD_DIR)
-    downloaded_files = []
+def download_with_requests(proforma_urls: list[str], cookies: dict) -> list[Path]:
+    session = requests.Session()
+    session.cookies.update(cookies)
+    session.headers.update({
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/120 Safari/537.36",
+        "Referer": INVOICES_URL.format(BL_NUMBER),
+    })
 
+    downloaded = []
     for idx, url in enumerate(proforma_urls, start=1):
-        previous_files = {f.name for f in list_downloaded_files(DOWNLOAD_DIR)}
-        print(f"  → navigation proforma #{idx} : {url}")
-        driver.get(url)
-        time.sleep(2)
+        print(f"  → téléchargement proforma #{idx} : {url}")
+        try:
+            resp = session.get(url, timeout=60, allow_redirects=True)
+            resp.raise_for_status()
 
-        new_file = wait_for_new_download(DOWNLOAD_DIR, previous_files, timeout=30)
-        if new_file:
-            downloaded_files.append(new_file.name)
-            print(f"✓ Proforma téléchargé #{idx} : {new_file.name}")
-        else:
-            print(f"✗ Téléchargement non détecté pour proforma #{idx}")
+            filename = None
+            cd = resp.headers.get("Content-Disposition", "")
+            if cd:
+                m = re.search(r'filename[^;=\n]*=(["\']?)([^"\';\n]+)\1', cd)
+                if m:
+                    filename = m.group(2).strip()
+            if not filename:
+                filename = f"proforma_{BL_NUMBER}_{idx}.pdf"
 
-        if idx < len(proforma_urls):
-            driver.get(invoices_url)
-            wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
-            time.sleep(1.5)
+            dest = DOWNLOAD_DIR / filename
+            dest.write_bytes(resp.content)
+            downloaded.append(dest)
+            print(f"✓ Proforma téléchargé #{idx} : {filename} ({len(resp.content)} bytes)")
+        except Exception as e:
+            print(f"✗ Erreur téléchargement #{idx} : {e}")
 
-    driver.save_screenshot(str(screenshot_path))
-
-    if downloaded_files:
-        print(f"✓ Téléchargements terminés : {len(downloaded_files)} fichier(s)")
-        return True
-
-    print("✗ Aucun téléchargement n'a abouti")
-    return False
+    return downloaded
 
 
 def main():
-    options = Options()
-    if HEADLESS:
-        options.add_argument("--headless=new")
-        options.add_argument("--disable-gpu")
-        options.add_argument("--disable-software-rasterizer")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--no-first-run")
-    options.add_argument("--disable-popup-blocking")
-    options.add_argument("--window-size=1920,1080")
-    print(f"Mode : {'headless' if HEADLESS else 'navigateur visible'}")
-
-    driver = webdriver.Chrome(options=options)
-    # Activer les téléchargements en mode headless via CDP
-    driver.execute_cdp_cmd("Browser.setDownloadBehavior", {
-        "behavior": "allow",
-        "downloadPath": str(DOWNLOAD_DIR.absolute()),
-    })
+    driver = build_driver()
     wait = WebDriverWait(driver, TIMEOUT)
+    proforma_urls = []
+    cookies = {}
 
     try:
         # --- Connexion ---
@@ -311,171 +257,171 @@ def main():
             sys.exit(1)
         print("✓ Connecté")
 
-        # --- Vérification : pas encore de factures (appel logique de ies/verification) ---
         invoices_url = INVOICES_URL.format(BL_NUMBER)
+
+        # --- Vérification : pas encore de factures ---
         driver.get(invoices_url)
         wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
         time.sleep(2)
 
         if "Il n'y a pas encore de factures" not in driver.page_source:
-            print(f"✗ BL {BL_NUMBER} : des factures existent déjà — génération annulée")
-            print("→ tentative de téléchargement automatique du PDF existant")
-            if download_proforma_pdf(driver, wait, invoices_url, SCREENSHOT):
-                sys.exit(0)
-            sys.exit(1)
-        print(f"✓ BL {BL_NUMBER} : aucune facture — génération du proforma possible")
-
-        # Extraire le blId depuis le lien de l'onglet "Eléments à Facturer"
-        el_tab = driver.find_element(By.XPATH,
-            "//a[contains(@href,'BillOfLadingPendingInvoicing')] | "
-            "//button[contains(@onclick,'BillOfLadingPendingInvoicing')]"
-        )
-        tab_href = el_tab.get_attribute("href") or el_tab.get_attribute("onclick") or ""
-        bl_id_match = re.search(r"blId=(\d+)", tab_href)
-        if not bl_id_match:
-            print("✗ Impossible d'extraire le blId depuis l'onglet Eléments à Facturer")
-            sys.exit(1)
-        bl_id = bl_id_match.group(1)
-        print(f"✓ blId extrait : {bl_id}")
-
-        # --- Navigation vers les éléments à facturer ---
-        pending_url = PENDING_URL.format(bl_id, BL_NUMBER)
-        print(f"Navigation vers {pending_url}")
-        driver.get(pending_url)
-        wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
-        time.sleep(2)
-
-        # Cocher la case d'en-tête (sélectionne tous les éléments)
-        header_cb = wait.until(EC.element_to_be_clickable(
-            (By.CSS_SELECTOR, "thead input[type='checkbox'], th input[type='checkbox']")
-        ))
-        if not header_cb.is_selected():
-            header_cb.click()
-        time.sleep(1)
-        print("✓ Case d'en-tête cochée")
-
-        # Cliquer sur "Générer proforma" — ciblé sur button/a uniquement
-        generer_proforma_btn = wait.until(EC.element_to_be_clickable(
-            (By.XPATH,
-             "//*[self::button or self::a or self::input]"
-             "[contains(normalize-space(.),'Générer proforma') or @value='Générer proforma']")
-        ))
-        driver.execute_script("arguments[0].scrollIntoView({block:'center'});", generer_proforma_btn)
-        time.sleep(0.5)
-        generer_proforma_btn.click()
-        print("✓ Clic sur Générer proforma")
-
-        # Attendre l'ouverture du modal (polling sans wait.until)
-        for _ in range(1, 8):
-            time.sleep(1)
-            candidates = driver.find_elements(By.XPATH,
-                "//dialog | //*[@role='dialog'] | //*[contains(@class,'modal')]"
-                "[.//*[contains(text(),'Génération de proforma')]]")
-            if candidates:
-                print("✓ Modal ouvert")
-                break
+            print(f"✗ BL {BL_NUMBER} : des factures existent déjà — tentative de téléchargement du PDF existant")
+            proforma_urls = find_proforma_links(driver, wait, invoices_url)
+            if not proforma_urls:
+                sys.exit(1)
+            cookies = {c["name"]: c["value"] for c in driver.get_cookies()}
         else:
-            driver.save_screenshot(str(SCREENSHOT))
-            print("✗ Modal non détecté après 7s")
-            sys.exit(1)
+            print(f"✓ BL {BL_NUMBER} : aucune facture — génération du proforma possible")
 
-        # Laisser le modal finir de se rendre
-        time.sleep(1)
-        driver.save_screenshot(str(RESULTS_DIR / "step_modal_open.png"))
-
-        # --- Inspection : lister tous les inputs/selects visibles sur la page ---
-        all_inputs = driver.find_elements(By.TAG_NAME, "input")
-        print(f"  → tous les inputs visibles ({len(all_inputs)}) :")
-        for inp in all_inputs:
-            if inp.is_displayed():
-                print(f"      type='{inp.get_attribute('type')}' id='{inp.get_attribute('id')}' name='{inp.get_attribute('name')}' placeholder='{inp.get_attribute('placeholder')}'")
-        all_selects = driver.find_elements(By.TAG_NAME, "select")
-        print(f"  → tous les selects visibles ({len(all_selects)}) :")
-        for s in all_selects:
-            if s.is_displayed():
-                opts = [o.get_attribute('value') + ':' + o.text for o in Select(s).options[:6]]
-                print(f"      id='{s.get_attribute('id')}' name='{s.get_attribute('name')}' options={opts}")
-
-        # --- Remplir le formulaire du modal ---
-
-        # Date d'enlèvement : chercher le premier input visible (type=date ou text avec placeholder date)
-        date_input = None
-        for inp in driver.find_elements(By.TAG_NAME, "input"):
-            if inp.is_displayed():
-                t = inp.get_attribute("type") or ""
-                ph = (inp.get_attribute("placeholder") or "").lower()
-                if t == "date" or "mm" in ph or "aaaa" in ph or "yyyy" in ph or "date" in ph:
-                    date_input = inp
-                    print(f"  → input date trouvé : type='{t}' placeholder='{inp.get_attribute('placeholder')}'")
-                    break
-        if not date_input:
-            print("✗ Aucun input date trouvé")
-            sys.exit(1)
-
-        inp_type = date_input.get_attribute("type") or "text"
-        parts = DATE.split("/")  # "20/04/2026" → ["20","04","2026"]
-        if inp_type == "date":
-            # Chrome type=date stocke en YYYY-MM-DD, injection JS la plus fiable
-            iso_date = f"{parts[2]}-{parts[1]}-{parts[0]}"
-            driver.execute_script(
-                "arguments[0].value = arguments[1];"
-                "arguments[0].dispatchEvent(new Event('input',  {bubbles:true}));"
-                "arguments[0].dispatchEvent(new Event('change', {bubbles:true}));",
-                date_input, iso_date
+            # Extraire le blId
+            el_tab = driver.find_element(By.XPATH,
+                "//a[contains(@href,'BillOfLadingPendingInvoicing')] | "
+                "//button[contains(@onclick,'BillOfLadingPendingInvoicing')]"
             )
-        else:
-            # Champ texte : saisir au format affiché JJ/MM/AAAA
-            date_input.click()
-            date_input.clear()
-            date_input.send_keys(DATE)
-        time.sleep(0.3)
-        driver.save_screenshot(str(RESULTS_DIR / "step_date_filled.png"))
-        print(f"✓ Date saisie : {DATE}")
+            tab_href = el_tab.get_attribute("href") or el_tab.get_attribute("onclick") or ""
+            bl_id_match = re.search(r"blId=(\d+)", tab_href)
+            if not bl_id_match:
+                print("✗ Impossible d'extraire le blId depuis l'onglet Eléments à Facturer")
+                sys.exit(1)
+            bl_id = bl_id_match.group(1)
+            print(f"✓ blId extrait : {bl_id}")
 
-        # Client facturé : premier select visible
-        client_sel_el = None
-        for s in driver.find_elements(By.TAG_NAME, "select"):
-            if s.is_displayed():
-                client_sel_el = s
-                break
-        if not client_sel_el:
-            print("✗ Aucun select trouvé")
-            sys.exit(1)
+            # --- Navigation vers les éléments à facturer ---
+            pending_url = PENDING_URL.format(bl_id, BL_NUMBER)
+            print(f"Navigation vers {pending_url}")
+            driver.get(pending_url)
+            wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
+            time.sleep(2)
 
-        sel = Select(client_sel_el)
-        try:
-            sel.select_by_value(CLIENT_FACTURE)
-        except NoSuchElementException:
+            # Cocher la case d'en-tête
+            header_cb = wait.until(EC.element_to_be_clickable(
+                (By.CSS_SELECTOR, "thead input[type='checkbox'], th input[type='checkbox']")
+            ))
+            if not header_cb.is_selected():
+                header_cb.click()
+            time.sleep(1)
+            print("✓ Case d'en-tête cochée")
+
+            # Cliquer sur "Générer proforma"
+            generer_proforma_btn = wait.until(EC.element_to_be_clickable(
+                (By.XPATH,
+                 "//*[self::button or self::a or self::input]"
+                 "[contains(normalize-space(.),'Générer proforma') or @value='Générer proforma']")
+            ))
+            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", generer_proforma_btn)
+            time.sleep(0.5)
+            generer_proforma_btn.click()
+            print("✓ Clic sur Générer proforma")
+
+            # Attendre l'ouverture du modal
+            for _ in range(1, 8):
+                time.sleep(1)
+                candidates = driver.find_elements(By.XPATH,
+                    "//dialog | //*[@role='dialog'] | //*[contains(@class,'modal')]"
+                    "[.//*[contains(text(),'Génération de proforma')]]")
+                if candidates:
+                    print("✓ Modal ouvert")
+                    break
+            else:
+                driver.save_screenshot(str(SCREENSHOT))
+                print("✗ Modal non détecté après 7s")
+                sys.exit(1)
+
+            time.sleep(1)
+            driver.save_screenshot(str(RESULTS_DIR / "step_modal_open.png"))
+
+            # Inspection des inputs/selects visibles
+            all_inputs = driver.find_elements(By.TAG_NAME, "input")
+            print(f"  → tous les inputs visibles ({len(all_inputs)}) :")
+            for inp in all_inputs:
+                if inp.is_displayed():
+                    print(f"      type='{inp.get_attribute('type')}' id='{inp.get_attribute('id')}' name='{inp.get_attribute('name')}' placeholder='{inp.get_attribute('placeholder')}'")
+            all_selects = driver.find_elements(By.TAG_NAME, "select")
+            print(f"  → tous les selects visibles ({len(all_selects)}) :")
+            for s in all_selects:
+                if s.is_displayed():
+                    opts = [o.get_attribute('value') + ':' + o.text for o in Select(s).options[:6]]
+                    print(f"      id='{s.get_attribute('id')}' name='{s.get_attribute('name')}' options={opts}")
+
+            # Remplir la date
+            date_input = None
+            for inp in driver.find_elements(By.TAG_NAME, "input"):
+                if inp.is_displayed():
+                    t = inp.get_attribute("type") or ""
+                    ph = (inp.get_attribute("placeholder") or "").lower()
+                    if t == "date" or "mm" in ph or "aaaa" in ph or "yyyy" in ph or "date" in ph:
+                        date_input = inp
+                        print(f"  → input date trouvé : type='{t}' placeholder='{inp.get_attribute('placeholder')}'")
+                        break
+            if not date_input:
+                print("✗ Aucun input date trouvé")
+                sys.exit(1)
+
+            inp_type = date_input.get_attribute("type") or "text"
+            parts = DATE.split("/")
+            if inp_type == "date":
+                iso_date = f"{parts[2]}-{parts[1]}-{parts[0]}"
+                driver.execute_script(
+                    "arguments[0].value = arguments[1];"
+                    "arguments[0].dispatchEvent(new Event('input',  {bubbles:true}));"
+                    "arguments[0].dispatchEvent(new Event('change', {bubbles:true}));",
+                    date_input, iso_date
+                )
+            else:
+                date_input.click()
+                date_input.clear()
+                date_input.send_keys(DATE)
+            time.sleep(0.3)
+            driver.save_screenshot(str(RESULTS_DIR / "step_date_filled.png"))
+            print(f"✓ Date saisie : {DATE}")
+
+            # Remplir le client facturé
+            client_sel_el = None
+            for s in driver.find_elements(By.TAG_NAME, "select"):
+                if s.is_displayed():
+                    client_sel_el = s
+                    break
+            if not client_sel_el:
+                print("✗ Aucun select trouvé")
+                sys.exit(1)
+
+            sel = Select(client_sel_el)
             try:
-                sel.select_by_visible_text(CLIENT_FACTURE)
+                sel.select_by_value(CLIENT_FACTURE)
             except NoSuchElementException:
-                handle_client_not_found(CLIENT_FACTURE)
-                raise
-        except Exception:
-            sel.select_by_visible_text(CLIENT_FACTURE)
-        time.sleep(0.3)
-        driver.save_screenshot(str(RESULTS_DIR / "step_client_filled.png"))
-        print(f"✓ Client facturé sélectionné : {CLIENT_FACTURE}")
+                try:
+                    sel.select_by_visible_text(CLIENT_FACTURE)
+                except NoSuchElementException:
+                    handle_client_not_found(CLIENT_FACTURE)
+                    raise
+            except Exception:
+                sel.select_by_visible_text(CLIENT_FACTURE)
+            time.sleep(0.3)
+            driver.save_screenshot(str(RESULTS_DIR / "step_client_filled.png"))
+            print(f"✓ Client facturé sélectionné : {CLIENT_FACTURE}")
 
-        # Cliquer sur "Générer" (bouton visible du modal)
-        generer_btn = None
-        for btn in driver.find_elements(By.TAG_NAME, "button"):
-            if btn.is_displayed() and btn.text.strip() in ("Générer", "Generer"):
-                generer_btn = btn
-                break
-        if not generer_btn:
-            print("✗ Bouton Générer non trouvé")
-            sys.exit(1)
+            # Cliquer sur "Générer"
+            generer_btn = None
+            for btn in driver.find_elements(By.TAG_NAME, "button"):
+                if btn.is_displayed() and btn.text.strip() in ("Générer", "Generer"):
+                    generer_btn = btn
+                    break
+            if not generer_btn:
+                print("✗ Bouton Générer non trouvé")
+                sys.exit(1)
 
-        driver.save_screenshot(str(RESULTS_DIR / "step_before_generer.png"))
-        generer_btn.click()
-        time.sleep(3)
-        print("✓ Proforma généré")
+            driver.save_screenshot(str(RESULTS_DIR / "step_before_generer.png"))
+            generer_btn.click()
+            time.sleep(3)
+            print("✓ Proforma généré")
 
-        if download_proforma_pdf(driver, wait, invoices_url, SCREENSHOT):
-            sys.exit(0)
-        sys.exit(1)
+            proforma_urls = find_proforma_links(driver, wait, invoices_url)
+            if not proforma_urls:
+                sys.exit(1)
+            cookies = {c["name"]: c["value"] for c in driver.get_cookies()}
 
+    except SystemExit:
+        raise
     except Exception as e:
         try:
             driver.save_screenshot(str(SCREENSHOT))
@@ -483,9 +429,16 @@ def main():
             pass
         print(f"✗ Erreur : {e}")
         sys.exit(1)
-
     finally:
-        driver.quit()
+        driver.quit()  # libérer Chrome avant les téléchargements
+
+    downloaded = download_with_requests(proforma_urls, cookies)
+    if downloaded:
+        print(f"✓ Téléchargements terminés : {len(downloaded)} fichier(s)")
+        sys.exit(0)
+    else:
+        print("✗ Aucun téléchargement n'a abouti")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
