@@ -13,12 +13,16 @@ from pathlib import Path
 from urllib import error, request
 
 import requests
+from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait, Select
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from ies_session import get_session, get_session_from_selenium_cookies
 
 LOGIN_URL = "https://ies.aglgroup.com/dkrp/Login"
 INVOICES_URL = "https://ies.aglgroup.com/DKRP/Customer/BillOfLadingInvoices?blNumber={}"
@@ -176,35 +180,35 @@ def handle_client_not_found(compte: str) -> None:
         print(f"✓ Mail envoyé et insertion SQL enregistrée pour {compte}")
 
 
-def find_proforma_links(driver: webdriver.Chrome, wait, invoices_url: str) -> list[str]:
-    """Navigate to invoice page and collect proforma links."""
-    driver.get(invoices_url)
-    wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
-    time.sleep(2)
-    driver.save_screenshot(str(RESULTS_DIR / "step_invoices_page.png"))
-    print(f"✓ Page des factures — URL : {driver.current_url}")
-
-    proforma_links = driver.find_elements(By.XPATH,
-        "//a[contains(@href,'GenerateProformaReport')]"
-    )
-    print(f"  → liens proforma trouvés : {len(proforma_links)}")
-    urls = []
-    for lnk in proforma_links:
-        href = lnk.get_attribute("href")
-        if href:
-            print(f"      href='{href}'")
-            urls.append(href)
+def find_proforma_links_html(html: str) -> list[str]:
+    soup = BeautifulSoup(html, "html.parser")
+    links = soup.find_all("a", href=re.compile(r"GenerateProformaReport"))
+    base = "https://ies.aglgroup.com"
+    urls = [a["href"] if a["href"].startswith("http") else base + a["href"]
+            for a in links if a.get("href")]
     return urls
 
 
-def download_with_requests(proforma_urls: list[str], cookies: dict) -> list[Path]:
-    session = requests.Session()
-    session.cookies.update(cookies)
-    session.headers.update({
-        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/120 Safari/537.36",
-        "Referer": INVOICES_URL.format(BL_NUMBER),
-    })
+def find_proforma_links(driver: webdriver.Chrome, wait, invoices_url: str) -> list[str]:
+    driver.get(invoices_url)
+    # Attendre que les liens proforma apparaissent (max 15s), sinon fallback sur le HTML courant
+    try:
+        wait.until(EC.presence_of_element_located(
+            (By.XPATH, "//a[contains(@href,'GenerateProformaReport')]")
+        ))
+    except Exception:
+        time.sleep(2)  # fallback si pas de lien détecté par WebDriverWait
+    driver.save_screenshot(str(RESULTS_DIR / "step_invoices_page.png"))
+    print(f"✓ Page des factures — URL : {driver.current_url}")
 
+    urls = find_proforma_links_html(driver.page_source)
+    print(f"  → liens proforma trouvés : {len(urls)}")
+    for u in urls:
+        print(f"      href='{u}'")
+    return urls
+
+
+def download_with_requests(proforma_urls: list[str], session) -> list[Path]:
     downloaded = []
     for idx, url in enumerate(proforma_urls, start=1):
         print(f"  → téléchargement proforma #{idx} : {url}")
@@ -232,44 +236,70 @@ def download_with_requests(proforma_urls: list[str], cookies: dict) -> list[Path
 
 
 def main():
-    driver = build_driver()
-    wait = WebDriverWait(driver, TIMEOUT)
+    driver = None
+    requests_session = None
     proforma_urls = []
-    cookies = {}
 
     try:
-        # --- Connexion ---
-        print(f"Connexion à {LOGIN_URL}")
-        driver.get(LOGIN_URL)
+        # Login via requests (sans Chrome) + cache de cookies
+        try:
+            requests_session = get_session()
+        except Exception as e:
+            print(f"  → Login requests échoué ({e}), fallback Selenium")
+            requests_session = None
 
-        email_field = wait.until(EC.presence_of_element_located(
-            (By.CSS_SELECTOR, "input[type='email'], input[name*='email'], input[id*='email'], input[placeholder*='mail']")
-        ))
-        email_field.clear()
-        email_field.send_keys(EMAIL)
-        driver.find_element(By.CSS_SELECTOR, "input[type='password']").send_keys(PASSWORD)
-        driver.find_element(By.CSS_SELECTOR, "button[type='submit'], input[type='submit']").click()
-        time.sleep(2)
+        driver = build_driver()
+        wait = WebDriverWait(driver, TIMEOUT)
 
-        if "login" in driver.current_url.lower():
-            driver.save_screenshot(str(SCREENSHOT))
-            print("✗ Erreur : échec de la connexion")
-            sys.exit(1)
-        print("✓ Connecté")
+    except Exception as e:
+        print(f"✗ Erreur initialisation : {e}")
+        sys.exit(1)
 
+    try:
         invoices_url = INVOICES_URL.format(BL_NUMBER)
 
-        # --- Vérification : pas encore de factures ---
-        driver.get(invoices_url)
-        wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
-        time.sleep(2)
+        # Injecter les cookies si disponibles, sinon login Selenium direct
+        if requests_session:
+            driver.get("https://ies.aglgroup.com")
+            for name, value in requests_session.cookies.items():
+                try:
+                    driver.add_cookie({"name": name, "value": value, "domain": "ies.aglgroup.com"})
+                except Exception:
+                    pass
+            print("✓ Cookies injectés dans Chrome")
+            driver.get(invoices_url)
+            wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
+        else:
+            driver.get(LOGIN_URL)
+
+        # Si toujours sur login (cookies expirés ou pas de session requests) → login Selenium
+        if "login" in driver.current_url.lower():
+            print("  → Login Selenium...")
+            email_field = wait.until(EC.presence_of_element_located(
+                (By.CSS_SELECTOR, "input[type='email'], input[name*='email'], input[id*='email'], input[placeholder*='mail']")
+            ))
+            email_field.clear()
+            email_field.send_keys(EMAIL)
+            driver.find_element(By.CSS_SELECTOR, "input[type='password']").send_keys(PASSWORD)
+            driver.find_element(By.CSS_SELECTOR, "button[type='submit'], input[type='submit']").click()
+            wait.until(lambda d: "login" not in d.current_url.lower())
+            if "login" in driver.current_url.lower():
+                driver.save_screenshot(str(SCREENSHOT))
+                print("✗ Erreur : échec de la connexion")
+                sys.exit(1)
+            driver.get(invoices_url)
+            wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
+
+        print(f"✓ Connecté — URL : {driver.current_url}")
 
         if "Il n'y a pas encore de factures" not in driver.page_source:
             print(f"✗ BL {BL_NUMBER} : des factures existent déjà — tentative de téléchargement du PDF existant")
             proforma_urls = find_proforma_links(driver, wait, invoices_url)
             if not proforma_urls:
                 sys.exit(1)
-            cookies = {c["name"]: c["value"] for c in driver.get_cookies()}
+            requests_session = get_session_from_selenium_cookies(
+                {c["name"]: c["value"] for c in driver.get_cookies()}
+            )
         else:
             print(f"✓ BL {BL_NUMBER} : aucune facture — génération du proforma possible")
 
@@ -291,7 +321,6 @@ def main():
             print(f"Navigation vers {pending_url}")
             driver.get(pending_url)
             wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
-            time.sleep(2)
 
             # Cocher la case d'en-tête
             header_cb = wait.until(EC.element_to_be_clickable(
@@ -299,7 +328,6 @@ def main():
             ))
             if not header_cb.is_selected():
                 header_cb.click()
-            time.sleep(1)
             print("✓ Case d'en-tête cochée")
 
             # Cliquer sur "Générer proforma"
@@ -412,13 +440,16 @@ def main():
 
             driver.save_screenshot(str(RESULTS_DIR / "step_before_generer.png"))
             generer_btn.click()
+            # Attendre que la page des factures redevienne accessible (modal fermé + redirect)
             time.sleep(3)
             print("✓ Proforma généré")
 
             proforma_urls = find_proforma_links(driver, wait, invoices_url)
             if not proforma_urls:
                 sys.exit(1)
-            cookies = {c["name"]: c["value"] for c in driver.get_cookies()}
+            requests_session = get_session_from_selenium_cookies(
+                {c["name"]: c["value"] for c in driver.get_cookies()}
+            )
 
     except SystemExit:
         raise
@@ -430,9 +461,10 @@ def main():
         print(f"✗ Erreur : {e}")
         sys.exit(1)
     finally:
-        driver.quit()  # libérer Chrome avant les téléchargements
+        if driver:
+            driver.quit()  # libérer Chrome avant les téléchargements
 
-    downloaded = download_with_requests(proforma_urls, cookies)
+    downloaded = download_with_requests(proforma_urls, requests_session)
     if downloaded:
         print(f"✓ Téléchargements terminés : {len(downloaded)} fichier(s)")
         sys.exit(0)

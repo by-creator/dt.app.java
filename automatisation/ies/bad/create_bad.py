@@ -7,18 +7,12 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-import requests
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
+from bs4 import BeautifulSoup
 
-LOGIN_URL = "https://ies.aglgroup.com/dkrp/Login"
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from ies_session import get_session, get_session_from_selenium_cookies
+
 INVOICES_URL = "https://ies.aglgroup.com/DKRP/Customer/BillOfLadingInvoices?blNumber={}"
-EMAIL = "marcdamien04@gmail.com"
-PASSWORD = "6W91PthfBCMfs3"
-TIMEOUT = 20
 
 RESULTS_DIR = Path(__file__).parent / "results"
 RESULTS_DIR.mkdir(exist_ok=True)
@@ -35,7 +29,39 @@ if not BL_NUMBER:
     sys.exit(1)
 
 
-def build_driver() -> webdriver.Chrome:
+def find_dn_links_from_html(html: str) -> list[str]:
+    """Cherche les liens PrintDeliveryNoteWithtout2Fa dans le HTML."""
+    soup = BeautifulSoup(html, "html.parser")
+    links = soup.find_all("a", href=re.compile(r"PrintDeliveryNoteWithtout2Fa"))
+    urls = [a["href"] for a in links if a.get("href")]
+    base = "https://ies.aglgroup.com"
+    return [u if u.startswith("http") else base + u for u in urls]
+
+
+def find_dn_links_via_requests(session) -> list[str]:
+    """Tente de trouver les liens DN via requests seul (sans Chrome)."""
+    url = INVOICES_URL.format(BL_NUMBER)
+    resp = session.get(url, timeout=20)
+    resp.raise_for_status()
+    print(f"✓ Page des factures — status {resp.status_code}")
+
+    dn_urls = find_dn_links_from_html(resp.text)
+    print(f"  → liens DN trouvés dans le HTML initial : {len(dn_urls)}")
+    for u in dn_urls:
+        print(f"      href='{u}'")
+    return dn_urls
+
+
+def find_dn_links_via_selenium(session) -> list[str]:
+    """Fallback Selenium si les liens DN ne sont pas dans le HTML initial (contenu JS)."""
+    from selenium import webdriver
+    from selenium.webdriver.chrome.options import Options
+    from selenium.webdriver.common.by import By
+    from selenium.webdriver.support import expected_conditions as EC
+    from selenium.webdriver.support.ui import WebDriverWait
+
+    print("  → liens non trouvés en HTML pur, passage en mode Selenium...")
+
     options = Options()
     if HEADLESS:
         options.add_argument("--headless=new")
@@ -45,103 +71,64 @@ def build_driver() -> webdriver.Chrome:
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--no-first-run")
     options.add_argument("--window-size=1920,1080")
-    print(f"Mode : {'headless' if HEADLESS else 'navigateur visible'}")
-    return webdriver.Chrome(options=options)
+
+    driver = webdriver.Chrome(options=options)
+    wait = WebDriverWait(driver, 20)
+
+    try:
+        # Injecter les cookies de la session requests dans Chrome
+        driver.get("https://ies.aglgroup.com")
+        for name, value in session.cookies.items():
+            driver.add_cookie({"name": name, "value": value, "domain": "ies.aglgroup.com"})
+
+        invoices_url = INVOICES_URL.format(BL_NUMBER)
+        driver.get(invoices_url)
+        wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
+        time.sleep(2)
+        driver.save_screenshot(str(RESULTS_DIR / "step_bad_invoices_page.png"))
+
+        # Clic sur la flèche déroulante de la ligne Facture
+        expand_candidates = driver.find_elements(By.XPATH,
+            "//tr[.//*[contains(text(),'Facture')] or contains(.,'Facture')]"
+            "  //*[self::button or self::a or self::span or self::i]"
+            "  [contains(@class,'collapse') or contains(@class,'expand') or contains(@class,'toggle')"
+            "   or contains(@class,'chevron') or contains(@class,'arrow') or contains(@class,'caret')"
+            "   or contains(@class,'bi-chevron') or contains(@class,'fa-chevron')"
+            "   or contains(@class,'bi-caret') or contains(@class,'accordion')]"
+            " | "
+            "//tr[.//*[contains(text(),'Facture')] or contains(.,'Facture')]"
+            "  //td[1]//*[self::button or self::a or self::span or self::i]"
+        )
+        print(f"  → éléments déroulants trouvés : {len(expand_candidates)}")
+
+        if not expand_candidates:
+            driver.save_screenshot(str(SCREENSHOT))
+            print("✗ Impossible de trouver la flèche déroulante de la ligne Facture")
+            return []
+
+        expand_btn = expand_candidates[0]
+        driver.execute_script("arguments[0].scrollIntoView({block:'center'});", expand_btn)
+        time.sleep(0.3)
+        driver.execute_script("arguments[0].click();", expand_btn)
+        print("✓ Clic sur la flèche déroulante")
+        time.sleep(1.5)
+        driver.save_screenshot(str(RESULTS_DIR / "step_bad_expanded.png"))
+
+        dn_urls = find_dn_links_from_html(driver.page_source)
+        print(f"  → liens DN trouvés après expansion : {len(dn_urls)}")
+        for u in dn_urls:
+            print(f"      href='{u}'")
+
+        # Mettre à jour le cache avec les cookies Selenium
+        selenium_cookies = {c["name"]: c["value"] for c in driver.get_cookies()}
+        session.cookies.update(selenium_cookies)
+
+        return dn_urls
+    finally:
+        driver.quit()
 
 
-def login_and_get_dn_links(driver: webdriver.Chrome) -> tuple[list[str], dict]:
-    """Login, navigate, expand accordion, collect DN links + cookies, then ready to quit."""
-    wait = WebDriverWait(driver, TIMEOUT)
-
-    print(f"Connexion à {LOGIN_URL}")
-    driver.get(LOGIN_URL)
-
-    email_field = wait.until(EC.presence_of_element_located(
-        (By.CSS_SELECTOR, "input[type='email'], input[name*='email'], input[id*='email'], input[placeholder*='mail']")
-    ))
-    email_field.clear()
-    email_field.send_keys(EMAIL)
-    driver.find_element(By.CSS_SELECTOR, "input[type='password']").send_keys(PASSWORD)
-    driver.find_element(By.CSS_SELECTOR, "button[type='submit'], input[type='submit']").click()
-    time.sleep(2)
-
-    if "login" in driver.current_url.lower():
-        driver.save_screenshot(str(SCREENSHOT))
-        print("✗ Erreur : échec de la connexion")
-        sys.exit(1)
-    print("✓ Connecté")
-
-    invoices_url = INVOICES_URL.format(BL_NUMBER)
-    driver.get(invoices_url)
-    wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
-    time.sleep(2)
-    driver.save_screenshot(str(RESULTS_DIR / "step_bad_invoices_page.png"))
-    print(f"✓ Page des factures — URL : {driver.current_url}")
-
-    # Trouver et cliquer sur la flèche déroulante de la ligne "Facture"
-    expand_candidates = driver.find_elements(By.XPATH,
-        "//tr[.//*[contains(text(),'Facture')] or contains(.,'Facture')]"
-        "  //*[self::button or self::a or self::span or self::i]"
-        "  [contains(@class,'collapse') or contains(@class,'expand') or contains(@class,'toggle')"
-        "   or contains(@class,'chevron') or contains(@class,'arrow') or contains(@class,'caret')"
-        "   or contains(@class,'bi-chevron') or contains(@class,'fa-chevron')"
-        "   or contains(@class,'bi-caret') or contains(@class,'accordion')]"
-        " | "
-        "//tr[.//*[contains(text(),'Facture')] or contains(.,'Facture')]"
-        "  //td[1]//*[self::button or self::a or self::span or self::i]"
-        " | "
-        "//*[contains(text(),'Facture') or .//*[contains(text(),'Facture')]]"
-        "  [self::tr or contains(@class,'row') or contains(@class,'item')]"
-        "  //*[contains(@class,'toggle') or contains(@class,'expand') or contains(@class,'accordion')"
-        "      or contains(@class,'chevron') or contains(@class,'arrow')]"
-    )
-    print(f"  → éléments déroulants trouvés : {len(expand_candidates)}")
-    for c in expand_candidates:
-        print(f"      tag={c.tag_name} class='{c.get_attribute('class')}' displayed={c.is_displayed()}")
-
-    if not expand_candidates:
-        driver.save_screenshot(str(SCREENSHOT))
-        print("✗ Impossible de trouver la flèche déroulante de la ligne Facture")
-        sys.exit(1)
-
-    expand_btn = expand_candidates[0]
-    driver.execute_script("arguments[0].scrollIntoView({block:'center'});", expand_btn)
-    time.sleep(0.3)
-    driver.execute_script("arguments[0].click();", expand_btn)
-    print(f"  → clic JS sur : tag={expand_btn.tag_name} class='{expand_btn.get_attribute('class')}'")
-    print("✓ Clic sur la flèche déroulante")
-    time.sleep(1.5)
-    driver.save_screenshot(str(RESULTS_DIR / "step_bad_expanded.png"))
-
-    # Collecter les liens DN
-    dn_links = driver.find_elements(By.XPATH,
-        "//a[contains(@href,'PrintDeliveryNoteWithtout2Fa')]"
-    )
-    print(f"  → liens DN trouvés : {len(dn_links)}")
-    dn_urls = []
-    for lnk in dn_links:
-        href = lnk.get_attribute("href")
-        if href:
-            print(f"      href='{href}'")
-            dn_urls.append(href)
-
-    if not dn_urls:
-        driver.save_screenshot(str(SCREENSHOT))
-        print("✗ Aucun lien PrintDeliveryNoteWithtout2Fa trouvé")
-        sys.exit(1)
-
-    cookies = {c["name"]: c["value"] for c in driver.get_cookies()}
-    return dn_urls, cookies
-
-
-def download_with_requests(dn_urls: list[str], cookies: dict) -> list[Path]:
-    session = requests.Session()
-    session.cookies.update(cookies)
-    session.headers.update({
-        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/120 Safari/537.36",
-        "Referer": INVOICES_URL.format(BL_NUMBER),
-    })
-
+def download_files(session, dn_urls: list[str]) -> list[Path]:
     downloaded = []
     for idx, url in enumerate(dn_urls, start=1):
         print(f"  → téléchargement BAD #{idx} : {url}")
@@ -164,18 +151,24 @@ def download_with_requests(dn_urls: list[str], cookies: dict) -> list[Path]:
             print(f"✓ BAD téléchargé #{idx} : {filename} ({len(resp.content)} bytes)")
         except Exception as e:
             print(f"✗ Erreur téléchargement #{idx} : {e}")
-
     return downloaded
 
 
 def main():
-    driver = build_driver()
-    try:
-        dn_urls, cookies = login_and_get_dn_links(driver)
-    finally:
-        driver.quit()
+    session = get_session()
 
-    downloaded = download_with_requests(dn_urls, cookies)
+    # Tenter d'abord sans Chrome
+    dn_urls = find_dn_links_via_requests(session)
+
+    # Fallback Selenium si les liens sont rendus par JS
+    if not dn_urls:
+        dn_urls = find_dn_links_via_selenium(session)
+
+    if not dn_urls:
+        print("✗ Aucun lien PrintDeliveryNoteWithtout2Fa trouvé")
+        sys.exit(1)
+
+    downloaded = download_files(session, dn_urls)
     if downloaded:
         print(f"✓ {len(downloaded)} BAD téléchargé(s)")
         sys.exit(0)

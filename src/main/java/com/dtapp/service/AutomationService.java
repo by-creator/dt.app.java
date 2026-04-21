@@ -305,16 +305,20 @@ public class AutomationService {
             if (downloadDirectory != null) {
                 try {
                     documents = collectLocalDocuments(downloadDirectory);
-                    if (documents.isEmpty()) {
+                    if (documents.isEmpty() && success) {
+                        // Script a réussi (exit 0) mais aucun fichier produit
                         success = false;
                         message = null;
                         errorMessage = "Aucun document telecharge n'a ete trouve apres l'execution.";
                     }
+                    // Si exitCode != 0, on garde le vrai message d'erreur du script
                 } catch (Exception e) {
                     log.error("Erreur lors de la collecte des documents locaux", e);
-                    success = false;
-                    message = null;
-                    errorMessage = "L'execution a abouti mais les documents sont introuvables: " + e.getMessage();
+                    if (success) {
+                        success = false;
+                        message = null;
+                        errorMessage = "L'execution a abouti mais les documents sont introuvables: " + e.getMessage();
+                    }
                 }
             }
 
@@ -444,9 +448,17 @@ public class AutomationService {
      */
     private String parseErrorMessage(String output) {
         String[] lines = output.split("\n");
+        // Priorité : ligne avec ✗, Error ou Erreur
         for (int i = lines.length - 1; i >= 0; i--) {
             String line = lines[i].trim();
             if (!line.isEmpty() && (line.startsWith("✗") || line.contains("Error") || line.contains("Erreur"))) {
+                return line;
+            }
+        }
+        // Fallback : dernière ligne non vide (pour les tracebacks Python, etc.)
+        for (int i = lines.length - 1; i >= 0; i--) {
+            String line = lines[i].trim();
+            if (!line.isEmpty()) {
                 return line;
             }
         }

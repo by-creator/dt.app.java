@@ -517,7 +517,7 @@
     }
 
     button.disabled = true;
-    button.textContent = 'Traitement en cours (patientez 5min)';
+    button.textContent = 'Traitement en cours (veuillez patienter)';
 
     try {
       const result = await executeAutomation('ies:proforma:create_proforma.py', {
@@ -602,7 +602,7 @@
     }
 
     button.disabled = true;
-    button.textContent = 'Traitement en cours (patientez 5min)';
+    button.textContent = 'Traitement en cours (veuillez patienter)';
 
     try {
       const result = await executeAutomation('ies:facture:create_facture.py', {
@@ -640,7 +640,7 @@
     }
 
     button.disabled = true;
-    button.textContent = 'Traitement en cours (patientez 5min)';
+    button.textContent = 'Traitement en cours (veuillez patienter)';
 
     try {
       const result = await executeAutomation('ies:bad:create_bad.py', {
