@@ -440,17 +440,30 @@
   async function executeAutomation(automationId, params) {
     const csrfToken = document.querySelector('meta[name="_csrf"]').content;
     const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
-    const response = await fetch('/api/automations/' + encodeURIComponent(automationId) + '/execute', {
+
+    // Soumettre le job
+    const submitResp = await fetch('/api/automations/' + encodeURIComponent(automationId) + '/execute', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken },
       body: JSON.stringify(params || {})
     });
-
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.error || "Erreur lors de l'execution");
+    if (!submitResp.ok) {
+      let msg = "Erreur lors de la soumission";
+      try { const d = await submitResp.json(); msg = d.error || msg; } catch {}
+      throw new Error(msg);
     }
-    return data;
+    const { jobId } = await submitResp.json();
+
+    // Poller jusqu'à la fin (max 5 min)
+    const deadline = Date.now() + 5 * 60 * 1000;
+    while (Date.now() < deadline) {
+      await new Promise(r => setTimeout(r, 3000));
+      const pollResp = await fetch('/api/automations/jobs/' + encodeURIComponent(jobId));
+      if (!pollResp.ok) throw new Error("Impossible de récupérer le statut du job");
+      const data = await pollResp.json();
+      if (data.status === 'success' || data.status === 'failed') return data;
+    }
+    throw new Error("Timeout : le traitement dépasse 5 minutes");
   }
 
   function renderProformaDocuments(documents) {

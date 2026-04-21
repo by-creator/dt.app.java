@@ -3,6 +3,7 @@ package com.dtapp.service;
 import com.dtapp.config.AutomationProperties;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import java.io.*;
@@ -10,6 +11,7 @@ import java.nio.file.*;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -25,13 +27,50 @@ public class AutomationService {
             "ies:bad:create_bad.py"
     );
 
+    @Data
+    public static class JobStatus {
+        private final String jobId;
+        private volatile String status; // pending, running, success, failed
+        private volatile AutomationResult result;
+
+        public JobStatus(String jobId) {
+            this.jobId = jobId;
+            this.status = "pending";
+        }
+    }
+
     private final AutomationProperties automationProperties;
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final Map<String, AutomationInfo> automationCache = new HashMap<>();
     private final Map<String, AutomationResult> lastResults = new HashMap<>();
+    private final ConcurrentHashMap<String, JobStatus> jobs = new ConcurrentHashMap<>();
+    private final ExecutorService executor = Executors.newCachedThreadPool();
 
     public AutomationService(AutomationProperties automationProperties) {
         this.automationProperties = automationProperties;
+    }
+
+    public String submitAutomation(String automationId, Map<String, String> params) {
+        String jobId = UUID.randomUUID().toString();
+        JobStatus job = new JobStatus(jobId);
+        jobs.put(jobId, job);
+        executor.submit(() -> {
+            job.setStatus("running");
+            try {
+                AutomationResult result = executeAutomation(automationId, params != null ? params : Collections.emptyMap());
+                job.setResult(result);
+                job.setStatus(result.isSuccess() ? "success" : "failed");
+            } catch (Exception e) {
+                log.error("Erreur async automation {}", automationId, e);
+                job.setResult(createErrorResult(automationId, "Erreur: " + e.getMessage()));
+                job.setStatus("failed");
+            }
+        });
+        return jobId;
+    }
+
+    public JobStatus getJobStatus(String jobId) {
+        return jobs.get(jobId);
     }
 
     /**

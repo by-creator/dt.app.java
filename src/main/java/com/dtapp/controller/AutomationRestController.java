@@ -56,48 +56,47 @@ public class AutomationRestController {
     }
 
     /**
-     * Lance une automatisation
+     * Lance une automatisation de façon asynchrone, retourne un jobId immédiatement
      */
     @PostMapping("/{id}/execute")
-    public ResponseEntity<AutomationExecutionResponse> executeAutomation(
+    public ResponseEntity<Map<String, String>> executeAutomation(
             @PathVariable String id,
             @RequestBody(required = false) Map<String, String> params) {
         try {
-            log.info("Exécution de l'automatisation: {}", id);
-
-            AutomationResult result = automationService.executeAutomation(id,
-                    params != null ? params : java.util.Collections.emptyMap());
-            
-            AutomationExecutionResponse response = new AutomationExecutionResponse(
-                    result.getId(),
-                    id,
-                    result.isSuccess() ? "success" : "failed",
-                    result.getMessage(),
-                    result.getErrorMessage(),
-                    result.getScreenshotPath(),
-                    result.getLogPath(),
-                    result.getExecutionTime(),
-                    result.getDocuments()
-            );
-            
-            log.info("Automatisation {} - Résultat: {}", id, result.isSuccess() ? "succès" : "échec");
-            return ResponseEntity.ok(response);
-            
+            log.info("Soumission de l'automatisation: {}", id);
+            String jobId = automationService.submitAutomation(id, params);
+            return ResponseEntity.ok(Map.of("jobId", jobId, "status", "pending"));
         } catch (Exception e) {
-            log.error("Erreur lors de l'exécution de l'automatisation: {}", id, e);
-            AutomationExecutionResponse response = new AutomationExecutionResponse(
-                    id,
-                    id,
-                    "error",
-                    null,
-                    "Erreur: " + e.getMessage(),
-                    null,
-                    null,
-                    0,
-                    java.util.Collections.emptyList()
-            );
-            return ResponseEntity.status(500).body(response);
+            log.error("Erreur lors de la soumission de l'automatisation: {}", id, e);
+            return ResponseEntity.status(500).body(Map.of("status", "error", "error", e.getMessage()));
         }
+    }
+
+    /**
+     * Poll le statut d'un job asynchrone
+     */
+    @GetMapping("/jobs/{jobId}")
+    public ResponseEntity<?> getJobStatus(@PathVariable String jobId) {
+        AutomationService.JobStatus job = automationService.getJobStatus(jobId);
+        if (job == null) {
+            return ResponseEntity.notFound().build();
+        }
+        if (job.getResult() == null) {
+            return ResponseEntity.ok(Map.of("jobId", jobId, "status", job.getStatus()));
+        }
+        AutomationResult result = job.getResult();
+        AutomationExecutionResponse response = new AutomationExecutionResponse(
+                result.getId(),
+                jobId,
+                job.getStatus(),
+                result.getMessage(),
+                result.getErrorMessage(),
+                result.getScreenshotPath(),
+                result.getLogPath(),
+                result.getExecutionTime(),
+                result.getDocuments()
+        );
+        return ResponseEntity.ok(response);
     }
 
     /**
