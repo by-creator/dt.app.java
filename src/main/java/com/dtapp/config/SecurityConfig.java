@@ -14,7 +14,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.header.writers.XXssProtectionHeaderWriter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.RegexRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
@@ -66,7 +66,7 @@ public class SecurityConfig {
                         response.setContentType("application/json;charset=UTF-8");
                         response.getWriter().write("{\"error\":\"Session expir\\u00e9e, veuillez recharger la page.\"}");
                     },
-                    new AntPathRequestMatcher("/api/**")
+                    new RegexRequestMatcher("/api/.*", null)
                 )
             )
             .authenticationProvider(authenticationProvider())
