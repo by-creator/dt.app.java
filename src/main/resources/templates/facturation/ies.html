@@ -81,6 +81,12 @@
         Reinitialisation de compte
       </a>
       <a th:if="${isAdmin}"
+         th:href="@{/menu/facturation/ies(tab='gestion-utilisateurs')}"
+         class="subpage-tab"
+         th:classappend="${activeTab == 'gestion-utilisateurs'} ? ' active' : ''">
+        Gestion des utilisateurs
+      </a>
+      <a th:if="${isAdmin}"
          th:href="@{/menu/facturation/ies(tab='admin')}"
          class="subpage-tab"
          th:classappend="${activeTab == 'admin'} ? ' active' : ''">
@@ -104,7 +110,7 @@
       <span th:if="${success}" id="_flashSuccess" th:text="${success}" style="display:none"></span>
       <span th:if="${error}" id="_flashError" th:text="${error}" style="display:none"></span>
 
-      <div class="page-section-card" style="max-width:760px; margin-bottom:28px;">
+      <div th:unless="${activeTab == 'gestion-utilisateurs'}" class="page-section-card" style="max-width:760px; margin-bottom:28px;">
         <div class="blocage-card-header">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
@@ -112,9 +118,13 @@
           <span th:if="${activeTab == 'lien-acces'}">Lien d'acces</span>
           <span th:if="${activeTab == 'creation-compte'}">Creation de compte</span>
           <span th:if="${activeTab == 'reinitialisation-compte'}">Reinitialisation de compte</span>
+          <span th:if="${activeTab == 'gestion-utilisateurs'}">Gestion des utilisateurs clients</span>
           <span th:if="${activeTab == 'admin'}">Administration des comptes IES</span>
         </div>
 
+        <p class="blocage-card-subtitle" th:if="${activeTab == 'gestion-utilisateurs'}">
+          Creez et gerez les comptes utilisateurs avec le role ROLE_CLIENT. Le mot de passe initial est le numero de telephone.
+        </p>
         <p class="blocage-card-subtitle" th:if="${activeTab == 'lien-acces'}">
           Saisissez l'adresse email du destinataire puis envoyez le lien d'acces.
         </p>
@@ -127,6 +137,47 @@
         <p class="blocage-card-subtitle" th:if="${activeTab == 'admin'}">
           Gere la liste des comptes IES et leur statut. Cet onglet est reserve aux administrateurs.
         </p>
+
+        <form th:if="${activeTab == 'gestion-utilisateurs' and isAdmin}"
+              id="clientUserForm"
+              th:action="@{/menu/facturation/ies/gestion-utilisateurs/create}"
+              method="post">
+          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+          <input type="hidden" id="clientUserId" name="_userId" value="">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+            <div class="form-group">
+              <label for="cuUsername" class="form-label">NOM D'UTILISATEUR</label>
+              <input id="cuUsername" name="username" type="text" class="form-input"
+                     placeholder="ex: jean.dupont" required>
+            </div>
+            <div class="form-group">
+              <label for="cuEmail" class="form-label">EMAIL</label>
+              <input id="cuEmail" name="email" type="email" class="form-input"
+                     placeholder="ex: jean@exemple.com" required>
+            </div>
+            <div class="form-group">
+              <label for="cuTelephone" class="form-label">TÉLÉPHONE (= mot de passe)</label>
+              <input id="cuTelephone" name="telephone" type="text" class="form-input"
+                     placeholder="ex: +221770000000">
+            </div>
+            <div class="form-group">
+              <label for="cuCompagnie" class="form-label">COMPAGNIE</label>
+              <select id="cuCompagnie" name="compagnieId" class="form-input">
+                <option value="">— Aucune —</option>
+                <option th:each="c : ${compagnieOptions}" th:value="${c.id}" th:text="${c.name}">—</option>
+              </select>
+            </div>
+          </div>
+          <div class="blocage-actions">
+            <button type="submit" class="btn-debloquer">
+              <span id="clientUserSubmitLabel">Enregistrer</span>
+            </button>
+            <button type="button" id="clientUserCancelBtn" onclick="resetClientUserForm()"
+                    class="btn-actualiser" style="display:none;">
+              Annuler
+            </button>
+          </div>
+        </form>
 
         <form th:if="${activeTab == 'lien-acces'}"
               th:action="@{/menu/facturation/ies/lien-acces}"
@@ -201,6 +252,109 @@
             </button>
           </div>
         </form>
+      </div>
+
+      <div th:if="${activeTab == 'gestion-utilisateurs' and isAdmin}"
+           style="display:flex; gap:24px; align-items:flex-start; flex-wrap:wrap; margin-bottom:28px;">
+
+        <!-- Formulaire (gauche) -->
+        <div class="page-section-card" style="width:340px; flex-shrink:0;">
+          <div class="blocage-card-header">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+            </svg>
+            <span>Gestion des utilisateurs clients</span>
+          </div>
+          <p class="blocage-card-subtitle">ROLE_CLIENT — le mot de passe est défini manuellement.</p>
+
+          <form id="clientUserForm"
+                th:action="@{/menu/facturation/ies/gestion-utilisateurs/create}"
+                method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <input type="hidden" id="clientUserId" name="_userId" value="">
+            <div class="form-group" style="margin-bottom:14px;">
+              <label for="cuUsername" class="form-label">NOM D'UTILISATEUR</label>
+              <input id="cuUsername" name="username" type="text" class="form-input"
+                     placeholder="ex: jean.dupont" required>
+            </div>
+            <div class="form-group" style="margin-bottom:14px;">
+              <label for="cuEmail" class="form-label">EMAIL</label>
+              <input id="cuEmail" name="email" type="email" class="form-input"
+                     placeholder="ex: jean@exemple.com" required>
+            </div>
+            <div class="form-group" style="margin-bottom:14px;">
+              <label for="cuTelephone" class="form-label">TÉLÉPHONE</label>
+              <input id="cuTelephone" name="telephone" type="text" class="form-input"
+                     placeholder="ex: +221770000000">
+            </div>
+            <div class="form-group" style="margin-bottom:20px;">
+              <label for="cuPassword" class="form-label">MOT DE PASSE</label>
+              <input id="cuPassword" name="password" type="password" class="form-input"
+                     placeholder="Mot de passe">
+            </div>
+            <div class="blocage-actions">
+              <button type="submit" class="btn-debloquer">
+                <span id="clientUserSubmitLabel">Enregistrer</span>
+              </button>
+              <button type="button" id="clientUserCancelBtn" onclick="resetClientUserForm()"
+                      class="btn-actualiser" style="display:none;">
+                Annuler
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Table (droite) -->
+        <div class="page-section-card" style="flex:1; min-width:0; padding:0; overflow:hidden;">
+          <div class="table-toolbar">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+              </svg>
+              <span style="font-weight:600; font-size:14px;">Utilisateurs ROLE_CLIENT</span>
+            </div>
+            <span class="pagination-info"
+                  th:text="${#lists.size(clientUsers)} + ' utilisateur(s)'">0</span>
+          </div>
+          <div class="table-wrapper">
+            <table id="clientUsersTable" class="data-table">
+              <thead>
+                <tr>
+                  <th>USERNAME</th>
+                  <th>EMAIL</th>
+                  <th>TÉLÉPHONE</th>
+                  <th>DATE</th>
+                  <th>ACTIONS</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:if="${#lists.isEmpty(clientUsers)}">
+                  <td colspan="5" style="text-align:center; color:#94a3b8; padding:32px;">
+                    Aucun utilisateur client.
+                  </td>
+                </tr>
+                <tr th:each="u : ${clientUsers}"
+                    th:data-id="${u.id}"
+                    th:data-username="${u.username}"
+                    th:data-email="${u.email}"
+                    th:data-telephone="${u.telephone != null ? u.telephone : ''}">
+                  <td th:text="${u.username}">—</td>
+                  <td th:text="${u.email}">—</td>
+                  <td th:text="${u.telephone != null ? u.telephone : '—'}">—</td>
+                  <td th:text="${u.createdAt != null ? #temporals.format(u.createdAt, 'dd/MM/yyyy') : '—'}">—</td>
+                  <td style="white-space:nowrap;">
+                    <button type="button" class="btn-table-action debloque js-edit-client-user">Modifier</button>
+                    <form th:action="@{/menu/facturation/ies/gestion-utilisateurs/{id}/delete(id=${u.id})}"
+                          method="post" style="display:inline;" class="js-delete-client-user-form">
+                      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                      <button type="submit" class="btn-table-action bloquer">Supprimer</button>
+                    </form>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
       <div th:if="${activeTab == 'admin' and isAdmin}" class="page-section-card" style="padding:0; overflow:hidden; max-width:980px;">
@@ -281,6 +435,55 @@
   const flashError = document.getElementById('_flashError');
   if (flashSuccess) showToast(flashSuccess.textContent, 'success');
   if (flashError) showToast(flashError.textContent, 'error');
+
+  const clientUsersTable = document.getElementById('clientUsersTable');
+  const clientUserForm = document.getElementById('clientUserForm');
+
+  function resetClientUserForm() {
+    if (!clientUserForm) return;
+    clientUserForm.action = '/menu/facturation/ies/gestion-utilisateurs/create';
+    document.getElementById('clientUserId').value = '';
+    document.getElementById('cuUsername').value = '';
+    document.getElementById('cuEmail').value = '';
+    document.getElementById('cuTelephone').value = '';
+    document.getElementById('cuPassword').value = '';
+    document.getElementById('clientUserSubmitLabel').textContent = 'Enregistrer';
+    document.getElementById('clientUserCancelBtn').style.display = 'none';
+  }
+
+  if (clientUsersTable) {
+    clientUsersTable.addEventListener('click', function (event) {
+      const btn = event.target.closest('.js-edit-client-user');
+      if (!btn) return;
+      const row = btn.closest('tr');
+      const d = row.dataset;
+      clientUserForm.action = '/menu/facturation/ies/gestion-utilisateurs/' + d.id + '/update';
+      document.getElementById('clientUserId').value = d.id || '';
+      document.getElementById('cuUsername').value = d.username || '';
+      document.getElementById('cuEmail').value = d.email || '';
+      document.getElementById('cuTelephone').value = d.telephone || '';
+      document.getElementById('cuPassword').value = '';
+      document.getElementById('clientUserSubmitLabel').textContent = 'Mettre a jour';
+      document.getElementById('clientUserCancelBtn').style.display = '';
+      clientUserForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    clientUsersTable.addEventListener('submit', function (event) {
+      if (!event.target.classList.contains('js-delete-client-user-form')) return;
+      event.preventDefault();
+      const form = event.target;
+      Swal.fire({
+        title: 'Supprimer cet utilisateur ?',
+        text: 'Cette action est irreversible.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'Oui, supprimer',
+        cancelButtonText: 'Annuler'
+      }).then(result => { if (result.isConfirmed) form.submit(); });
+    });
+  }
 
   const updateIesAccountTable = document.getElementById('updateIesAccountsTable');
   const updateIesAccountForm = document.getElementById('updateIesAccountForm');

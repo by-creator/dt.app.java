@@ -642,6 +642,75 @@ public class AdminController {
         return "redirect:/admin?tab=users";
     }
 
+    @GetMapping("/users/template")
+    @ResponseBody
+    public ResponseEntity<byte[]> downloadUserTemplate() {
+        try (Workbook wb = new XSSFWorkbook();
+             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Sheet sheet = wb.createSheet("Utilisateurs");
+            Row header = sheet.createRow(0);
+            header.createCell(0).setCellValue("username");
+            header.createCell(1).setCellValue("email");
+            header.createCell(2).setCellValue("telephone");
+            Row example = sheet.createRow(1);
+            example.createCell(0).setCellValue("jean.dupont");
+            example.createCell(1).setCellValue("jean.dupont@example.com");
+            example.createCell(2).setCellValue("+221770000000");
+            wb.write(out);
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"modele_utilisateurs.xlsx\"")
+                    .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                    .body(out.toByteArray());
+        } catch (Exception e) {
+            log.error("Erreur génération modèle", e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @PostMapping("/users/import")
+    public String importUsers(@RequestParam MultipartFile file,
+                              @RequestParam(required = false) String authority,
+                              RedirectAttributes ra) {
+        if (file.isEmpty()) {
+            ra.addFlashAttribute("error", "Aucun fichier sélectionné.");
+            return "redirect:/admin?tab=users";
+        }
+        int created = 0, skipped = 0;
+        try (Workbook wb = new XSSFWorkbook(file.getInputStream())) {
+            Sheet sheet = wb.getSheetAt(0);
+            DataFormatter fmt = new DataFormatter();
+            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+                Row row = sheet.getRow(i);
+                if (row == null) continue;
+                String username = fmt.formatCellValue(row.getCell(0)).trim();
+                String email = fmt.formatCellValue(row.getCell(1)).trim();
+                String telephone = fmt.formatCellValue(row.getCell(2)).trim();
+                if (username.isEmpty() || email.isEmpty()) { skipped++; continue; }
+                if (userRepository.findByEmail(email).isPresent()) { skipped++; continue; }
+                User user = new User();
+                user.setUsername(username);
+                user.setEmail(email);
+                user.setTelephone(telephone.isEmpty() ? null : telephone);
+                user.setPassword(passwordEncoder.encode(telephone.isEmpty() ? username : telephone));
+                user.setEnabled(true);
+                User saved = userRepository.save(user);
+                if (authority != null && !authority.isBlank()) {
+                    Authority authEntry = new Authority();
+                    authEntry.setUser(saved);
+                    authEntry.setAuthority(authority.trim());
+                    authorityRepository.save(authEntry);
+                }
+                created++;
+            }
+        } catch (Exception e) {
+            log.error("Erreur import utilisateurs", e);
+            ra.addFlashAttribute("error", "Erreur lors de l'import : " + e.getMessage());
+            return "redirect:/admin?tab=users";
+        }
+        ra.addFlashAttribute("success", created + " utilisateur(s) importé(s), " + skipped + " ignoré(s).");
+        return "redirect:/admin?tab=users";
+    }
+
     @PostMapping("/users/{id}/delete")
     public String deleteUser(@PathVariable int id, Authentication auth, RedirectAttributes ra) {
         var current = userRepository.findByEmail(auth.getName()).orElseThrow();

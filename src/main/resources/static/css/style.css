@@ -1756,3 +1756,31 @@ input[type="file"].form-input::file-selector-button:hover {
   }
   .login-title { font-size: 24px; }
 }
+
+/* =====================================================
+   SETTINGS PAGE — Mobile responsive
+   ===================================================== */
+@media (max-width: 900px) {
+  .settings-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
+  .settings-card {
+    padding: 20px 18px;
+  }
+  .main-content {
+    padding: 16px;
+  }
+  .page-header-card {
+    padding: 20px 18px;
+    border-radius: 12px;
+  }
+  .page-title {
+    font-size: 22px !important;
+  }
+}

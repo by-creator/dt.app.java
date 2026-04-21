@@ -12,6 +12,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.header.writers.XXssProtectionHeaderWriter;
 
 @Configuration
@@ -72,7 +73,7 @@ public class SecurityConfig {
                 .loginPage("/login")
                 .usernameParameter("email")
                 .passwordParameter("password")
-                .defaultSuccessUrl("/dashboard", true)
+                .successHandler(loginSuccessHandler())
                 .failureUrl("/login?error")
                 .permitAll()
             )
@@ -90,6 +91,15 @@ public class SecurityConfig {
             );
 
         return http.build();
+    }
+
+    @Bean
+    public AuthenticationSuccessHandler loginSuccessHandler() {
+        return (request, response, authentication) -> {
+            boolean isClient = authentication.getAuthorities().stream()
+                    .anyMatch(a -> "ROLE_CLIENT".equals(a.getAuthority()));
+            response.sendRedirect(request.getContextPath() + (isClient ? "/menu/dt/client" : "/dashboard"));
+        };
     }
 
     @Bean

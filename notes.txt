@@ -1,18 +1,8 @@
-Sur la route /menu/dt/client : 
+Je souhaite que si un user a pour authority 
+ROLE_CLIENT que lorsqu'il se connecte qu'il arrive
+directement sur /menu/dt/client, les liens dashboard et menu vont renvoyer à ce 
+même lien 
 
-- selon la capture sous format mobile sur tous 
-les onglets je souhaite le card où se trouve les 
-boutons Ovrir et Téléchager ne dépasse pas la 
-largeur du card Documents telecharges
-
-- je souhaite que tu respectes le thème couleur 
-pour qu'on voit bien les écrits
-
-- je souhaite que tu rajoutes un onglet PAIEMENT
-juste après FACTURE qui va afficher les cards 
-de paiement qui redirigent vers "#" pour le moment
-
-- je souhaite savoir s'il y'a une configuration
-supplémentaire à faire sur heroku ou alors on peut
-tout configurer depuis l'application et juste
-redéployer (à faire si possible)
+aussi sur la route /parametres je souhaite que tu 
+optimises l'affichage en le rendant plus responsive 
+sous format mobile 

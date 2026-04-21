@@ -1,5 +1,3 @@
-- automatiser validation proforma 
-- automatiser bad
 - automatiser update ies account
 - import des users avec choix de authority
 - gestion des clients IES 

@@ -1,11 +1,14 @@
 package com.dtapp.controller;
 
+import com.dtapp.entity.Authority;
 import com.dtapp.entity.RapportSuiviVides;
 import com.dtapp.entity.RattachementBl;
 import com.dtapp.entity.SatisfactionReponse;
 import com.dtapp.entity.TiersUnify;
 import com.dtapp.entity.UpdateIesAccount;
 import com.dtapp.entity.User;
+import com.dtapp.repository.AuthorityRepository;
+import com.dtapp.repository.CompagnieRepository;
 import com.dtapp.repository.GfaGuichetRepository;
 import com.dtapp.repository.RapportSuiviVidesRepository;
 import com.dtapp.repository.RattachementBlRepository;
@@ -13,6 +16,7 @@ import com.dtapp.repository.SatisfactionReponseRepository;
 import com.dtapp.repository.TiersUnifyRepository;
 import com.dtapp.repository.UpdateIesAccountRepository;
 import com.dtapp.repository.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import com.dtapp.service.B2StorageService;
 import com.dtapp.service.BulkInsertService;
 import com.dtapp.service.EmailService;
@@ -68,6 +72,9 @@ public class MenuController {
     private final EmailService emailService;
     private final BulkInsertService bulkInsertService;
     private final B2StorageService b2StorageService;
+    private final AuthorityRepository authorityRepository;
+    private final CompagnieRepository compagnieRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public MenuController(UserRepository userRepository,
                           RattachementBlRepository rattachementBlRepository,
@@ -78,7 +85,10 @@ public class MenuController {
                           UpdateIesAccountRepository updateIesAccountRepository,
                           EmailService emailService,
                           BulkInsertService bulkInsertService,
-                          B2StorageService b2StorageService) {
+                          B2StorageService b2StorageService,
+                          AuthorityRepository authorityRepository,
+                          CompagnieRepository compagnieRepository,
+                          PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.rattachementBlRepository = rattachementBlRepository;
         this.satisfactionReponseRepository = satisfactionReponseRepository;
@@ -89,6 +99,9 @@ public class MenuController {
         this.emailService = emailService;
         this.bulkInsertService = bulkInsertService;
         this.b2StorageService = b2StorageService;
+        this.authorityRepository = authorityRepository;
+        this.compagnieRepository = compagnieRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @GetMapping("/menu")
@@ -106,6 +119,7 @@ public class MenuController {
     }
 
     private String resolveMenuRedirect(Set<String> roles) {
+        if (roles.contains("ROLE_CLIENT"))                  return "/menu/dt/client";
         if (roles.contains("ROLE_INFORMATIQUE"))            return "/menu/informatique";
         if (roles.contains("ROLE_FACTURATION"))             return "/menu/facturation";
         if (roles.contains("ROLE_DIRECTION_GENERALE"))      return "/menu/direction-generale";
@@ -365,6 +379,14 @@ public class MenuController {
         model.addAttribute("sidebarMenuUrl", isAdmin ? "/menu" : "/menu/facturation");
         if (isAdmin) {
             model.addAttribute("updateIesAccounts", updateIesAccountRepository.findAllForAdmin());
+            List<User> clientUsers = authorityRepository.findAll().stream()
+                    .filter(a -> "ROLE_CLIENT".equals(a.getAuthority()) && a.getUser() != null)
+                    .map(Authority::getUser)
+                    .distinct()
+                    .sorted(Comparator.comparing(u -> u.getUsername() == null ? "" : u.getUsername()))
+                    .collect(Collectors.toList());
+            model.addAttribute("clientUsers", clientUsers);
+            model.addAttribute("compagnieOptions", compagnieRepository.findAll(Sort.by("name")));
         }
         return "facturation/ies";
     }
@@ -1046,9 +1068,83 @@ public class MenuController {
         return "redirect:/menu/facturation/ies?tab=admin";
     }
 
+    @PostMapping("/menu/facturation/ies/gestion-utilisateurs/create")
+    public String createClientUser(@RequestParam String username,
+                                   @RequestParam String email,
+                                   @RequestParam(required = false) String telephone,
+                                   @RequestParam(required = false) String password,
+                                   Authentication auth,
+                                   RedirectAttributes redirectAttributes) {
+        if (!hasAdminRole(auth)) {
+            redirectAttributes.addFlashAttribute("error", "Acces refuse.");
+            return "redirect:/menu/facturation/ies";
+        }
+        if (userRepository.findByEmail(email.trim()).isPresent()) {
+            redirectAttributes.addFlashAttribute("error", "Cet email est deja utilise.");
+            return "redirect:/menu/facturation/ies?tab=gestion-utilisateurs";
+        }
+        String tel = telephone != null ? telephone.trim() : "";
+        String pwd = (password != null && !password.isBlank()) ? password : username.trim();
+        User user = new User();
+        user.setUsername(username.trim());
+        user.setEmail(email.trim());
+        user.setTelephone(tel.isEmpty() ? null : tel);
+        user.setPassword(passwordEncoder.encode(pwd));
+        user.setEnabled(true);
+        User saved = userRepository.save(user);
+        Authority authority = new Authority();
+        authority.setUser(saved);
+        authority.setAuthority("ROLE_CLIENT");
+        authorityRepository.save(authority);
+        redirectAttributes.addFlashAttribute("success", "Utilisateur client « " + username.trim() + " » cree.");
+        return "redirect:/menu/facturation/ies?tab=gestion-utilisateurs";
+    }
+
+    @PostMapping("/menu/facturation/ies/gestion-utilisateurs/{id}/update")
+    public String updateClientUser(@PathVariable int id,
+                                   @RequestParam String username,
+                                   @RequestParam String email,
+                                   @RequestParam(required = false) String telephone,
+                                   @RequestParam(required = false) String password,
+                                   Authentication auth,
+                                   RedirectAttributes redirectAttributes) {
+        if (!hasAdminRole(auth)) {
+            redirectAttributes.addFlashAttribute("error", "Acces refuse.");
+            return "redirect:/menu/facturation/ies";
+        }
+        userRepository.findById(id).ifPresent(user -> {
+            user.setUsername(username.trim());
+            user.setEmail(email.trim());
+            String tel = telephone != null ? telephone.trim() : "";
+            user.setTelephone(tel.isEmpty() ? null : tel);
+            if (password != null && !password.isBlank()) {
+                user.setPassword(passwordEncoder.encode(password));
+            }
+            userRepository.save(user);
+        });
+        redirectAttributes.addFlashAttribute("success", "Utilisateur mis a jour.");
+        return "redirect:/menu/facturation/ies?tab=gestion-utilisateurs";
+    }
+
+    @PostMapping("/menu/facturation/ies/gestion-utilisateurs/{id}/delete")
+    public String deleteClientUser(@PathVariable int id,
+                                   Authentication auth,
+                                   RedirectAttributes redirectAttributes) {
+        if (!hasAdminRole(auth)) {
+            redirectAttributes.addFlashAttribute("error", "Acces refuse.");
+            return "redirect:/menu/facturation/ies";
+        }
+        userRepository.deleteById(id);
+        redirectAttributes.addFlashAttribute("success", "Utilisateur supprime.");
+        return "redirect:/menu/facturation/ies?tab=gestion-utilisateurs";
+    }
+
     private String normalizeIesTab(String tab, boolean isAdmin) {
         if (isAdmin && "admin".equalsIgnoreCase(tab)) {
             return "admin";
+        }
+        if (isAdmin && "gestion-utilisateurs".equalsIgnoreCase(tab)) {
+            return "gestion-utilisateurs";
         }
         if ("creation-compte".equalsIgnoreCase(tab)) {
             return "creation-compte";

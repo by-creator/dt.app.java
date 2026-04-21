@@ -35,10 +35,12 @@ public class ParametresController {
                 .map(GrantedAuthority::getAuthority).collect(Collectors.toSet());
         model.addAttribute("loggedUser", loggedUser(auth));
         model.addAttribute("menuUrl", resolveMenuUrl(roles));
+        model.addAttribute("dashboardUrl", roles.contains("ROLE_CLIENT") ? "/menu/dt/client" : "/dashboard");
         return "parametres";
     }
 
     private String resolveMenuUrl(Set<String> roles) {
+        if (roles.contains("ROLE_CLIENT"))                 return "/menu/dt/client";
         if (roles.contains("ROLE_ADMIN"))                  return "/menu";
         if (roles.contains("ROLE_FACTURATION"))            return "/menu/facturation";
         if (roles.contains("ROLE_DIRECTION_GENERALE"))     return "/menu/direction-generale";

@@ -59,6 +59,7 @@ public class DashboardController {
     }
 
     private String resolveModuleDashboard(Set<String> roles) {
+        if (roles.contains("ROLE_CLIENT"))               return "/menu/dt/client";
         if (roles.contains("ROLE_INFORMATIQUE"))         return "/informatique/dashboard";
         if (roles.contains("ROLE_FACTURATION"))          return "/facturation/dashboard";
         if (roles.contains("ROLE_DIRECTION_GENERALE"))   return "/direction-generale/dashboard";

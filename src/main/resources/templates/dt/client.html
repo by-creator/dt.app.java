@@ -23,14 +23,14 @@
     </div>
 
     <nav class="sidebar-nav">
-      <a th:href="@{/dashboard}" class="nav-item">
+      <a th:href="@{/menu/dt/client}" class="nav-item">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
           <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
         </svg>
         Dashboard
       </a>
-      <a th:href="@{/menu/dt}" class="nav-item active">
+      <a th:href="@{/menu/dt/client}" class="nav-item active">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/>
           <line x1="3" y1="18" x2="21" y2="18"/>
@@ -67,11 +67,35 @@
       Client
     </div>
 
-    <div class="subpage-tabs">
-      <button type="button" class="subpage-tab active" data-client-tab="proforma" style="background:none; border:none;">PROFORMA</button>
-      <button type="button" class="subpage-tab" data-client-tab="facture" style="background:none; border:none;">FACTURE</button>
-      <button type="button" class="subpage-tab" data-client-tab="paiement" style="background:none; border:none;">PAIEMENT</button>
-      <button type="button" class="subpage-tab" data-client-tab="bad" style="background:none; border:none;">BAD</button>
+    <div class="subpage-tabs" style="display:grid; grid-template-columns:repeat(2,auto); justify-content:center; gap:10px; padding:16px 24px;">
+      <button type="button" class="subpage-tab active" data-client-tab="proforma"
+              style="display:flex; flex-direction:column; align-items:center; gap:6px; min-width:110px; padding:14px 20px; border-radius:14px; border:1px solid rgba(99,102,241,0.35); background:rgba(99,102,241,0.08); cursor:pointer; color:var(--accent,#6366f1);">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="14" y2="17"/>
+        </svg>
+        <span style="font-size:11px; font-weight:600; letter-spacing:.5px;">PROFORMA</span>
+      </button>
+      <button type="button" class="subpage-tab" data-client-tab="facture"
+              style="display:flex; flex-direction:column; align-items:center; gap:6px; min-width:110px; padding:14px 20px; border-radius:14px; border:1px solid rgba(148,163,184,.18); background:none; cursor:pointer;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+        </svg>
+        <span style="font-size:11px; font-weight:600; letter-spacing:.5px;">FACTURE</span>
+      </button>
+      <button type="button" class="subpage-tab" data-client-tab="paiement"
+              style="display:flex; flex-direction:column; align-items:center; gap:6px; min-width:110px; padding:14px 20px; border-radius:14px; border:1px solid rgba(148,163,184,.18); background:none; cursor:pointer;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+        </svg>
+        <span style="font-size:11px; font-weight:600; letter-spacing:.5px;">PAIEMENT</span>
+      </button>
+      <button type="button" class="subpage-tab" data-client-tab="bad"
+              style="display:flex; flex-direction:column; align-items:center; gap:6px; min-width:110px; padding:14px 20px; border-radius:14px; border:1px solid rgba(148,163,184,.18); background:none; cursor:pointer;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+        </svg>
+        <span style="font-size:11px; font-weight:600; letter-spacing:.5px;">BAD</span>
+      </button>
     </div>
 
     <div style="padding: 32px 36px;">
@@ -142,26 +166,26 @@
         </div>
 
         <div class="tab-pane" data-client-pane="paiement" style="display:none;">
-          <div style="display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; max-width:480px; margin:0 auto;">
+          <div style="display:flex; flex-direction:column; gap:16px; max-width:380px; margin:0 auto;">
             <a href="#" style="display:flex; align-items:center; justify-content:center;
-                               min-height:130px; border-radius:16px; padding:18px;
+                               min-height:160px; border-radius:16px; padding:24px;
                                background:rgba(99,102,241,0.08); border:1px solid rgba(148,163,184,.18);
                                text-decoration:none; transition:transform .18s,box-shadow .18s;"
                onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 12px 28px rgba(0,0,0,0.12)';"
                onmouseout="this.style.transform=''; this.style.boxShadow='';"
                aria-label="SycaPay">
               <img th:src="@{/img/operateur/sycapay.png}" alt="SycaPay"
-                   style="max-width:130px; max-height:64px; object-fit:contain;">
+                   style="max-width:200px; max-height:80px; object-fit:contain;">
             </a>
             <a href="#" style="display:flex; align-items:center; justify-content:center;
-                               min-height:130px; border-radius:16px; padding:18px;
+                               min-height:160px; border-radius:16px; padding:24px;
                                background:rgba(99,102,241,0.08); border:1px solid rgba(148,163,184,.18);
                                text-decoration:none; transition:transform .18s,box-shadow .18s;"
                onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 12px 28px rgba(0,0,0,0.12)';"
                onmouseout="this.style.transform=''; this.style.boxShadow='';"
                aria-label="InTouch">
               <img th:src="@{/img/operateur/intouch.png}" alt="InTouch"
-                   style="max-width:130px; max-height:64px; object-fit:contain;">
+                   style="max-width:200px; max-height:80px; object-fit:contain;">
             </a>
           </div>
         </div>
@@ -389,7 +413,11 @@
 
   function switchTab(tabName) {
     document.querySelectorAll('[data-client-tab]').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.clientTab === tabName);
+      const isActive = btn.dataset.clientTab === tabName;
+      btn.classList.toggle('active', isActive);
+      btn.style.background = isActive ? 'rgba(99,102,241,0.08)' : '';
+      btn.style.borderColor = isActive ? 'rgba(99,102,241,0.35)' : 'rgba(148,163,184,.18)';
+      btn.style.color = isActive ? 'var(--accent, #6366f1)' : '';
     });
     document.querySelectorAll('[data-client-pane]').forEach(pane => {
       if (pane.dataset.clientPane !== tabName) {
@@ -471,7 +499,7 @@
     const button = document.getElementById('proformaSearchBtn');
 
     if (!blNumber || !dateValue || !clientFacture) {
-      showStatus("Veuillez renseigner le BL, la date d'enlevement et la maison de transit.", 'warning');
+      Swal.fire({ icon: 'warning', title: 'Champs requis', text: "Veuillez renseigner le BL, la date d'enlevement et la maison de transit.", confirmButtonColor: '#6366f1' });
       return;
     }
 
@@ -489,13 +517,8 @@
 
       if (result.status !== 'success' && (!result.documents || !result.documents.length)) {
         const errorMessage = result.error || result.message || "Le lancement du proforma a echoue.";
-        updateResultCard(
-          'proformaResultCard',
-          'proformaResultMeta',
-          'proformaResultBody',
-          `BL : ${blNumber}`,
-          escapeHtml(errorMessage)
-        );
+        Swal.fire({ icon: 'error', title: 'Erreur proforma', text: errorMessage, confirmButtonColor: '#6366f1' });
+        updateResultCard('proformaResultCard', 'proformaResultMeta', 'proformaResultBody', `BL : ${blNumber}`, escapeHtml(errorMessage));
         return;
       }
 
@@ -508,13 +531,8 @@
       );
     } catch (error) {
       const errorMessage = error.message || "Le lancement du proforma a echoue.";
-      updateResultCard(
-        'proformaResultCard',
-        'proformaResultMeta',
-        'proformaResultBody',
-        `BL : ${blNumber || '-'}`,
-        escapeHtml(errorMessage)
-      );
+      Swal.fire({ icon: 'error', title: 'Erreur proforma', text: errorMessage, confirmButtonColor: '#6366f1' });
+      updateResultCard('proformaResultCard', 'proformaResultMeta', 'proformaResultBody', `BL : ${blNumber || '-'}`, escapeHtml(errorMessage));
     } finally {
       button.disabled = false;
       button.textContent = 'Generer';
@@ -526,7 +544,7 @@
     const button = document.getElementById(btnId);
 
     if (!blNumber) {
-      showStatus('Veuillez renseigner le BL dans le formulaire avant de ' + actionLabel + '.', 'warning');
+      Swal.fire({ icon: 'warning', title: 'BL requis', text: 'Veuillez renseigner le BL dans le formulaire avant de ' + actionLabel + '.', confirmButtonColor: '#6366f1' });
       return;
     }
 
@@ -536,27 +554,17 @@
     try {
       const result = await executeAutomation(automationId, { BL_NUMBER: blNumber });
       if (result.status === 'success') {
-        showStatus(`BL ${blNumber} : ${successMsg}`, 'success');
-        updateResultCard(
-          'proformaResultCard', 'proformaResultMeta', 'proformaResultBody',
-          `BL : ${blNumber}`,
-          `<span style="color:#166534;">${successMsg}</span>`
-        );
+        Swal.fire({ icon: 'success', title: 'Succes', text: `BL ${blNumber} : ${successMsg}`, confirmButtonColor: '#6366f1' });
+        updateResultCard('proformaResultCard', 'proformaResultMeta', 'proformaResultBody', `BL : ${blNumber}`, `<span style="color:#166534;">${successMsg}</span>`);
       } else {
         const errorMessage = result.error || result.message || `L'action a echoue pour le BL ${blNumber}.`;
-        showStatus(errorMessage, 'error');
-        updateResultCard(
-          'proformaResultCard', 'proformaResultMeta', 'proformaResultBody',
-          `BL : ${blNumber}`, escapeHtml(errorMessage)
-        );
+        Swal.fire({ icon: 'error', title: 'Erreur', text: errorMessage, confirmButtonColor: '#6366f1' });
+        updateResultCard('proformaResultCard', 'proformaResultMeta', 'proformaResultBody', `BL : ${blNumber}`, escapeHtml(errorMessage));
       }
     } catch (error) {
       const errorMessage = error.message || `L'action a echoue pour le BL ${blNumber}.`;
-      showStatus(errorMessage, 'error');
-      updateResultCard(
-        'proformaResultCard', 'proformaResultMeta', 'proformaResultBody',
-        `BL : ${blNumber}`, escapeHtml(errorMessage)
-      );
+      Swal.fire({ icon: 'error', title: 'Erreur', text: errorMessage, confirmButtonColor: '#6366f1' });
+      updateResultCard('proformaResultCard', 'proformaResultMeta', 'proformaResultBody', `BL : ${blNumber}`, escapeHtml(errorMessage));
     } finally {
       button.disabled = false;
       button.textContent = actionLabel.charAt(0).toUpperCase() + actionLabel.slice(1);
@@ -576,7 +584,7 @@
     const button = document.getElementById('factureSearchBtn');
 
     if (!blNumber) {
-      showStatus('Veuillez saisir un BL pour la facture.', 'warning');
+      Swal.fire({ icon: 'warning', title: 'BL requis', text: 'Veuillez saisir un BL pour la facture.', confirmButtonColor: '#6366f1' });
       return;
     }
 
@@ -591,8 +599,8 @@
 
       if (result.status !== 'success' && (!result.documents || !result.documents.length)) {
         const errorMessage = result.error || result.message || 'Le telechargement de la facture a echoue.';
-        updateResultCard('factureResultCard', 'factureResultMeta', 'factureResultBody',
-          `BL : ${blNumber}`, escapeHtml(errorMessage));
+        Swal.fire({ icon: 'error', title: 'Erreur facture', text: errorMessage, confirmButtonColor: '#6366f1' });
+        updateResultCard('factureResultCard', 'factureResultMeta', 'factureResultBody', `BL : ${blNumber}`, escapeHtml(errorMessage));
         return;
       }
 
@@ -601,8 +609,8 @@
         renderProformaDocuments(result.documents));
     } catch (error) {
       const errorMessage = error.message || 'Le telechargement de la facture a echoue.';
-      updateResultCard('factureResultCard', 'factureResultMeta', 'factureResultBody',
-        `BL : ${blNumber || '-'}`, escapeHtml(errorMessage));
+      Swal.fire({ icon: 'error', title: 'Erreur facture', text: errorMessage, confirmButtonColor: '#6366f1' });
+      updateResultCard('factureResultCard', 'factureResultMeta', 'factureResultBody', `BL : ${blNumber || '-'}`, escapeHtml(errorMessage));
     } finally {
       button.disabled = false;
       button.textContent = 'Telecharger';
@@ -614,7 +622,7 @@
     const button = document.getElementById('badSearchBtn');
 
     if (!blNumber) {
-      showStatus('Veuillez saisir un BL pour le BAD.', 'warning');
+      Swal.fire({ icon: 'warning', title: 'BL requis', text: 'Veuillez saisir un BL pour le BAD.', confirmButtonColor: '#6366f1' });
       return;
     }
 
@@ -629,8 +637,8 @@
 
       if (result.status !== 'success' && (!result.documents || !result.documents.length)) {
         const errorMessage = result.error || result.message || 'Le telechargement du BAD a echoue.';
-        updateResultCard('badResultCard', 'badResultMeta', 'badResultBody',
-          `BL : ${blNumber}`, escapeHtml(errorMessage));
+        Swal.fire({ icon: 'error', title: 'Erreur BAD', text: errorMessage, confirmButtonColor: '#6366f1' });
+        updateResultCard('badResultCard', 'badResultMeta', 'badResultBody', `BL : ${blNumber}`, escapeHtml(errorMessage));
         return;
       }
 
@@ -639,8 +647,8 @@
         renderProformaDocuments(result.documents));
     } catch (error) {
       const errorMessage = error.message || 'Le telechargement du BAD a echoue.';
-      updateResultCard('badResultCard', 'badResultMeta', 'badResultBody',
-        `BL : ${blNumber || '-'}`, escapeHtml(errorMessage));
+      Swal.fire({ icon: 'error', title: 'Erreur BAD', text: errorMessage, confirmButtonColor: '#6366f1' });
+      updateResultCard('badResultCard', 'badResultMeta', 'badResultBody', `BL : ${blNumber || '-'}`, escapeHtml(errorMessage));
     } finally {
       button.disabled = false;
       button.textContent = 'Telecharger';
