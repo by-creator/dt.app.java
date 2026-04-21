@@ -303,7 +303,12 @@ public class AutomationService {
     private String getPythonCommand() {
         String configured = automationProperties.getPythonPath();
         if (configured != null && !configured.isBlank()) {
-            return Paths.get(configured).toAbsolutePath().toString();
+            Path p = Paths.get(configured);
+            // Commande système (ex: "python3") — ne pas résoudre en chemin absolu
+            if (p.getNameCount() == 1 && !configured.startsWith("/")) {
+                return configured;
+            }
+            return p.toAbsolutePath().toString();
         }
         return System.getProperty("os.name").toLowerCase().contains("win") ? "python" : "python3";
     }
