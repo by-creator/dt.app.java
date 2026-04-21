@@ -13,8 +13,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl;
+import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
 import org.springframework.security.web.header.writers.XXssProtectionHeaderWriter;
 import org.springframework.security.web.util.matcher.RegexRequestMatcher;
+import javax.sql.DataSource;
 
 @Configuration
 @EnableWebSecurity
@@ -23,14 +26,24 @@ public class SecurityConfig {
 
     private final UserDetailsServiceImpl userDetailsService;
     private final AuditLogFilter auditLogFilter;
+    private final DataSource dataSource;
 
     @Value("${app.security.remember-me-key:dt-app-remember-me-key-change-in-prod}")
     private String rememberMeKey;
 
     public SecurityConfig(UserDetailsServiceImpl userDetailsService,
-                          AuditLogFilter auditLogFilter) {
+                          AuditLogFilter auditLogFilter,
+                          DataSource dataSource) {
         this.userDetailsService = userDetailsService;
         this.auditLogFilter = auditLogFilter;
+        this.dataSource = dataSource;
+    }
+
+    @Bean
+    public PersistentTokenRepository persistentTokenRepository() {
+        JdbcTokenRepositoryImpl repo = new JdbcTokenRepositoryImpl();
+        repo.setDataSource(dataSource);
+        return repo;
     }
 
     @Bean
@@ -98,7 +111,8 @@ public class SecurityConfig {
             .rememberMe(rm -> rm
                 .key(rememberMeKey)
                 .rememberMeParameter("remember-me")
-                .tokenValiditySeconds(2 * 3600)
+                .tokenRepository(persistentTokenRepository())
+                .tokenValiditySeconds(30 * 24 * 3600)
             );
 
         return http.build();
